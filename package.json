@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n backend,frontend -c cyan,magenta \"npm --prefix backend run dev\" \"npm --prefix frontend/educart-frontend run dev\"",
-    "dev:backend": "npm --prefix backend run dev",
-    "dev:frontend": "npm --prefix frontend/educart-frontend run dev"
+    "dev": "concurrently -n backend,frontend -c cyan,magenta \"npm --prefix be run dev\" \"npm --prefix fe run dev\"",
+    "dev:backend": "npm --prefix be run dev",
+    "dev:frontend": "npm --prefix fe run dev"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

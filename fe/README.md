@@ -10,7 +10,8 @@ EduCart frontend is built with Next.js App Router, Tailwind CSS, Framer Motion, 
 ## Run locally
 
 1. Open terminal at this folder c:\Users\user\Desktop\EduCart\frontend :
-   cd frontend
+
+   cd fe
 
 2. Install dependencies:
 
