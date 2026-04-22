@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShoppingCart, Search, LogOut, User, BookOpen } from "lucide-react";
+import { ShoppingCart, MessageCircle, LogOut, User, BookOpen } from "lucide-react";
 import Link from "next/link";
 
 export default function HomeNavbar() {
@@ -63,18 +63,18 @@ export default function HomeNavbar() {
 
                     {/* Right: Icons */}
                     <div className="flex items-center gap-4">
-                        <button className="rounded-lg p-2 hover:bg-gray-100">
-                            <Search className="h-5 w-5 text-gray-700" />
-                        </button>
+                        <Link href="/chat" className="rounded-lg p-2 hover:bg-gray-100">
+                            <MessageCircle className="h-5 w-5 text-gray-700" />
+                        </Link>
 
-                        <button className="rounded-lg p-2 hover:bg-gray-100 relative">
+                        <Link href="/cart" className="rounded-lg p-2 hover:bg-gray-100 relative inline-flex">
                             <ShoppingCart className="h-5 w-5 text-gray-700" />
                             {isLoggedIn && (
                                 <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                                     2
                                 </span>
                             )}
-                        </button>
+                        </Link>
 
                         {!isLoggedIn ? (
                             <Link

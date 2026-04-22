@@ -139,19 +139,19 @@ const mockSaleBooks: SaleBook[] = [
 
 /* ─── Config ─────────────────────────────────────────────── */
 const buyStages = [
-    { label: "ĐÃ ĐẶT",     key: "ordered",   icon: Package },
-    { label: "ĐANG GIAO",  key: "shipping",  icon: Truck },
-    { label: "HOÀN TẤT",  key: "completed", icon: CheckCircle },
+    { label: "ĐÃ ĐẶT", key: "ordered", icon: Package },
+    { label: "ĐANG GIAO", key: "shipping", icon: Truck },
+    { label: "HOÀN TẤT", key: "completed", icon: CheckCircle },
 ];
 
 const rentStages = [
-    { label: "ĐÃ ĐẶT",       key: "ordered",  icon: Package },
-    { label: "ĐANG THUÊ",    key: "renting",  icon: BookOpen },
+    { label: "ĐÃ ĐẶT", key: "ordered", icon: Package },
+    { label: "ĐANG THUÊ", key: "renting", icon: BookOpen },
     { label: "ĐÃ HOÀN TRẢ", key: "returned", icon: RotateCcw },
 ];
 
-const buyStageIndex: Record<string, number>  = { ordered: 0, shipping: 1, completed: 2 };
-const rentStageIndex: Record<string, number> = { ordered: 0, renting: 1,  returned: 2  };
+const buyStageIndex: Record<string, number> = { ordered: 0, shipping: 1, completed: 2 };
+const rentStageIndex: Record<string, number> = { ordered: 0, renting: 1, returned: 2 };
 
 /* ─── Book Cover Component ───────────────────────────────── */
 function BookCover({ title, image, type }: { title: string; image: string; type: OrderType }) {
@@ -162,8 +162,8 @@ function BookCover({ title, image, type }: { title: string; image: string; type:
 
     return (
         <div
-            className="relative w-24 h-32 rounded-xl overflow-hidden shrink-0 select-none"
-            style={{ boxShadow: "4px 4px 16px rgba(0,0,0,0.2)" }}
+            className="relative w-28 h-36 rounded-2xl overflow-hidden shrink-0 select-none"
+            style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.15)" }}
         >
             {/* Real product image */}
             <img
@@ -192,9 +192,9 @@ function OrderTimeline({
     orderType: OrderType;
     trackingNumber: string;
 }) {
-    const isRent    = orderType === "rent";
-    const stages    = isRent ? rentStages    : buyStages;
-    const indexMap  = isRent ? rentStageIndex : buyStageIndex;
+    const isRent = orderType === "rent";
+    const stages = isRent ? rentStages : buyStages;
+    const indexMap = isRent ? rentStageIndex : buyStageIndex;
     const currentIdx = indexMap[status] ?? 0;
 
     const headerIcon = isRent ? BookOpen : Truck;
@@ -202,32 +202,32 @@ function OrderTimeline({
 
     return (
         <div
-            className="mb-5 px-6 py-5 rounded-t-2xl"
+            className="px-6 py-5 rounded-t-2xl border-b"
             style={{
                 background: isRent
-                    ? "linear-gradient(135deg, #fff3e6 0%, #fff3e6 100%)"
-                    : "linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%)",
-                borderBottom: isRent
-                    ? "1px solid rgba(197,91,0,0.18)"
-                    : "1px solid rgba(59,130,246,0.15)",
+                    ? "linear-gradient(135deg, #fff5f1 0%, #fffbf8 100%)"
+                    : "linear-gradient(135deg, #f0f9ff 0%, #f8fcff 100%)",
+                borderBottomColor: isRent
+                    ? "rgba(197,91,0,0.1)"
+                    : "rgba(59,130,246,0.1)",
             }}
         >
             {/* Header */}
-            <div className="flex items-center gap-2 mb-5">
+            <div className="flex items-center gap-3 mb-5">
                 <div
-                    className="w-5 h-5 rounded-md flex items-center justify-center"
-                    style={{ background: isRent ? "#ffcc99" : "#cce0fa" }}
+                    className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: isRent ? "#ffdbcd" : "#dbeafe" }}
                 >
-                    <HeaderIcon className="h-3 w-3" style={{ color: isRent ? "#9e4900" : "#1978E5" }} />
+                    <HeaderIcon className="h-3.5 w-3.5" style={{ color: isRent ? "#d97706" : "#0284c7" }} />
                 </div>
-                <p className="text-[11px] font-bold text-gray-700 tracking-widest uppercase">
-                    Tiến độ đơn hàng #{trackingNumber}
+                <p className="text-xs font-bold text-gray-700 tracking-wider uppercase">
+                    Đơn hàng #{trackingNumber}
                 </p>
                 <span
-                    className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full"
                     style={isRent
-                        ? { background: "#ffcc99", color: "#6b3000" }
-                        : { background: "#cce0fa", color: "#0e3d7a" }
+                        ? { background: "#fed7aa", color: "#92400e" }
+                        : { background: "#bfdbfe", color: "#0c4a6e" }
                     }
                 >
                     {isRent ? "THUÊ" : "MUA"}
@@ -235,27 +235,27 @@ function OrderTimeline({
             </div>
 
             {/* Stages */}
-            <div className="flex items-start relative">
+            <div className="flex items-start relative px-2">
                 {stages.map((stage, idx) => {
                     const isCompleted = idx < currentIdx;
-                    const isCurrent   = idx === currentIdx;
-                    const isUpcoming  = idx > currentIdx;
-                    const StageIcon   = stage.icon;
-                    const activeColor = isRent ? "#C55B00" : "#1978E5";
-                    const ringClass   = isRent ? "ring-[#ffcc99]" : "ring-[#cce0fa]";
-                    const textActive  = isRent ? "text-[#C55B00]" : "text-[#1978E5]";
+                    const isCurrent = idx === currentIdx;
+                    const isUpcoming = idx > currentIdx;
+                    const StageIcon = stage.icon;
+                    const activeColor = isRent ? "#d97706" : "#0284c7";
+                    const ringClass = isRent ? "ring-[#fed7aa]" : "ring-[#bfdbfe]";
+                    const textActive = isRent ? "text-[#d97706]" : "text-[#0284c7]";
 
                     return (
                         <div key={stage.key} className="flex-1 flex flex-col items-center relative">
                             {/* Connector line */}
                             {idx < stages.length - 1 && (
                                 <div
-                                    className="absolute h-0.5 transition-all duration-700"
+                                    className="absolute h-1 transition-all duration-700"
                                     style={{
-                                        top: "18px",
+                                        top: "20px",
                                         left: "50%",
                                         width: "100%",
-                                        background: isCompleted ? activeColor : "#e2e8f0",
+                                        background: isCompleted ? activeColor : "#e5e7eb",
                                         zIndex: 0,
                                     }}
                                 />
@@ -263,28 +263,26 @@ function OrderTimeline({
 
                             {/* Circle */}
                             <div
-                                className={`relative z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
-                                    isCurrent ? `ring-4 ${ringClass} scale-110` : ""
-                                }`}
+                                className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 font-semibold ${isCurrent ? `ring-4 ${ringClass} scale-110` : ""
+                                    }`}
                                 style={{
                                     background: isUpcoming
-                                        ? "#e9ecef"
+                                        ? "#f3f4f6"
                                         : isCompleted
-                                        ? activeColor
-                                        : `linear-gradient(135deg, ${activeColor}, ${activeColor}cc)`,
-                                    boxShadow: !isUpcoming ? `0 4px 12px ${activeColor}55` : "none",
+                                            ? activeColor
+                                            : `linear-gradient(135deg, ${activeColor}, ${activeColor}dd)`,
+                                    boxShadow: !isUpcoming ? `0 4px 12px ${activeColor}40` : "none",
                                 }}
                             >
                                 {isCompleted ? (
-                                    <CheckCircle className="h-4 w-4 text-white" />
+                                    <CheckCircle className="h-5 w-5 text-white" />
                                 ) : (
-                                    <StageIcon className={`h-4 w-4 ${isUpcoming ? "text-gray-400" : "text-white"}`} />
+                                    <StageIcon className={`h-4 w-4 ${isUpcoming ? "text-gray-300" : "text-white"}`} />
                                 )}
                             </div>
 
-                            <p className={`text-[10px] mt-2 text-center font-bold tracking-wide transition-colors ${
-                                isUpcoming ? "text-gray-300" : textActive
-                            }`}>
+                            <p className={`text-xs mt-2.5 text-center font-bold tracking-wide transition-colors ${isUpcoming ? "text-gray-300" : textActive
+                                }`}>
                                 {stage.label}
                             </p>
                         </div>
@@ -299,11 +297,11 @@ function OrderTimeline({
 function OrderCard({ order }: { order: Order }) {
     return (
         <div
-            className="rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-lg"
+            className="rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.01]"
             style={{
-                background: "#ffffff",
-                border: "1px solid #f0f2f5",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+                background: "#fff",
+                border: "1px solid #e8ecf1",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
             }}
         >
             <OrderTimeline
@@ -313,48 +311,50 @@ function OrderCard({ order }: { order: Order }) {
             />
 
             {/* Items */}
-            <div className="px-6 space-y-4 pb-2">
+            <div className="px-6 space-y-5 py-4">
                 {order.items.map((item, idx) => {
                     const isRent = item.type === "rent";
                     return (
-                        <div key={idx} className="flex gap-4">
+                        <div key={idx} className="flex gap-5 group">
                             <BookCover title={item.title} image={item.image} type={item.type} />
 
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 flex flex-col justify-between">
                                 {/* Badge */}
-                                <span
-                                    className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full mb-2"
-                                    style={
-                                        isRent
-                                            ? { background: "#fff3e0", color: "#e65100" }
-                                            : { background: "#e8f5e9", color: "#2e7d32" }
-                                    }
-                                >
-                                    {isRent ? "ĐANG THUÊ" : "MUA HÀNG"}
-                                </span>
+                                <div>
+                                    <span
+                                        className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full mb-2"
+                                        style={
+                                            isRent
+                                                ? { background: "#fff3e0", color: "#e65100" }
+                                                : { background: "#e8f5e9", color: "#2e7d32" }
+                                        }
+                                    >
+                                        {isRent ? "ĐANG THUÊ" : "MUA HÀNG"}
+                                    </span>
 
-                                <h4 className="font-bold text-gray-900 text-[15px] leading-snug mb-0.5">
-                                    {item.title}
-                                </h4>
-                                <p className="text-sm text-gray-500 mb-3">
-                                    {isRent ? "Người cho thuê:" : "Người bán:"}{" "}
-                                    <span className="text-[#1978E5] font-medium">{item.author}</span>
-                                </p>
+                                    <h4 className="font-bold text-gray-900 text-base leading-tight mb-1 line-clamp-2">
+                                        {item.title}
+                                    </h4>
+                                    <p className="text-sm text-gray-500 mb-4">
+                                        {isRent ? "Người cho thuê:" : "Người bán:"}{" "}
+                                        <span className="text-[#1978E5] font-semibold">{item.author}</span>
+                                    </p>
+                                </div>
 
                                 {/* Actions + Price row */}
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <button className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[13px] font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors">
+                                    <button className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors duration-200">
                                         <MessageSquare className="h-3.5 w-3.5" />
                                         Nhắn tin
                                     </button>
                                     <button
-                                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[13px] font-semibold text-white transition-all hover:opacity-90"
+                                        className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[12px] font-semibold text-white transition-all duration-200 hover:shadow-md active:scale-95"
                                         style={{ background: "linear-gradient(135deg, #1978E5, #1461bc)" }}
                                     >
                                         Xác nhận đã nhận
                                     </button>
                                     {isRent && (
-                                        <button className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[13px] font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors">
+                                        <button className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[12px] font-semibold text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors duration-200">
                                             <RefreshCw className="h-3.5 w-3.5" />
                                             Gia hạn
                                         </button>
@@ -363,13 +363,13 @@ function OrderCard({ order }: { order: Order }) {
                             </div>
 
                             {/* Price block */}
-                            <div className="shrink-0 text-right flex flex-col items-end justify-start gap-1">
+                            <div className="shrink-0 text-right flex flex-col items-end justify-start gap-1.5">
                                 {item.urgencyText && (
-                                    <span className="text-[10px] font-bold text-gray-400 tracking-wider">
+                                    <span className="text-[10px] font-bold text-gray-600 tracking-wider">
                                         {item.urgencyText}
                                     </span>
                                 )}
-                                <p className="text-xl font-extrabold text-red-500">{item.priceLabel}</p>
+                                <p className="text-xl font-extrabold text-gray-700">{item.priceLabel}</p>
                                 {!item.urgencyText && (
                                     <span className="text-[10px] text-gray-400 font-semibold uppercase">Giá trị</span>
                                 )}
@@ -380,16 +380,17 @@ function OrderCard({ order }: { order: Order }) {
             </div>
 
             {/* Divider */}
-            <div className="mx-6 mt-4 border-t border-gray-100" />
+            <div className="mx-6 border-t border-gray-100" />
 
             {/* Footer */}
-            <div className="px-6 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                    <Clock className="h-3.5 w-3.5" />
-                    Dự kiến giao: <span className="font-semibold text-gray-600 ml-1">{order.estimatedDelivery}</span>
+            <div className="px-6 py-4 flex items-center justify-between bg-gray-50/50">
+                <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                    <Clock className="h-3.5 w-3.5 text-gray-400" />
+                    <span className="text-gray-500">Dự kiến giao:</span>
+                    <span className="font-semibold text-gray-800">{order.estimatedDelivery}</span>
                 </div>
-                <p className="text-sm text-gray-400">
-                    Tổng: <span className="font-extrabold text-gray-800 text-base ml-1">{order.totalPrice.toLocaleString("vi-VN")} VNĐ</span>
+                <p className="text-sm text-gray-600">
+                    Tổng: <span className="font-extrabold text-gray-900 text-base ml-1">{order.totalPrice.toLocaleString("vi-VN")} VNĐ</span>
                 </p>
             </div>
         </div>
@@ -441,11 +442,10 @@ export default function OrdersPage() {
                                     <button
                                         key={tab.key}
                                         onClick={() => setActiveTab(tab.key as "orders" | "sales")}
-                                        className={`flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                                            activeTab === tab.key
+                                        className={`flex items-center gap-1.5 px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${activeTab === tab.key
                                                 ? "text-white shadow-sm"
                                                 : "text-gray-500 hover:text-gray-700"
-                                        }`}
+                                            }`}
                                         style={activeTab === tab.key ? { background: "#1978E5" } : {}}
                                     >
                                         <tab.icon className="h-3.5 w-3.5" />
