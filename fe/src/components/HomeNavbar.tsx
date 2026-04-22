@@ -38,7 +38,7 @@ export default function HomeNavbar() {
                                     <Link href="/post-product" className="text-sm font-medium text-gray-700 hover:text-blue-600">
                                         Đăng bán
                                     </Link>
-                                    <Link href="#" className="text-sm font-medium text-gray-700 hover:text-blue-600">
+                                    <Link href="/orders" className="text-sm font-medium text-gray-700 hover:text-blue-600">
                                         Theo dõi đơn hàng
                                     </Link>
                                 </>
@@ -53,7 +53,7 @@ export default function HomeNavbar() {
                                     <Link href="/post-product" className="text-sm font-medium text-gray-700 hover:text-blue-600">
                                         Đăng bán
                                     </Link>
-                                    <Link href="#" className="text-sm font-medium text-gray-700 hover:text-blue-600">
+                                    <Link href="/orders" className="text-sm font-medium text-gray-700 hover:text-blue-600">
                                         Theo dõi đơn hàng
                                     </Link>
                                 </>
