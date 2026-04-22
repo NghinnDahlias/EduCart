@@ -85,9 +85,9 @@ export default function HomeNavbar() {
                             </Link>
                         ) : (
                             <div className="flex items-center gap-2">
-                                <button className="rounded-lg p-2 hover:bg-gray-100">
+                                <Link href="/profile" className="rounded-lg p-2 hover:bg-gray-100">
                                     <User className="h-5 w-5 text-gray-700" />
-                                </button>
+                                </Link>
                                 <button
                                     onClick={handleLogOut}
                                     className="rounded-lg p-2 hover:bg-gray-100"
