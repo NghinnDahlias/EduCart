@@ -5,12 +5,12 @@ import { Download, Shield, Users, Calendar } from "lucide-react";
 
 export default function HomeHeroSection() {
     return (
-        <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-purple-50 to-blue-50 py-16">
+        <section className="relative overflow-hidden bg-linear-to-br from-blue-50 via-orange-50 to-blue-50 py-16">
             {/* 3D Blur Background Effect */}
             <div className="absolute inset-0 backdrop-blur-3xl opacity-40">
                 <div className="absolute -top-40 -left-40 h-80 w-80 rounded-full bg-blue-400 mix-blend-multiply filter blur-3xl" />
-                <div className="absolute -bottom-40 -right-40 h-80 w-80 rounded-full bg-purple-400 mix-blend-multiply filter blur-3xl" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-pink-300 mix-blend-multiply filter blur-3xl" />
+                <div className="absolute -bottom-40 -right-40 h-80 w-80 rounded-full bg-orange-400 mix-blend-multiply filter blur-3xl" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-orange-200 mix-blend-multiply filter blur-3xl" />
             </div>
 
             {/* Content Layer */}
@@ -24,8 +24,8 @@ export default function HomeHeroSection() {
                             transition={{ duration: 0.6 }}
                             className="flex flex-col justify-center"
                         >
-                            <div className="mb-4 inline-flex w-fit items-center gap-2 rounded-full bg-blue-100 px-4 py-2">
-                                <span className="text-sm font-semibold uppercase text-blue-600">
+                            <div className="mb-4 inline-flex w-fit items-center gap-2 rounded-full bg-orange-100 px-4 py-2">
+                                <span className="text-sm font-semibold uppercase text-orange-700">
                                     Tri thức cũ, hành trình mới
                                 </span>
                             </div>
@@ -33,11 +33,11 @@ export default function HomeHeroSection() {
                             <h1 className="text-4xl font-bold leading-tight text-gray-900 sm:text-5xl">
                                 EduCart
                                 <br />
-                                <span className="text-blue-600">Sách cũ, giá tốt</span>
+                                <span className="text-blue-600">Tiếp nối tri thức, Tiết kiệm hành trang</span>
                             </h1>
 
                             <p className="mt-6 max-w-lg text-base text-gray-700">
-                                Mua sách và cho thuê giáo trình chuyên ngành từ cộng đồng sinh viên. Tiết kiệm chi phí, kết nối trí thức.
+                                Nền tảng mua bán và cho thuê giáo trình chuyên ngành dành riêng cho cộng đồng sinh viên. Tiết kiệm tới 70% chi phí học tập và kết nối cùng bạn bè cùng chí hướng.
                             </p>
 
                             {/* CTA Buttons */}
@@ -48,7 +48,7 @@ export default function HomeHeroSection() {
                                 </button>
                                 <button className="inline-flex items-center gap-2 rounded-lg border-2 border-gray-300 px-6 py-3 font-semibold text-gray-700 hover:border-gray-400 transition">
                                     <Calendar className="h-5 w-5" />
-                                    THUÊ THEO HỌC KỲ
+                                    THUÊ SÁCH NGAY
                                 </button>
                             </div>
                         </motion.div>
@@ -86,7 +86,7 @@ export default function HomeHeroSection() {
                                 </div>
                                 <h3 className="font-bold text-gray-900">MUA BÁN & THUÊ GIÁO TRÌNH</h3>
                                 <p className="mt-2 text-sm text-gray-600">
-                                    Nền tảng kết nối các phân bán và cho thuê giáo trình ở giá tốt nhất cho sinh viên.
+                                    Tìm thấy mọi cuốn giáo trình "hiếm" từ các anh chị khóa trên với mức giá cực rẻ và đa dạng hình thức: Mua đứt để làm kỷ niệm hoặc thuê theo kỳ để tiết kiệm túi tiền
                                 </p>
                             </div>
 
@@ -95,9 +95,9 @@ export default function HomeHeroSection() {
                                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
                                     <Shield className="h-6 w-6 text-blue-600" />
                                 </div>
-                                <h3 className="font-bold text-gray-900">AN TẤM VỚI ESCROW</h3>
+                                <h3 className="font-bold text-gray-900">HƯỚNG ĐẾN SINH VIÊN</h3>
                                 <p className="mt-2 text-sm text-gray-600">
-                                    Hệ thống ghi chép giao dịch bảo đảm tất cả các nguyên tắc. Chúng tôi giúp bạn kiểm soát an toàn mọi lần giao dịch.
+                                    Nền tảng xây dựng bởi sinh viên, cho sinh viên, giúp kết nối bạn bè cùng ngành, cùng trường để chia sẻ tài liệu và kinh nghiệm học tập hiệu quả
                                 </p>
                             </div>
 

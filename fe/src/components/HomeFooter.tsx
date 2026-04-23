@@ -12,7 +12,7 @@ export default function HomeFooter() {
                     <div>
                         <h3 className="text-xl font-bold text-white">EduCart</h3>
                         <p className="mt-4 text-sm">
-                            Xây dựng hệ sinh thái tư thác bền vững cho sinh viên Việt Nam qua việc tái sử dụng giáo trình và tài liệu học tập.
+                            Tiên phong xây dựng hệ sinh thái tri thức bền vững cho sinh viên Việt Nam qua giải pháp tái sử dụng giáo trình. Chúng tôi kết nối giá trị cũ để mở ra những hành trình mới, giúp tối ưu chi phí và lan tỏa văn hóa đọc trong cộng đồng học thuật
                         </p>
                         <div className="mt-4 flex gap-3">
                             <button className="rounded-lg p-2 hover:bg-gray-800">
@@ -30,7 +30,7 @@ export default function HomeFooter() {
                         <ul className="mt-4 space-y-2 text-sm">
                             <li>
                                 <Link href="#" className="hover:text-white">
-                                    Hướng dẫn mua hàng
+                                    Hướng dẫn giao dịch
                                 </Link>
                             </li>
                             <li>
@@ -40,12 +40,12 @@ export default function HomeFooter() {
                             </li>
                             <li>
                                 <Link href="#" className="hover:text-white">
-                                    Kiểm định chất lượng
+                                    Quy chuẩn kiểm định chất lượng
                                 </Link>
                             </li>
                             <li>
                                 <Link href="#" className="hover:text-white">
-                                    Tuyên công tác viên
+                                    Trung tâm trợ giúp và khiếu nại
                                 </Link>
                             </li>
                         </ul>
@@ -53,27 +53,27 @@ export default function HomeFooter() {
 
                     {/* Support Links */}
                     <div>
-                        <h4 className="font-semibold text-white">HỖ TRỢ</h4>
+                        <h4 className="font-semibold text-white">THÔNG TIN LIÊN HỆ</h4>
                         <ul className="mt-4 space-y-2 text-sm">
                             <li>
-                                <Link href="#" className="hover:text-white">
-                                    Trung tâm trợ giúp
-                                </Link>
+                                <button className="text-white text-left">
+                                    Địa điểm: Trường ĐH Bách khoa - ĐHQG-HCM, cơ sở 2
+                                </button>
                             </li>
                             <li>
-                                <Link href="#" className="hover:text-white">
-                                    Báo cáo vi phạm
-                                </Link>
+                                <button className="text-white text-left">
+                                    Email: contact.educart@gmail.com
+                                </button>
                             </li>
                             <li>
-                                <Link href="#" className="hover:text-white">
-                                    Khiếu nại / Hoàn tiền
-                                </Link>
+                                <button className="text-white text-left">
+                                    Số điện thoại: 0329 123 456
+                                </button>
                             </li>
                             <li>
-                                <Link href="#" className="hover:text-white">
-                                    Liên hệ Campus
-                                </Link>
+                                <button className="text-white text-left">
+                                    Facebook: facebook.com/EduCart.HCMUT
+                                </button>
                             </li>
                         </ul>
                     </div>

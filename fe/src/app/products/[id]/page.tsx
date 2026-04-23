@@ -21,9 +21,9 @@ const products: Record<number, any> = {
         tag: "BÁN",
         category: "CALCULUS",
         images: [
-            "https://images.unsplash.com/photo-1543002588-d4d1a5007b53?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9781285741550-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780538497817-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780495011668-L.jpg",
         ],
         description: "Một cuốn sách giáo khoa toán học chuyên sâu về Giải tích. Phù hợp cho sinh viên năm 1 và những người muốn nắm vững nền tảng Giải tích. Cuốn sách được viết một cách rõ ràng và dễ hiểu, kèm theo nhiều bài tập thực hành.",
         specifications: {
@@ -50,9 +50,9 @@ const products: Record<number, any> = {
         tag: "THUÊ",
         category: "ECONOMICS",
         images: [
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1543002588-d4d1a5007b53?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9781305585126-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9781285165875-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9781337613040-L.jpg",
         ],
         description: "Giáo trình kinh tế học nền tảng được dạy tại hàng trăm đại học trên thế giới. Dễ hiểu, bổ ích và cập nhật với các tình huống kinh tế hiện tại.",
         specifications: {
@@ -79,9 +79,9 @@ const products: Record<number, any> = {
         tag: "BÁN",
         category: "CHEMISTRY",
         images: [
-            "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1543002588-d4d1a5007b53?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9780321809247-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780134874371-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780321706461-L.jpg",
         ],
         description: "Sách hóa học tương tác với phương pháp tiếp cận từ phân tử. Giải thích các khái niệm hóa học phức tạp một cách đơn giản. Phù hợp cho sinh viên ngành khoa học tự nhiên.",
         specifications: {
@@ -108,9 +108,9 @@ const products: Record<number, any> = {
         tag: "THUÊ",
         category: "PHILOSOPHY",
         images: [
-            "https://images.unsplash.com/photo-1495446815901-a7297e60bbb6?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1543002588-d4d1a5007b53?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9780717804405-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780717800377-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780717805167-L.jpg",
         ],
         description: "Giáo trình triết học dành cho sinh viên các ngành xã hội. Cung cấp kiến thức cơ bản về chủ nghĩa Mác - Lênin và các lý thuyết triết học.",
         specifications: {
@@ -137,9 +137,9 @@ const products: Record<number, any> = {
         tag: "BÁN",
         category: "COMPUTER SCIENCE",
         images: [
-            "https://images.unsplash.com/photo-1516979187457-635ffe35ff04?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9780262033848-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780262046305-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780262531962-L.jpg",
         ],
         description: "Cuốn sách cơ bản về thuật toán được sử dụng trong hầu hết các trường đại học. Cung cấp kiến thức toàn diện về các thuật toán và cấu trúc dữ liệu.",
         specifications: {
@@ -166,9 +166,9 @@ const products: Record<number, any> = {
         tag: "BÁN",
         category: "PHYSICS",
         images: [
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1543002588-d4d1a5007b53?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1516979187457-635ffe35ff04?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9781305952195-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9781337553292-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9781285737027-L.jpg",
         ],
         description: "Giáo trình vật lý đại cương dành cho sinh viên năm thứ nhất. Bao gồm các khái niệm cơ bản về cơ học, động lực học và năng lượng.",
         specifications: {
@@ -195,9 +195,9 @@ const products: Record<number, any> = {
         tag: "BÁN",
         category: "MATHEMATICS",
         images: [
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1516979187457-635ffe35ff04?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1543002588-d4d1a5007b53?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9780321982384-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780136871583-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780201709704-L.jpg",
         ],
         description: "Sách đại số tuyến tính với ứng dụng thực tế. Dạy các khái niệm vector, ma trận, eigenvalues và các ứng dụng trong khoa học máy tính.",
         specifications: {
@@ -224,9 +224,9 @@ const products: Record<number, any> = {
         tag: "BÁN",
         category: "BIOLOGY",
         images: [
-            "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1516979187457-635ffe35ff04?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9780321762436-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780321948472-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780805368444-L.jpg",
         ],
         description: "Sách sinh học phân tử nổi tiếng thế giới. Giải thích cấu trúc và chức năng của các phân tử sinh học, DNA, protein và các quá trình sống.",
         specifications: {
@@ -253,9 +253,9 @@ const products: Record<number, any> = {
         tag: "THUÊ",
         category: "LANGUAGE",
         images: [
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1543002588-d4d1a5007b53?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1495446815901-a7297e60bbb6?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9780194579858-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780194373562-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780194366090-L.jpg",
         ],
         description: "Giáo trình tiếng Anh giao tiếp cho người mới bắt đầu. Dạy phát âm, từ vựng, ngữ pháp cơ bản và kỹ năng giao tiếp hàng ngày.",
         specifications: {
@@ -282,9 +282,9 @@ const products: Record<number, any> = {
         tag: "BÁN",
         category: "HISTORY",
         images: [
-            "https://images.unsplash.com/photo-1495446815901-a7297e60bbb6?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1543002588-d4d1a5007b53?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9780313341960-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780801428388-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780813027722-L.jpg",
         ],
         description: "Tác phẩm lịch sử kinh điển về Việt Nam thời kỳ hiện đại. Cung cấp cái nhìn sâu sắc về các giai đoạn lịch sử quan trọng của đất nước.",
         specifications: {
@@ -311,9 +311,9 @@ const products: Record<number, any> = {
         tag: "BÁN",
         category: "COMPUTER SCIENCE",
         images: [
-            "https://images.unsplash.com/photo-1516979187457-635ffe35ff04?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9781491912058-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9781491910399-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9781491954461-L.jpg",
         ],
         description: "Sách hướng dẫn toàn diện về khoa học dữ liệu sử dụng Python. Bao gồm xử lý dữ liệu, trực quan hóa, machine learning và thống kê.",
         specifications: {
@@ -340,9 +340,9 @@ const products: Record<number, any> = {
         tag: "THUÊ",
         category: "BUSINESS",
         images: [
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1543002588-d4d1a5007b53?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1516979187457-635ffe35ff04?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9780133910292-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780137618521-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780134527604-L.jpg",
         ],
         description: "Giáo trình quản trị kinh doanh toàn diện. Dạy các nguyên lý, quy trình và kỹ năng quản lý doanh nghiệp hiện đại.",
         specifications: {
@@ -369,9 +369,9 @@ const products: Record<number, any> = {
         tag: "BÁN",
         category: "CHEMISTRY",
         images: [
-            "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1516979187457-635ffe35ff04?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9780199270293-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780198503460-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780199270293-M.jpg",
         ],
         description: "Sách hóa học hữu cơ chuyên sâu cho sinh viên cao năm. Bao gồm các cơ chế phản ứng, tổng hợp hữu cơ và các ứng dụng thực tế.",
         specifications: {
@@ -398,9 +398,9 @@ const products: Record<number, any> = {
         tag: "THUÊ",
         category: "PSYCHOLOGY",
         images: [
-            "https://images.unsplash.com/photo-1495446815901-a7297e60bbb6?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1543002588-d4d1a5007b53?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9780395755310-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780395086544-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780618652549-L.jpg",
         ],
         description: "Tác phẩm kinh điển về tâm lý học nhân cách của Carl Rogers. Phân tích các lý thuyết về nhân cách, phát triển và tự nhận thức.",
         specifications: {
@@ -427,9 +427,9 @@ const products: Record<number, any> = {
         tag: "BÁN",
         category: "PHYSICS",
         images: [
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1516979187457-635ffe35ff04?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1543002588-d4d1a5007b53?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9780073398273-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780072938449-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9780077422417-L.jpg",
         ],
         description: "Sách cơ học chất lỏng toàn diện. Dạy các nguyên lý về dòng chảy, động lực học chất lỏng, và các ứng dụng trong kỹ thuật.",
         specifications: {
@@ -456,9 +456,9 @@ const products: Record<number, any> = {
         tag: "BÁN",
         category: "COMPUTER SCIENCE",
         images: [
-            "https://images.unsplash.com/photo-1516979187457-635ffe35ff04?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=600&h=800&fit=crop",
-            "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&h=800&fit=crop",
+            "https://covers.openlibrary.org/b/isbn/9781492051725-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9781491954614-L.jpg",
+            "https://covers.openlibrary.org/b/isbn/9781491931820-L.jpg",
         ],
         description: "Sách hướng dẫn lập trình Web frontend sử dụng React. Bao gồm components, hooks, state management, routing, và best practices.",
         specifications: {

@@ -17,7 +17,8 @@ const allProducts = [
         discount: "-50%",
         tag: "Bán",
         category: "Calculus",
-        image: "https://images.unsplash.com/photo-1543002588-d4d1a5007b53?w=300&h=400&fit=crop",
+        // Calculus: Early Transcendentals by James Stewart — ISBN 9781285741550
+        image: "https://covers.openlibrary.org/b/isbn/9781285741550-L.jpg",
         type: "Sách cùng",
     },
     {
@@ -29,7 +30,8 @@ const allProducts = [
         discount: "",
         tag: "Thuê",
         category: "Economics",
-        image: "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=300&h=400&fit=crop",
+        // Principles of Economics by Mankiw — ISBN 9781305585126
+        image: "https://covers.openlibrary.org/b/isbn/9781305585126-L.jpg",
         type: "E-book",
     },
     {
@@ -41,7 +43,8 @@ const allProducts = [
         discount: "",
         tag: "Bán",
         category: "Chemistry",
-        image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=300&h=400&fit=crop",
+        // Chemistry: A Molecular Approach by Tro — ISBN 9780321809247
+        image: "https://covers.openlibrary.org/b/isbn/9780321809247-L.jpg",
         type: "Sách cùng",
     },
     {
@@ -53,7 +56,8 @@ const allProducts = [
         discount: "-50%",
         tag: "Thuê",
         category: "Philosophy",
-        image: "https://images.unsplash.com/photo-1495446815901-a7297e60bbb6?w=300&h=400&fit=crop",
+        // Karl Marx — Das Kapital / Marxist Philosophy cover via OL subject
+        image: "https://covers.openlibrary.org/b/isbn/9780717804405-L.jpg",
         type: "Lau kit",
     },
     {
@@ -65,7 +69,8 @@ const allProducts = [
         discount: "-37%",
         tag: "Bán",
         category: "Computer Science",
-        image: "https://images.unsplash.com/photo-1516979187457-635ffe35ff04?w=300&h=400&fit=crop",
+        // CLRS Introduction to Algorithms 3rd ed — ISBN 9780262033848
+        image: "https://covers.openlibrary.org/b/isbn/9780262033848-L.jpg",
         type: "E-book",
     },
     {
@@ -77,7 +82,8 @@ const allProducts = [
         discount: "",
         tag: "Bán",
         category: "Physics",
-        image: "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=300&h=400&fit=crop",
+        // University Physics — Serway — ISBN 9781305952195
+        image: "https://covers.openlibrary.org/b/isbn/9781305952195-L.jpg",
         type: "Sách cùng",
     },
     {
@@ -89,7 +95,8 @@ const allProducts = [
         discount: "-33%",
         tag: "Bán",
         category: "Mathematics",
-        image: "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=300&h=400&fit=crop",
+        // Linear Algebra and Its Applications by Lay — ISBN 9780321982384
+        image: "https://covers.openlibrary.org/b/isbn/9780321982384-L.jpg",
         type: "Sách cùng",
     },
     {
@@ -101,7 +108,8 @@ const allProducts = [
         discount: "",
         tag: "Bán",
         category: "Biology",
-        image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=300&h=400&fit=crop",
+        // Molecular Biology of the Gene by Watson — ISBN 9780321762436
+        image: "https://covers.openlibrary.org/b/isbn/9780321762436-L.jpg",
         type: "E-book",
     },
     {
@@ -113,7 +121,8 @@ const allProducts = [
         discount: "-43%",
         tag: "Thuê",
         category: "Language",
-        image: "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=300&h=400&fit=crop",
+        // Oxford Practice Grammar — ISBN 9780194579858
+        image: "https://covers.openlibrary.org/b/isbn/9780194579858-L.jpg",
         type: "Sách cùng",
     },
     {
@@ -125,7 +134,8 @@ const allProducts = [
         discount: "",
         tag: "Bán",
         category: "History",
-        image: "https://images.unsplash.com/photo-1495446815901-a7297e60bbb6?w=300&h=400&fit=crop",
+        // The History of Vietnam — ISBN 9780313341960
+        image: "https://covers.openlibrary.org/b/isbn/9780313341960-L.jpg",
         type: "Sách cùng",
     },
     {
@@ -137,7 +147,8 @@ const allProducts = [
         discount: "-40%",
         tag: "Bán",
         category: "Computer Science",
-        image: "https://images.unsplash.com/photo-1516979187457-635ffe35ff04?w=300&h=400&fit=crop",
+        // Python Data Science Handbook by VanderPlas — ISBN 9781491912058
+        image: "https://covers.openlibrary.org/b/isbn/9781491912058-L.jpg",
         type: "E-book",
     },
     {
@@ -149,7 +160,8 @@ const allProducts = [
         discount: "",
         tag: "Thuê",
         category: "Business",
-        image: "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=300&h=400&fit=crop",
+        // Management by Robbins & Coulter — ISBN 9780133910292
+        image: "https://covers.openlibrary.org/b/isbn/9780133910292-L.jpg",
         type: "Sách cùng",
     },
     {
@@ -161,7 +173,8 @@ const allProducts = [
         discount: "-37%",
         tag: "Bán",
         category: "Chemistry",
-        image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=300&h=400&fit=crop",
+        // Organic Chemistry by Clayden — ISBN 9780199270293
+        image: "https://covers.openlibrary.org/b/isbn/9780199270293-L.jpg",
         type: "E-book",
     },
     {
@@ -173,7 +186,8 @@ const allProducts = [
         discount: "-40%",
         tag: "Thuê",
         category: "Psychology",
-        image: "https://images.unsplash.com/photo-1495446815901-a7297e60bbb6?w=300&h=400&fit=crop",
+        // On Becoming a Person by Carl Rogers — ISBN 9780395755310
+        image: "https://covers.openlibrary.org/b/isbn/9780395755310-L.jpg",
         type: "Sách cùng",
     },
     {
@@ -185,7 +199,8 @@ const allProducts = [
         discount: "",
         tag: "Bán",
         category: "Physics",
-        image: "https://images.unsplash.com/photo-1507842217343-583684b2dd83?w=300&h=400&fit=crop",
+        // Fluid Mechanics by Frank White — ISBN 9780073398273
+        image: "https://covers.openlibrary.org/b/isbn/9780073398273-L.jpg",
         type: "Sách cùng",
     },
     {
@@ -197,7 +212,8 @@ const allProducts = [
         discount: "-38%",
         tag: "Bán",
         category: "Computer Science",
-        image: "https://images.unsplash.com/photo-1516979187457-635ffe35ff04?w=300&h=400&fit=crop",
+        // Learning React by Alex Banks & Eve Porcello — ISBN 9781492051725
+        image: "https://covers.openlibrary.org/b/isbn/9781492051725-L.jpg",
         type: "E-book",
     },
 ];
@@ -380,6 +396,17 @@ export default function ProductsPage() {
                                                     src={product.image}
                                                     alt={product.title}
                                                     className="h-full w-full object-cover group-hover:scale-110 transition"
+                                                    onError={(e) => {
+                                                        const target = e.currentTarget;
+                                                        target.style.display = "none";
+                                                        const parent = target.parentElement;
+                                                        if (parent && !parent.querySelector(".cover-fallback")) {
+                                                            const fallback = document.createElement("div");
+                                                            fallback.className = "cover-fallback h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200";
+                                                            fallback.innerHTML = `<span style="font-size:2.5rem;font-weight:700;color:#3b5bdb;opacity:0.5;">${product.title.charAt(0)}</span>`;
+                                                            parent.appendChild(fallback);
+                                                        }
+                                                    }}
                                                 />
 
                                                 {/* Tag */}

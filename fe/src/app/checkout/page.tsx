@@ -171,10 +171,10 @@ export default function CheckoutPage() {
 
                             <div className="mt-6 flex items-center gap-2 text-blue-600">
                                 <ShieldCheck className="h-4 w-4 shrink-0" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Thanh toán bảo mật 256-bit</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider">Thanh toán bảo mật cùng EduCart</span>
                             </div>
                             <p className="text-[10px] text-gray-400 leading-relaxed mt-2">
-                                Dữ liệu của bạn được mã hóa hoàn toàn. Chúng tôi không bao giờ lưu trữ thông tin thẻ.
+                                Dữ liệu của bạn được mã hóa hoàn toàn. Chúng tôi không bao giờ lưu trữ thông tin cá nhân của bạn.
                             </p>
                         </div>
                     </div>
