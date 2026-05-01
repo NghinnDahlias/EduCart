@@ -1,9 +1,25 @@
 const sql = require('mssql');
 
+// const sqlConfig = {
+//   user: process.env.DB_USER,
+//   password: process.env.DB_PASSWORD,
+//   server: process.env.DB_SERVER,
+//   database: process.env.DB_NAME,
+//   pool: {
+//     max: 10,
+//     min: 0,
+//     idleTimeoutMillis: 30000,
+//   },
+//   options: {
+//     encrypt: true,
+//     trustServerCertificate: true,
+//     enableArithAbort: true,
+//   },
+// };
 const sqlConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  server: process.env.DB_SERVER,
+  server: 'localhost\\SQLEXPRESS',  // ⭐ gộp instance vào server
   database: process.env.DB_NAME,
   pool: {
     max: 10,
@@ -11,9 +27,9 @@ const sqlConfig = {
     idleTimeoutMillis: 30000,
   },
   options: {
-    encrypt: true,
+    // instanceName: 'SQLEXPRESS',  // ⭐ bỏ dòng này đi
+    encrypt: false,
     trustServerCertificate: true,
-    enableArithAbort: true,
   },
 };
 

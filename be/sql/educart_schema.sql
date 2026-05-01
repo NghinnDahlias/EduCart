@@ -5,34 +5,40 @@
 --              DeliveryMethods · Orders · Shipments · OrderItems
 --   Interact : Messages · Reviews · Reports
 --   Forum    : Posts · Comments · PostVotes
---   Gamif.   : UserLevels · XpEvents
---   Revenue  : CoinWallets · CoinTransactions · PaymentTransactions
---              Advertisements · AdImpressions · Referrals
---              LoginStreaks · CommissionConfigs · OrderFees
 -- ============================================================
+CREATE DATABASE EduCart;
 
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
 GO
 
 -- ── Drop theo thứ tự phụ thuộc ────────────────────────────────
-IF OBJECT_ID('dbo.OrderFees',          'U') IS NOT NULL DROP TABLE dbo.OrderFees;
-IF OBJECT_ID('dbo.CoinWallets',        'U') IS NOT NULL DROP TABLE dbo.CoinWallets;
-IF OBJECT_ID('dbo.Reviews',            'U') IS NOT NULL DROP TABLE dbo.Reviews;
-IF OBJECT_ID('dbo.Messages',           'U') IS NOT NULL DROP TABLE dbo.Messages;
-IF OBJECT_ID('dbo.OrderFees',          'U') IS NOT NULL DROP TABLE dbo.OrderFees;
-IF OBJECT_ID('dbo.Shipments',          'U') IS NOT NULL DROP TABLE dbo.Shipments;
-IF OBJECT_ID('dbo.OrderItems',         'U') IS NOT NULL DROP TABLE dbo.OrderItems;
-IF OBJECT_ID('dbo.Orders',             'U') IS NOT NULL DROP TABLE dbo.Orders;
-IF OBJECT_ID('dbo.DeliveryMethods',    'U') IS NOT NULL DROP TABLE dbo.DeliveryMethods;
-IF OBJECT_ID('dbo.CartItems',          'U') IS NOT NULL DROP TABLE dbo.CartItems;
-IF OBJECT_ID('dbo.ProductImages',      'U') IS NOT NULL DROP TABLE dbo.ProductImages;
-IF OBJECT_ID('dbo.Products',           'U') IS NOT NULL DROP TABLE dbo.Products;
-IF OBJECT_ID('dbo.UserUniversity',     'U') IS NOT NULL DROP TABLE dbo.UserUniversity;
-IF OBJECT_ID('dbo.Users',              'U') IS NOT NULL DROP TABLE dbo.Users;
-IF OBJECT_ID('dbo.Subjects',           'U') IS NOT NULL DROP TABLE dbo.Subjects;
-IF OBJECT_ID('dbo.Faculties',          'U') IS NOT NULL DROP TABLE dbo.Faculties;
-IF OBJECT_ID('dbo.Universities',       'U') IS NOT NULL DROP TABLE dbo.Universities;
+-- Bảng từ schema cũ (chưa có trong v7)
+IF OBJECT_ID('dbo.LoginStreaks',        'U') IS NOT NULL DROP TABLE dbo.LoginStreaks;
+IF OBJECT_ID('dbo.Referrals',           'U') IS NOT NULL DROP TABLE dbo.Referrals;
+
+-- Bảng v7
+IF OBJECT_ID('dbo.OrderFees',           'U') IS NOT NULL DROP TABLE dbo.OrderFees;
+IF OBJECT_ID('dbo.CommissionConfigs',   'U') IS NOT NULL DROP TABLE dbo.CommissionConfigs;
+IF OBJECT_ID('dbo.PaymentTransactions', 'U') IS NOT NULL DROP TABLE dbo.PaymentTransactions;
+IF OBJECT_ID('dbo.CoinTransactions',    'U') IS NOT NULL DROP TABLE dbo.CoinTransactions;
+IF OBJECT_ID('dbo.CoinWallets',         'U') IS NOT NULL DROP TABLE dbo.CoinWallets;
+IF OBJECT_ID('dbo.AdImpressions',       'U') IS NOT NULL DROP TABLE dbo.AdImpressions;
+IF OBJECT_ID('dbo.Reports',             'U') IS NOT NULL DROP TABLE dbo.Reports;
+IF OBJECT_ID('dbo.Reviews',             'U') IS NOT NULL DROP TABLE dbo.Reviews;
+IF OBJECT_ID('dbo.Messages',            'U') IS NOT NULL DROP TABLE dbo.Messages;
+IF OBJECT_ID('dbo.OrderItems',          'U') IS NOT NULL DROP TABLE dbo.OrderItems;
+IF OBJECT_ID('dbo.Shipments',           'U') IS NOT NULL DROP TABLE dbo.Shipments;
+IF OBJECT_ID('dbo.Orders',              'U') IS NOT NULL DROP TABLE dbo.Orders;
+IF OBJECT_ID('dbo.DeliveryMethods',     'U') IS NOT NULL DROP TABLE dbo.DeliveryMethods;
+IF OBJECT_ID('dbo.CartItems',           'U') IS NOT NULL DROP TABLE dbo.CartItems;
+IF OBJECT_ID('dbo.ProductImages',       'U') IS NOT NULL DROP TABLE dbo.ProductImages;
+IF OBJECT_ID('dbo.Products',            'U') IS NOT NULL DROP TABLE dbo.Products;
+IF OBJECT_ID('dbo.UserUniversity',      'U') IS NOT NULL DROP TABLE dbo.UserUniversity;
+IF OBJECT_ID('dbo.Users',               'U') IS NOT NULL DROP TABLE dbo.Users;
+IF OBJECT_ID('dbo.Subjects',            'U') IS NOT NULL DROP TABLE dbo.Subjects;
+IF OBJECT_ID('dbo.Faculties',           'U') IS NOT NULL DROP TABLE dbo.Faculties;
+IF OBJECT_ID('dbo.Universities',        'U') IS NOT NULL DROP TABLE dbo.Universities;
 GO
 
 
@@ -365,6 +371,19 @@ CREATE TABLE dbo.Reports (
     CONSTRAINT FK_Rep_Reported FOREIGN KEY (ReportedID) REFERENCES dbo.Users(UserID),
     CONSTRAINT CK_Rep_Status   CHECK (Status IN ('Pending','Resolved','Dismissed')),
     CONSTRAINT CK_Rep_NotSelf  CHECK (ReporterID <> ReportedID)
+);
+GO
+
+
+-- ============================================================
+-- 16. ADIMPRESSIONS  (tracking quảng cáo xem)
+-- ============================================================
+CREATE TABLE dbo.AdImpressions (
+    ImpressionID INT      IDENTITY(1,1) PRIMARY KEY,
+    AdID         INT      NOT NULL,
+    UserID       INT      NOT NULL,
+    ViewedAt     DATETIME NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_AI_User FOREIGN KEY (UserID) REFERENCES dbo.Users(UserID)
 );
 GO
 
