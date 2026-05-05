@@ -292,61 +292,54 @@ const products = [
 ];
 const ITEMS_PER_PAGE = 15;
 export default function ProductsPage() {
-    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 // TEMP (user đang chọn)
-const [tempSchool, setTempSchool] = useState("");
-const [tempFaculty, setTempFaculty] = useState("");
-const [tempMajor, setTempMajor] = useState("");
+  const [tempSchool, setTempSchool] = useState("");
+  const [tempFaculty, setTempFaculty] = useState("");
+  const [tempMajor, setTempMajor] = useState("");
 
 // APPLIED (dùng để filter)
-const [selectedSchool, setSelectedSchool] = useState("");
-const [selectedFaculty, setSelectedFaculty] = useState("");
-const [selectedMajor, setSelectedMajor] = useState("");
+  const [selectedSchool, setSelectedSchool] = useState("");
+  const [selectedFaculty, setSelectedFaculty] = useState("");
+  const [selectedMajor, setSelectedMajor] = useState("");
 
-const schools = Object.keys(major_data);
-
-const faculties =
+  const schools = Object.keys(major_data);
+  const faculties =
   tempSchool ? Object.keys(major_data[tempSchool]) : [];
 
-const majors =
+  const majors =
   tempSchool && tempFaculty
-    ? major_data[tempSchool][tempFaculty] || []
-    : [];
-    const [currentPage, setCurrentPage] = useState(1);
+    ? major_data[tempSchool][tempFaculty] || []: [];
+  const [currentPage, setCurrentPage] = useState(1);
   const [favorites, setFavorites] = useState(new Set<number>());
-    const [selectedTypes, setSelectedTypes] = useState<string[]>(["Bán", "Thuê"]);
-    const [minPriceInput, setMinPriceInput] = useState("");
-const [maxPriceInput, setMaxPriceInput] = useState("");
-    const [priceRange, setPriceRange] = useState({ min: 0, max: Infinity });
-const [condition, setCondition] = useState("");
-const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-    const toggleFavorite = (productId: number) => {
-        const newFavorites = new Set(favorites);
-        if (newFavorites.has(productId)) {
-            newFavorites.delete(productId);
-        } else {
-            newFavorites.add(productId);
-        }
-        setFavorites(newFavorites);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(["Bán", "Thuê"]);
+  const [minPriceInput, setMinPriceInput] = useState("");
+  const [maxPriceInput, setMaxPriceInput] = useState("");
+  const [priceRange, setPriceRange] = useState({ min: 0, max: Infinity });
+  const [condition, setCondition] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const toggleFavorite = (productId: number) => {
+  const newFavorites = new Set(favorites);
+    if (newFavorites.has(productId)) {
+      newFavorites.delete(productId);
+    } else {
+      newFavorites.add(productId);
+    }
+      setFavorites(newFavorites);
     };
 
-const filteredProducts = products.filter((p) => {
-const matchSchool =
-  !selectedSchool || p.school === selectedSchool;
-
-const matchFaculty =
-  !selectedFaculty || p.faculty === selectedFaculty;
-
-const matchMajor =
-  !selectedMajor || p.subject === selectedMajor;
+  const filteredProducts = products.filter((p) => {
+  const matchSchool =  !selectedSchool || p.school === selectedSchool;
+  const matchFaculty = !selectedFaculty || p.faculty === selectedFaculty;
+  const matchMajor = !selectedMajor || p.subject === selectedMajor;
   // TYPE (Bán / Thuê)
   const matchType = selectedTypes.includes(p.tag);
-
   // CATEGORY
+  const normalize = (str: string) => str.toLowerCase().replace(/\s+/g, "").replace(/-/g, "");
+
   const matchCategory =
     selectedCategories.length === 0 ||
-    selectedCategories.includes(p.type);
-
+    selectedCategories.some(cat => normalize(cat) === normalize(p.type));
   // PRICE
   const priceNumber = parseInt(p.price.replace(/\D/g, ""));
   const matchPrice =
@@ -374,48 +367,20 @@ const matchMajor =
     const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIdx = startIdx + ITEMS_PER_PAGE;
     const paginatedProducts = filteredProducts.slice(startIdx, endIdx);
-
-
-
   return (
     <main className="bg-gray-50 min-h-screen">
       <HomeNavbar />
-
- <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 pt-12">
-                    {/* Breadcrumb with View Toggle */}
-                    <div className="mb-4 flex items-center justify-between text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                            <Link href="/" className="hover:text-blue-600">Trang chủ</Link>
-                            <span>/</span>
-                            <span className="text-gray-900 font-medium">Sản phẩm</span>
-                        </div>
-
-                        {/* View Mode Toggle */}
-                        {/*<div className="flex gap-2">
-                            <button
-                                onClick={() => setViewMode("grid")}
-                                className={`rounded-lg p-2 transition ${viewMode === "grid"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                                    }`}
-                            >
-                                <Grid3x3 className="h-5 w-5" />
-                            </button>
-                            <button
-                                onClick={() => setViewMode("list")}
-                                className={`rounded-lg p-2 transition ${viewMode === "list"
-                                    ? "bg-blue-600 text-white"
-                                    : "bg-gray-200 text-gray-600 hover:bg-gray-300"
-                                    }`}
-                            >
-                                <List className="h-5 w-5" />
-                            </button>
-                        </div> */}
-                    </div>
-</div>
-
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 pt-12">
+        {/* Breadcrumb with View Toggle */}
+        <div className="mb-4 flex items-center justify-between text-sm text-gray-600">
+          <div className="flex items-center gap-2">
+            <Link href="/" className="hover:text-blue-600">Trang chủ</Link>
+              <span>/</span>
+              <span className="text-gray-900 font-medium">Sản phẩm</span>
+          </div>
+        </div>
+      </div>
       <div className="max-w-7xl mx-auto px-4 py-6">
-
         {/* ALERT */}
         <div className="bg-blue-50 text-blue-700 p-4 rounded-xl mb-6 text-sm">
           Mặc định trường "Trường" là trường bạn. Hãy chọn đúng để có kết quả chính xác.
@@ -423,81 +388,71 @@ const matchMajor =
 
         {/* SELECT FILTER */}
         <div className="grid md:grid-cols-4 gap-4 mb-6">
-          <select
-  className="border p-2 rounded-lg"
-  onChange={(e) => {
-    setTempSchool(e.target.value);
-    setTempFaculty("");
-    setTempMajor("");
-  }}
->
-  <option value="">Chọn trường</option>
-  {schools.map((s) => (
-    <option key={s} value={s}>{s}</option>
-  ))}
-</select>
-<select
-  className="border p-2 rounded-lg"
-  onChange={(e) => {
-    setTempFaculty(e.target.value);
-    setTempMajor("");
-  }}
-  disabled={!tempSchool}
->
-  <option value="">Chọn khoa</option>
-  {faculties.map((f) => (
-    <option key={f} value={f}>{f}</option>
-  ))}
-</select>
-          <select
-  className="border p-2 rounded-lg"
-  onChange={(e) => setTempMajor(e.target.value)}
-  disabled={!tempFaculty}
->
-  <option value="">Chọn ngành</option>
-  {majors.map((m) => (
-    <option key={m} value={m}>{m}</option>
-  ))}
-</select>
+          <select className="border p-2 rounded-lg"
+            onChange={(e) => {
+              setTempSchool(e.target.value);
+              setTempFaculty("");
+              setTempMajor("");
+            }}>
+            <option value="">Chọn trường</option>
+              {schools.map((s) => (
+                <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <select className="border p-2 rounded-lg"
+            onChange={(e) => {
+              setTempFaculty(e.target.value);
+              setTempMajor("");
+            }}
+            disabled={!tempSchool}>
+            <option value="">Chọn khoa</option>
+              {faculties.map((f) => (
+              <option key={f} value={f}>{f}</option>
+              ))}
+          </select>
+          <select className="border p-2 rounded-lg"
+            onChange={(e) => setTempMajor(e.target.value)}
+            disabled={!tempFaculty}>
+            <option value="">Chọn ngành</option>
+              {majors.map((m) => (
+                <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
           <button onClick={() => {
-    setSelectedSchool(tempSchool);
-    setSelectedFaculty(tempFaculty);
-    setSelectedMajor(tempMajor);
-     setCurrentPage(1);
-  }}
-  className="bg-blue-600 text-white rounded-lg"
->
-  Cập nhật
+            setSelectedSchool(tempSchool);
+            setSelectedFaculty(tempFaculty);
+            setSelectedMajor(tempMajor);
+            setCurrentPage(1);
+          }}
+          className="bg-blue-600 text-white rounded-lg">
+            Cập nhật
           </button>
         </div>
 
         <div className="grid lg:grid-cols-4 gap-6">
-
           {/* SIDEBAR */}
           <div className="bg-white p-5 rounded-xl shadow-sm h-fit">
 
             {/* CATEGORY */}
             <h3 className="font-bold mb-3">Danh mục sản phẩm</h3>
             <div className="space-y-2">
-              {["SÁCH CHUYÊN NGÀNH", "EBOOK", "SÁCH CỨNG", "CHEATSHEET","ĐỀ THI","DỤNG CỤ VẼ KỸ THUẬT", "BỘ KIT / BOARD MẠCH", "DỤNG CỤ CHUYÊN DỤNG"].map(i => (
-  <label key={i} className="flex gap-2">
-    <input
-      type="checkbox"
-      onChange={() => {
-        setSelectedCategories(prev =>
-          prev.includes(i)
-            ? prev.filter(x => x !== i)
-            : [...prev, i]
-        );
-      }}
-    />
-    {i}
-  </label>
-))}
+              {["SÁCH CHUYÊN NGÀNH", "E-BOOK", "SÁCH CỨNG", "CHEATSHEET","ĐỀ THI","DỤNG CỤ VẼ KỸ THUẬT", "BỘ KIT / BOARD MẠCH", "DỤNG CỤ CHUYÊN DỤNG"].map(i => (
+              <label key={i} className="flex gap-2">
+                <input
+                  type="checkbox"
+                  onChange={() => {
+                    setSelectedCategories(prev =>
+                    prev.includes(i)? prev.filter(x => x !== i) : [...prev, i]
+                    );
+                    setCurrentPage(1);
+                  }}
+              />
+              {i}
+              </label>
+              ))}
             </div>
 
             {/* PRICE */}
-{/* PRICE */}
             <h3 className="font-bold mt-6 mb-3">Khoảng giá</h3>
             <div className="flex gap-2 mb-2">
               <input 
@@ -527,7 +482,7 @@ const matchMajor =
             >
               Áp dụng
             </button>
-{/* CONDITION */}
+            {/* CONDITION */}
             <h3 className="font-bold mt-6 mb-3">Độ mới tài liệu</h3>
             <div className="space-y-2 flex flex-col">
               <label className="cursor-pointer flex items-center gap-2">
@@ -615,56 +570,114 @@ const matchMajor =
 
             {/* GRID */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedProducts.map(p => (
-                <div key={p.id} className="bg-white rounded-xl shadow-sm p-4 relative">
+              {paginatedProducts.map((product) => (
+                <Link
+                  key={product.id}
+                  href={`/products/${product.id}`}
+                  className={
+                  viewMode === "grid"
+                    ? "group flex flex-col h-full rounded-2xl bg-white p-4 shadow-sm hover:shadow-lg transition"
+                    : "flex gap-4 rounded-2xl bg-white p-4 shadow-sm hover:shadow-lg transition"
+                    }>
+                    {/* Image */}
+                    <div className={viewMode === "grid"
+                      ? "relative mb-4 overflow-hidden rounded-xl bg-gray-200 h-40 w-full"
+                       : "relative overflow-hidden rounded-xl bg-gray-200 h-40 w-40 flex-shrink-0"
+                        }>
+                      <img src={product.image} alt={product.title}
+                        className="h-full w-full object-cover group-hover:scale-110 transition"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            target.style.display = "none";
+                            const parent = target.parentElement;
+                            if (parent && !parent.querySelector(".cover-fallback")) {
+                              const fallback = document.createElement("div");
+                              fallback.className = "cover-fallback h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200";
+                              fallback.innerHTML = `<span style="font-size:2.5rem;font-weight:700;color:#3b5bdb;opacity:0.5;">${product.title.charAt(0)}</span>`;
+                              parent.appendChild(fallback);
+                            }
+                          }}/>
+                      {/* Tag */}
+                      <div className="absolute right-2 top-2">
+                        <div className="rounded-md bg-orange-500 px-2 py-1 text-xs font-bold text-white">
+                          {product.tag}
+                        </div>
+                      </div>
+                      {/* Wishlist Button */}
+                      <button onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleFavorite(product.id);
+                        }}
+                        className="absolute left-2 top-2 rounded-full bg-white p-2 shadow-md hover:bg-gray-100 transition"
+                      >
+                        <Heart className={`h-4 w-4 transition ${favorites.has(product.id)
+                        ? "fill-red-500 text-red-500": "text-gray-400" }`}
+                      />
+                      </button>
+                    </div>
+                    {/* Product Info */}
+                    <div className={viewMode === "grid" ? "flex flex-col flex-1" : "flex-1"}>
+                      <div className={viewMode === "list" ? "" : "mb-4 flex-1"}>
+                        <p className="text-xs text-gray-500 font-medium">{product.type}</p>
+                          <h3 className="mt-1 font-semibold text-gray-900 line-clamp-2">
+                            {product.title}
+                          </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {product.condition} • {product.year}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-600">{product.author}</p>
+                      </div>
+                      {/* Price and Buy Button */}
+                      <div className="flex flex-col gap-3">
+                        {/* Price */}
+                        <div>
+                          <div className="flex items-baseline gap-2">
+                            <p className="text-lg font-bold text-blue-600">
+                              {product.price}
+                            </p>
+                            {product.originalPrice && (
+                              <p className="text-xs text-gray-500 line-through">
+                                {product.originalPrice}
+                              </p>
+                            )}
+                          </div>
+                        </div>
 
-                  {/* TAG */}
-                  <div className={`absolute top-2 left-2 text-xs px-2 py-1 rounded-full text-white 
-                    ${p.tag === "Bán" ? "bg-blue-500" : "bg-orange-500"}`}>
-                    {p.tag === "Bán" ? "BÁN" : "THUÊ"}
-                  </div>
+                        {/* Buy Button */}
+                          {viewMode === "grid" && (
+                            <button onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                            >
+                              <ShoppingCart className="h-4 w-4" />
+                                Mua ngay
+                            </button>
+                          )}
+                      </div>
 
-                  {/* IMAGE */}
-                  <div className="h-32 bg-gray-200 rounded mb-4 flex items-center justify-center">
-                    📘
-                  </div>
-
-                  {/* INFO */}
-                  <p className="text-xs text-gray-500">{p.type}</p>
-                  <h3 className="font-semibold">{p.title}</h3>
-
-                  <p className="text-xs text-gray-500 mt-1">
-                    {p.author} • {p.condition} • {p.year}
-                  </p>
-
-                  <p className="text-lg font-bold mt-2">
-                    <p className="text-lg font-bold mt-2">
-  {p.price}
-</p>
-                  </p>
-
-                  {/* BUTTON */}
-                  <button className={`w-full mt-3 py-2 rounded text-white flex items-center justify-center gap-2
-                    ${p.tag === "Thuê" ? "bg-orange-500" : "bg-blue-600"}`}>
-                    <ShoppingCart size={16} />
-                    {p.tag === "Thuê" ? "Thuê ngay" : "Mua ngay"}
-                  </button>
-
-                  {/* FAVORITE */}
-                  <button
-                    onClick={() => toggleFavorite(p.id)}
-                    className="absolute top-2 right-2 bg-white p-2 rounded-full shadow"
-                  >
-                    <Heart className={`h-4 w-4 ${favorites.has(p.id) ? "text-red-500 fill-red-500" : ""}`} />
-                  </button>
-                </div>
-              ))}
+                      {/* Buy Button for List View */}
+                      {viewMode === "list" && (
+                        <button onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          }}
+                          className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-700 transition flex items-center justify-center gap-2 h-fit"
+                        >
+                          <ShoppingCart className="h-4 w-4" />
+                            Mua ngay
+                          </button>
+                        )}
+                    </div>
+                  </Link>
+              ))}                       
             </div>
 
             {/* PAGINATION */}
-            {/* Pagination */}
-                            {totalPages > 0 && (
-                                <div className="mt-8 flex items-center justify-center gap-2">
+              {totalPages > 0 && (
+                <div className="mt-8 flex items-center justify-center gap-2">
                                     <button
                                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                                         disabled={currentPage === 1}
