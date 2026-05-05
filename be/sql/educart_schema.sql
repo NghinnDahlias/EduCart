@@ -151,6 +151,8 @@ GO
 CREATE TABLE dbo.Products (
     ProductID   INT            IDENTITY(1,1) PRIMARY KEY,
     SellerID    INT            NOT NULL,
+    UniversityID INT            NOT NULL,   
+    FacultyID   INT            NOT NULL,
     SubjectID   INT            NOT NULL,
     Title       NVARCHAR(255)  NOT NULL,
     Description NVARCHAR(MAX)  NULL,
