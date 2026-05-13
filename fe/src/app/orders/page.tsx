@@ -7,7 +7,8 @@ import {
     MessageSquare, Clock, RefreshCw, BookOpen, BarChart3, RotateCcw,
 } from "lucide-react";
 import HomeNavbar from "../../components/HomeNavbar";
-
+import { useRouter } from "next/navigation";
+//import router from "next/router";
 type OrderStatus = "ordered" | "shipping" | "renting" | "completed" | "returned";
 type OrderType = "rent" | "buy";
 
@@ -85,6 +86,7 @@ function OrderTimeline({ status, orderType, trackingNumber }: { status: OrderSta
 }
 
 function OrderCard({ order }: { order: Order }) {
+    const router = useRouter();
     return (
         <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all">
             <OrderTimeline status={order.status} orderType={order.items[0]?.type ?? "buy"} trackingNumber={order.trackingNumber} />
@@ -109,7 +111,14 @@ function OrderCard({ order }: { order: Order }) {
                                     <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors">
                                         <MessageSquare className="h-3.5 w-3.5" /> Nhắn tin
                                     </button>
-                                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                                    <button 
+                                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+
+                                           router.push(`/review?orderId=${order.id}`);
+                                    }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors">
                                         Xác nhận đã nhận
                                     </button>
                                     {isRent && (
@@ -144,7 +153,6 @@ function OrderCard({ order }: { order: Order }) {
 export default function OrdersPage() {
     const [orders] = useState<Order[]>(mockOrders);
     const [activeTab, setActiveTab] = useState<"orders" | "sales">("orders");
-
     return (
         <main className="min-h-screen bg-[#F8FAFC]">
             <HomeNavbar />

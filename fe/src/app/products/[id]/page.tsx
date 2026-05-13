@@ -980,7 +980,7 @@
                                                                 </div>
                                                             )}
                                                             <div className="flex justify-between text-sm">
-                                                                <span className="text-gray-600">Phí dịch vụ</span>
+                                                                <span className="text-gray-600">Phí vận chuyển</span>
                                                                 <span className="font-medium">Miễn phí</span>
                                                             </div>
                                                             <div className="border-t border-gray-300 pt-3 flex justify-between">
