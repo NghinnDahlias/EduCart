@@ -170,7 +170,7 @@ export default function CartPage() {
                                     <span className="font-bold text-[#193967]">{subtotal.toLocaleString("vi-VN")} VNĐ</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500 font-medium">Phí dịch vụ</span>
+                                    <span className="text-gray-500 font-medium">Phí vận chuyển</span>
                                     <span className="font-bold text-[#193967]">{serviceFee.toLocaleString("vi-VN")} VNĐ</span>
                                 </div>
                                 <div className="flex justify-between text-sm">

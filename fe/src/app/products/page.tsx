@@ -660,9 +660,9 @@ export default function ProductsPage() {
                     <button
                         onClick={() => {
                           if (product.tag === "Thuê") {
-                            router.push(`/hire?productId=${product.id}`);
+                            router.push(`/products/${product.id}`);
                             } else {
-                            router.push(`/checkout?productId=${product.id}`);
+                            router.push(`/checkout/${product.id}`);
                             }
                           }}
                       className={`w-full rounded-lg px-4 py-2 text-sm font-bold text-white flex items-center justify-center gap-2 ${

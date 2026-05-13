@@ -335,9 +335,8 @@ export default function CheckoutPage() {
 
   const subtotal = numericPrice * quantity;
 
-  const serviceFee = 15000;
-
-  const total = subtotal + serviceFee;
+  
+  const total = subtotal ;
 
   const handlePlaceOrder = () => {
     setIsProcessing(true);
@@ -620,7 +619,7 @@ export default function CheckoutPage() {
                   </span>
 
                   <span className="font-bold text-[#193967]">
-                    {serviceFee.toLocaleString("vi-VN")}₫
+                    Miễn phí
                   </span>
                 </div>
               </div>
