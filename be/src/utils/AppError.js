@@ -1,0 +1,17 @@
+/**
+ * Operational, HTTP-aware error. The global error middleware
+ * relies on `err instanceof AppError` to decide whether to expose
+ * the message and which status code to send.
+ */
+class AppError extends Error {
+  constructor(message, statusCode = 500, details = null) {
+    super(message);
+    this.name = 'AppError';
+    this.statusCode = statusCode;
+    this.details = details;
+    this.isOperational = true;
+    Error.captureStackTrace?.(this, AppError);
+  }
+}
+
+module.exports = AppError;

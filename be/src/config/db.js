@@ -16,18 +16,21 @@ const sql = require('mssql');
 //     enableArithAbort: true,
 //   },
 // };
+// DB_SERVER honours both forms:
+//   - "db" (Docker service name / hostname)
+//   - "localhost\\SQLEXPRESS" (Windows named instance for local dev)
 const sqlConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  server: 'localhost\\SQLEXPRESS',  // ⭐ gộp instance vào server
+  server: process.env.DB_SERVER || 'localhost',
   database: process.env.DB_NAME,
+  port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 1433,
   pool: {
     max: 10,
     min: 0,
     idleTimeoutMillis: 30000,
   },
   options: {
-    // instanceName: 'SQLEXPRESS',  // ⭐ bỏ dòng này đi
     encrypt: false,
     trustServerCertificate: true,
   },
