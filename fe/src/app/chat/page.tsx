@@ -39,7 +39,7 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    api.get<{ ok: boolean; conversations: Conversation[] }>("/messages/conversations")
+    api.get<{ ok: boolean; conversations: Conversation[] }>("/messages/conversations", true)
       .then(d => {
         const convs = d.conversations ?? [];
         setConversations(convs);
@@ -52,7 +52,7 @@ export default function ChatPage() {
   useEffect(() => {
     if (!selected) return;
     setIsLoadingMsgs(true);
-    api.get<{ ok: boolean; messages: ApiMessage[] }>(`/messages?with=${selected.OtherUserID}`)
+    api.get<{ ok: boolean; messages: ApiMessage[] }>(`/messages?with=${selected.OtherUserID}`, true)
       .then(d => setMessages(d.messages ?? []))
       .catch(() => setMessages([]))
       .finally(() => setIsLoadingMsgs(false));
@@ -70,7 +70,7 @@ export default function ChatPage() {
       const d = await api.post<{ ok: boolean; message: ApiMessage }>("/messages", {
         receiverId: selected.OtherUserID,
         content,
-      });
+      }, true);
       if (d.message) setMessages(prev => [...prev, d.message]);
     } catch {}
   };

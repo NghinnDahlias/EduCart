@@ -19,7 +19,8 @@ if [[ "$db_exists" == "0" ]]; then
   $SQLCMD -S "$DB_HOST" -U "$DB_USER" -P "$DB_PASSWORD" -C \
     -i /docker-entrypoint-initdb.d/educart_schema.sql
 else
-  echo "Database ${DB_NAME} already exists; skipping schema."
+  echo "Database ${DB_NAME} already exists; skipping schema creation."
+  echo "NOTE: If the schema has changed, run: docker compose down -v && docker compose up --build"
 fi
 
 echo "Applying stored procedures..."

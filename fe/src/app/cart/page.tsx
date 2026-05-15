@@ -17,12 +17,6 @@ interface CartItem {
   status: "SẴN SÀNG" | "HẾT HÀNG";
 }
 
-const recommendationItems = [
-  { title: "Advanced Statistics", author: "Dr. Sarah Miller", image: "https://img.freepik.com/free-photo/abstract-eye-concept-art-background_23-2148816738.jpg" },
-  { title: "Modern Philosophy", author: "Arthur C. Brooks", image: "https://img.freepik.com/free-photo/view-futuristic-sculpture_23-2151037384.jpg" },
-  { title: "Human Anatomy", author: "Mariah S. Hoehn", image: "https://img.freepik.com/free-photo/muscular-system-human-body_23-2150165507.jpg" },
-  { title: "Deep Learning", author: "Ian Goodfellow", image: "https://img.freepik.com/free-photo/artificial-intelligence-brain-concept_23-2150379435.jpg" },
-];
 
 export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -31,7 +25,7 @@ export default function CartPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    api.get<{ ok: boolean; items: any[] }>("/cart")
+    api.get<{ ok: boolean; items: any[] }>("/cart", true)
       .then(d => {
         const mapped: CartItem[] = (d.items ?? []).map((item: any) => ({
           id: item.CartItemID,
@@ -66,7 +60,7 @@ export default function CartPage() {
 
   const handleRemoveItem = async (item: CartItem) => {
     try {
-      await api.delete(`/cart/${item.productId}`);
+      await api.delete(`/cart/${item.productId}`, true);
     } catch {}
     setCartItems(prev => prev.filter(i => i.id !== item.id));
     setSelectedItems(prev => { const s = new Set(prev); s.delete(item.id); return s; });
@@ -167,21 +161,6 @@ export default function CartPage() {
               </>
             )}
 
-            {/* Recommendations */}
-            <div>
-              <h2 className="text-xl font-bold text-[#193967] mb-6">Có thể bạn quan tâm</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {recommendationItems.map((item, idx) => (
-                  <div key={idx} className="group cursor-pointer">
-                    <div className="aspect-[3/4] rounded-xl overflow-hidden mb-3 shadow-sm transition-transform group-hover:-translate-y-1">
-                      <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                    </div>
-                    <h4 className="font-bold text-[#193967] text-sm group-hover:text-blue-600 transition-colors line-clamp-1">{item.title}</h4>
-                    <p className="text-xs text-gray-400">{item.author}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* Right: Sidebar */}

@@ -26,7 +26,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<ApiUser | null>(null);
 
   useEffect(() => {
-    api.get<{ ok: boolean; user: ApiUser }>("/users/me")
+    api.get<{ ok: boolean; user: ApiUser }>("/users/me", true)
       .then(d => setUser(d.user))
       .catch(() => {
         const cached = getUser();
