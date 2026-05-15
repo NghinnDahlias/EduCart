@@ -162,13 +162,13 @@ export default function OrdersPage() {
   useEffect(() => {
     const role = activeTab === "sales" ? "seller" : "buyer";
     setIsLoading(true);
-    api.get<{ ok: boolean; orders: ApiOrder[] }>(`/orders?role=${role}`)
+    api.get<{ ok: boolean; orders: ApiOrder[] }>(`/orders?role=${role}`, true)
       .then(d => setOrders(d.orders ?? []))
       .catch(() => setOrders([]))
       .finally(() => setIsLoading(false));
 
     if (activeTab === "sales") {
-      api.get<{ ok: boolean; products: ApiSellerProduct[] }>("/products?status=all&sellerOnly=true")
+      api.get<{ ok: boolean; products: ApiSellerProduct[] }>("/products?status=all&sellerOnly=true", true)
         .catch(() => ({ products: [] as ApiSellerProduct[] }))
         .then(d => setSellerProducts((d as any).products ?? []));
     }

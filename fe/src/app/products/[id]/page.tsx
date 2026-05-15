@@ -90,7 +90,7 @@ export default function ProductPage() {
   const handleNextImage = () => setSelectedImage(prev => prev === displayImages.length - 1 ? 0 : prev + 1);
 
   const addToCart = async () => {
-    try { await api.post("/cart", { productId: product.ProductID }); } catch {}
+    try { await api.post("/cart", { productId: product.ProductID }, true); } catch {}
   };
 
   return (

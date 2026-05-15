@@ -1,35 +1,86 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChevronLeft, MapPin, CreditCard, Truck, ShieldCheck, CheckCircle2, Phone, User, Handshake } from "lucide-react";
 import HomeNavbar from "../../components/HomeNavbar";
+import { api } from "@/lib/api";
 
 interface CartItem {
-    id: string;
+    id: number;
+    productId: number;
     title: string;
     author: string;
     image: string;
     price: number;
-    quantity: number;
+    type: "buy" | "rent";
+    rentalPrice: number | null;
 }
 
-const mockCheckoutItems: CartItem[] = [
-    { id: "1", title: "Molecular Biology", author: "David P. Clark & Lonnie D. Russell", image: "https://covers.openlibrary.org/b/isbn/9781464126054-L.jpg", price: 215000, quantity: 1 },
-    { id: "2", title: "Principles of Economics", author: "N. Gregory Mankiw", image: "https://covers.openlibrary.org/b/isbn/1305585127-L.jpg", price: 185000, quantity: 1 },
-];
-
 export default function CheckoutPage() {
+    const [cartItems, setCartItems] = useState<CartItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [paymentMethod, setPaymentMethod] = useState<"direct" | "cod">("direct");
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const subtotal = mockCheckoutItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const serviceFee = 15000;
+    useEffect(() => {
+        api.get<{ ok: boolean; items: any[] }>("/cart", true)
+            .then(d => {
+                const mapped: CartItem[] = (d.items ?? [])
+                    .filter((item: any) => item.Stock > 0 && item.Status === "Available")
+                    .map((item: any) => ({
+                        id: item.CartItemID,
+                        productId: item.ProductID,
+                        title: item.Title,
+                        author: item.Author,
+                        image: item.ThumbnailURL ?? "",
+                        price: item.IsForRent ? (item.RentalPrice ?? item.Price ?? 0) : (item.Price ?? 0),
+                        type: item.IsForRent ? "rent" : "buy",
+                        rentalPrice: item.RentalPrice ?? null,
+                    }));
+                setCartItems(mapped);
+            })
+            .catch(() => {})
+            .finally(() => setIsLoading(false));
+    }, []);
+
+    const subtotal = cartItems.reduce((sum, item) => sum + item.price, 0);
+    const serviceFee = cartItems.length > 0 ? 15000 : 0;
     const total = subtotal + serviceFee;
 
-    const handlePlaceOrder = () => {
+    const handlePlaceOrder = async () => {
+        if (cartItems.length === 0) return;
         setIsProcessing(true);
-        setTimeout(() => { window.location.href = "/orders"; }, 2000);
+        try {
+            const buyItems = cartItems.filter(i => i.type === "buy");
+            const rentItems = cartItems.filter(i => i.type === "rent");
+
+            if (buyItems.length > 0) {
+                await api.post("/orders", {
+                    type: "Buy",
+                    items: buyItems.map(i => ({ productId: i.productId, quantity: 1 })),
+                }, true);
+            }
+
+            if (rentItems.length > 0) {
+                const startDate = new Date();
+                const endDate = new Date();
+                endDate.setDate(endDate.getDate() + 7);
+                await api.post("/orders", {
+                    type: "Rent",
+                    items: rentItems.map(i => ({ productId: i.productId, quantity: 1 })),
+                    rentStartDate: startDate.toISOString(),
+                    rentEndDate: endDate.toISOString(),
+                    dailyRate: rentItems[0].rentalPrice ?? rentItems[0].price,
+                }, true);
+            }
+
+            window.location.href = "/orders";
+        } catch (err: any) {
+            alert(err?.message ?? "Có lỗi xảy ra. Vui lòng thử lại.");
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     return (
@@ -131,43 +182,58 @@ export default function CheckoutPage() {
                         <div className="bg-gray-50 rounded-2xl p-8 border border-gray-200 sticky top-28">
                             <h3 className="text-lg font-bold text-[#193967] mb-6">Đơn hàng của bạn</h3>
 
-                            <div className="space-y-4 mb-6 pb-6 border-b border-gray-200">
-                                {mockCheckoutItems.map(item => (
-                                    <div key={item.id} className="flex gap-3">
-                                        <div className="w-14 h-18 rounded-xl overflow-hidden shrink-0 shadow-sm" style={{ height: "72px" }}>
-                                            <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                            {isLoading ? (
+                                <div className="text-center py-8 text-gray-400 text-sm">Đang tải...</div>
+                            ) : cartItems.length === 0 ? (
+                                <div className="text-center py-8 text-gray-400 text-sm">
+                                    Giỏ hàng trống.{" "}
+                                    <Link href="/products" className="text-blue-600 font-semibold">Khám phá sản phẩm</Link>
+                                </div>
+                            ) : (
+                                <div className="space-y-4 mb-6 pb-6 border-b border-gray-200">
+                                    {cartItems.map(item => (
+                                        <div key={item.id} className="flex gap-3">
+                                            <div className="w-14 rounded-xl overflow-hidden shrink-0 shadow-sm bg-gray-100" style={{ height: "72px" }}>
+                                                {item.image
+                                                    ? <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                                                    : <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">{item.title.charAt(0)}</div>}
+                                            </div>
+                                            <div className="flex-1 flex flex-col justify-center">
+                                                <h4 className="text-sm font-bold text-[#193967] line-clamp-1">{item.title}</h4>
+                                                <p className="text-xs text-gray-400">{item.author}</p>
+                                                <p className="text-sm font-bold text-blue-600 mt-0.5">{item.price.toLocaleString("vi-VN")} VNĐ</p>
+                                            </div>
                                         </div>
-                                        <div className="flex-1 flex flex-col justify-center">
-                                            <h4 className="text-sm font-bold text-[#193967] line-clamp-1">{item.title}</h4>
-                                            <p className="text-xs text-gray-400 font-medium">SL: {item.quantity}</p>
-                                            <p className="text-sm font-bold text-blue-600 mt-0.5">{item.price.toLocaleString("vi-VN")} VNĐ</p>
+                                    ))}
+                                </div>
+                            )}
+
+                            {!isLoading && (
+                                <>
+                                    <div className="space-y-3 mb-6">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-500 font-medium">Tạm tính</span>
+                                            <span className="font-bold text-[#193967]">{subtotal.toLocaleString("vi-VN")} VNĐ</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-500 font-medium">Phí dịch vụ</span>
+                                            <span className="font-bold text-[#193967]">{serviceFee.toLocaleString("vi-VN")} VNĐ</span>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
 
-                            <div className="space-y-3 mb-6">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500 font-medium">Tạm tính</span>
-                                    <span className="font-bold text-[#193967]">{subtotal.toLocaleString("vi-VN")} VNĐ</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500 font-medium">Phí dịch vụ</span>
-                                    <span className="font-bold text-[#193967]">{serviceFee.toLocaleString("vi-VN")} VNĐ</span>
-                                </div>
-                            </div>
+                                    <div className="flex justify-between items-center mb-6 pt-4 border-t border-gray-200">
+                                        <span className="text-sm font-bold text-[#193967] uppercase tracking-wider">TỔNG CỘNG</span>
+                                        <span className="text-2xl font-bold text-blue-600">{total.toLocaleString("vi-VN")} VNĐ</span>
+                                    </div>
 
-                            <div className="flex justify-between items-center mb-6 pt-4 border-t border-gray-200">
-                                <span className="text-sm font-bold text-[#193967] uppercase tracking-wider">TỔNG CỘNG</span>
-                                <span className="text-2xl font-bold text-blue-600">{total.toLocaleString("vi-VN")} VNĐ</span>
-                            </div>
-
-                            <button onClick={handlePlaceOrder} disabled={isProcessing}
-                                className={`w-full py-3 text-white text-center font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${isProcessing ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}>
-                                {isProcessing ? (
-                                    <><div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />ĐANG XỬ LÝ...</>
-                                ) : "XÁC NHẬN THANH TOÁN"}
-                            </button>
+                                    <button onClick={handlePlaceOrder} disabled={isProcessing || cartItems.length === 0}
+                                        className={`w-full py-3 text-white text-center font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${isProcessing || cartItems.length === 0 ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}>
+                                        {isProcessing ? (
+                                            <><div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />ĐANG XỬ LÝ...</>
+                                        ) : "XÁC NHẬN THANH TOÁN"}
+                                    </button>
+                                </>
+                            )}
 
                             <div className="mt-6 flex items-center gap-2 text-blue-600">
                                 <ShieldCheck className="h-4 w-4 shrink-0" />
