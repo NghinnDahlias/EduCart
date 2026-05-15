@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Upload, ChevronDown } from "lucide-react";
+import { Check, Upload } from "lucide-react";
 import HomeNavbar from "@/components/HomeNavbar";
 import HomeFooter from "@/components/HomeFooter";
+import { api } from "@/lib/api";
 
 const categories = [
     "Khoa Học Máy Tính",
@@ -83,6 +84,31 @@ export default function PostBookPage() {
             }));
             setNewSlotInput("");
             setShowAddSlotInput(false);
+        }
+    };
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const conditionMap: Record<string, number> = { new: 100, good: 80, old: 60 };
+
+    const handleSubmit = async () => {
+        if (!isStep4Valid) return;
+        setIsSubmitting(true);
+        try {
+            await api.post("/products", {
+                title: formData.productName,
+                category: formData.category,
+                price: Number(formData.yourPrice),
+                isForRent: formData.saleType === "rent",
+                rentalPrice: formData.saleType === "rent" ? Number(formData.yourPrice) : null,
+                condition: conditionMap[formData.condition] ?? 80,
+                images: [],
+            });
+            window.location.href = "/orders";
+        } catch (err: any) {
+            alert(err?.message ?? "Có lỗi xảy ra. Vui lòng thử lại.");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -475,7 +501,7 @@ export default function PostBookPage() {
                                                         onChange={(e) => setNewSlotInput(e.target.value)}
                                                         placeholder="Ví dụ: Thứ Năm, 14:00 - 16:00"
                                                         className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
-                                                        onKeyPress={(e) => {
+                                                        onKeyDown={(e) => {
                                                             if (e.key === 'Enter') {
                                                                 handleAddCustomSlot();
                                                             }
@@ -508,14 +534,14 @@ export default function PostBookPage() {
                                                 Quay Lại
                                             </button>
                                             <button
-                                                onClick={() => isStep4Valid && alert("Bài Đăng Đã Được Công Bố!")}
-                                                disabled={!isStep4Valid}
-                                                className={`flex-1 py-3 rounded-lg font-semibold transition ${isStep4Valid
+                                                onClick={handleSubmit}
+                                                disabled={!isStep4Valid || isSubmitting}
+                                                className={`flex-1 py-3 rounded-lg font-semibold transition ${isStep4Valid && !isSubmitting
                                                     ? "bg-blue-600 text-white hover:bg-blue-700"
                                                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                                                     }`}
                                             >
-                                                🚀 CÔNG BỐ BÀI ĐĂNG
+                                                {isSubmitting ? "Đang đăng..." : "🚀 CÔNG BỐ BÀI ĐĂNG"}
                                             </button>
                                         </div>
                                     </div>

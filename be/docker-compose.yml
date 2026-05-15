@@ -1,0 +1,68 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: educart-mssql
+    platform: linux/amd64
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${DB_PASSWORD}"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+      - ./sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: educart-mssql-init
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ACCEPT_EULA: "Y"
+      DB_HOST: db
+      DB_USER: sa
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_NAME: EduCart
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d:ro
+    entrypoint: /bin/bash
+    command:
+      - /docker-entrypoint-initdb.d/init-db.sh
+
+  api:
+    build: .
+    container_name: educart-api
+    depends_on:
+      db:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      PORT: "${PORT:-5000}"
+      DB_USER: sa
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_SERVER: db
+      DB_NAME: EduCart
+      JWT_SECRET: "${JWT_SECRET:-change-me-please}"
+      JWT_EXPIRES_IN: "7d"
+      MOMO_PARTNER_CODE: "MOMO_SANDBOX"
+      MOMO_SECRET: "mock_momo_secret"
+      VNPAY_TMN_CODE: "VNPAY_SANDBOX"
+      VNPAY_SECRET: "mock_vnpay_secret"
+      PAYMENT_WEBHOOK_SECRET: "mock_webhook_secret"
+    ports:
+      - "${PORT:-5000}:${PORT:-5000}"
+    volumes:
+      - ./uploads:/app/uploads
+
+volumes:
+  mssql-data:

@@ -1,315 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Heart, ShoppingCart, Grid3x3, List, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Heart, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
 import HomeNavbar from "@/components/HomeNavbar";
 import HomeFooter from "@/components/HomeFooter";
+import { api } from "@/lib/api";
 
-const major_data: Record<string, Record<string, string[]>> = {
-  "ĐH Bách Khoa TP.HCM": {
-    "Khoa Khoa học & Kỹ thuật Máy tính": [
-      "Khoa học Máy tính",
-      "Ký thuật máy tính"
-    ],
-    "Khoa Khoa học Ứng dụng": ["All"],
-    "All": []
-  }
-}; //tạm
-const products = [
-  {
-    id: 1,
-    title: "Calculus: Early Transcendentals",
-    author: "James Stewart",
-    price: "125.000₫",
-    originalPrice: "250.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Calculus",
-    image: "https://covers.openlibrary.org/b/isbn/9781285741550-L.jpg",
-    type: "Sách cứng",
-    condition: "95%",
-    year: "Theo kỳ",
-    school: "ĐH Bách Khoa TP.HCM",
-    faculty: "Khoa Khoa học Ứng dụng",
-    subject: "All",
-  },
-  {
-    id: 2,
-    title: "Nguyên lý Kinh tế học",
-    author: "N. Gregory Mankiw",
-    price: "25.000₫",
-    originalPrice: "50.000₫",
-    discount: "-50%",
-    tag: "Thuê",
-    category: "Economics",
-    image: "https://covers.openlibrary.org/b/isbn/9781305585126-L.jpg",
-    type: "E-book",
-    condition: "100%",
-    year: "Theo kỳ",
-    school: "ĐH Kinh tế TP.HCM",
-    faculty: "Khoa Kinh tế",
-    subject: "Kinh tế vi mô",
-  },
-  {
-    id: 3,
-    title: "Chemistry: A Molecular Approach",
-    author: "Nivaldo Jr. Tro",
-    price: "180.000₫",
-    originalPrice: "360.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Chemistry",
-    image: "https://covers.openlibrary.org/b/isbn/9780321809247-L.jpg",
-    type: "Sách cứng",
-    condition: "90%",
-    year: "Theo kỳ",
-    school: "ĐH Khoa học Tự nhiên",
-    faculty: "Khoa Hóa học",
-    subject: "Hóa học đại cương",
-  },
-  {
-    id: 4,
-    title: "Triết học Mác - Lênin",
-    author: "NXB Lao động",
-    price: "15.000₫",
-    originalPrice: "30.000₫",
-    discount: "-50%",
-    tag: "Thuê",
-    category: "Philosophy",
-    image: "https://covers.openlibrary.org/b/isbn/9780717804405-L.jpg",
-    type: "Sách mềm",
-    condition: "85%",
-    year: "Theo kỳ",
-    school: "ĐH Quốc gia TP.HCM",
-    faculty: "Khoa Lý luận Chính trị",
-    subject: "Triết học Mác - Lênin",
-  },
-  {
-    id: 5,
-    title: "Introduction to Algorithms",
-    author: "Thomas H. Cormen",
-    price: "220.000₫",
-    originalPrice: "440.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Computer Science",
-    image: "https://covers.openlibrary.org/b/isbn/9780262033848-L.jpg",
-    type: "E-book",
-    condition: "100%",
-    year: "Dài hạn",
-    school: "ĐH Bách Khoa TP.HCM",
-    faculty: "Khoa Khoa học & Kỹ thuật Máy tính",
-    subject: "Cấu trúc dữ liệu và Giải thuật",
-  },
-  {
-    id: 6,
-    title: "Vật lý đại cương A1",
-    author: "TS. Lê Công C",
-    price: "110.000₫",
-    originalPrice: "220.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Physics",
-    image: "https://covers.openlibrary.org/b/isbn/9781305952195-L.jpg",
-    type: "Sách cứng",
-    condition: "90%",
-    year: "Theo kỳ",
-    school: "ĐH Bách Khoa TP.HCM",
-    faculty: "Khoa Khoa học Ứng dụng",
-    subject: "Vật lý 1",
-  },
-  {
-    id: 7,
-    title: "Linear Algebra and Its Applications",
-    author: "David C. Lay",
-    price: "195.000₫",
-    originalPrice: "250.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Mathematics",
-    image: "https://covers.openlibrary.org/b/isbn/9780321982384-L.jpg",
-    type: "Sách cứng",
-    condition: "92%",
-    year: "Theo kỳ",
-    school: "ĐH Khoa học Tự nhiên",
-    faculty: "Khoa Toán - Tin học",
-    subject: "Đại số tuyến tính",
-  },
-  {
-    id: 8,
-    title: "Sinh học phân tử",
-    author: "James D. Watson",
-    price: "240.000₫",
-    originalPrice: "480.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Biology",
-    image: "https://covers.openlibrary.org/b/isbn/9780321762436-L.jpg",
-    type: "E-book",
-    condition: "100%",
-    year: "Dài hạn",
-    school: "ĐH Y Dược TP.HCM",
-    faculty: "Khoa Y",
-    subject: "Sinh học đại cương",
-  },
-  {
-    id: 9,
-    title: "Tiếng Anh giao tiếp cơ bản",
-    author: "Oxford English",
-    price: "85.000₫",
-    originalPrice: "170.000₫",
-    discount: "-50%",
-    tag: "Thuê",
-    category: "Language",
-    image: "https://covers.openlibrary.org/b/isbn/9780194579858-L.jpg",
-    type: "Sách cứng",
-    condition: "80%",
-    year: "Theo kỳ",
-    school: "ĐH Sư phạm TP.HCM",
-    faculty: "Khoa Tiếng Anh",
-    subject: "Anh văn cơ bản",
-  },
-  {
-    id: 10,
-    title: "Lịch sử Việt Nam hiện đại",
-    author: "TS. Trần Văn Giàu",
-    price: "65.000₫",
-    originalPrice: "130.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "History",
-    image: "https://covers.openlibrary.org/b/isbn/9780313341960-L.jpg",
-    type: "Sách cứng",
-    condition: "88%",
-    year: "Dài hạn",
-    school: "ĐH KHXH & Nhân văn",
-    faculty: "Khoa Lịch sử",
-    subject: "Lịch sử Việt Nam",
-  },
-  {
-    id: 11,
-    title: "Data Science Handbook",
-    author: "Jake VanderPlas",
-    price: "210.000₫",
-    originalPrice: "420.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Computer Science",
-    image: "https://covers.openlibrary.org/b/isbn/9781491912058-L.jpg",
-    type: "E-book",
-    condition: "100%",
-    year: "Dài hạn",
-    school: "ĐH Công nghệ Thông tin",
-    faculty: "Khoa Khoa học Dữ liệu",
-    subject: "Nhập môn Khoa học Dữ liệu",
-  },
-  {
-    id: 12,
-    title: "Quản trị Kinh doanh",
-    author: "Stephen P. Robbins",
-    price: "175.000₫",
-    originalPrice: "350.000₫",
-    discount: "-50%",
-    tag: "Thuê",
-    category: "Business",
-    image: "https://covers.openlibrary.org/b/isbn/9780133910292-L.jpg",
-    type: "Sách cứng",
-    condition: "90%",
-    year: "Theo kỳ",
-    school: "ĐH Kinh tế TP.HCM",
-    faculty: "Khoa Quản trị",
-    subject: "Quản trị kinh doanh",
-  },
-  {
-    id: 13,
-    title: "Hóa học hữu cơ nâng cao",
-    author: "Jonathan Clayden",
-    price: "245.000₫",
-    originalPrice: "490.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Chemistry",
-    image: "https://covers.openlibrary.org/b/isbn/9780199270293-L.jpg",
-    type: "E-book",
-    condition: "100%",
-    year: "Theo kỳ",
-    school: "ĐH Bách Khoa TP.HCM",
-    faculty: "Khoa Kỹ thuật Hóa học",
-    subject: "Hóa hữu cơ",
-  },
-  {
-    id: 14,
-    title: "Tâm lý học nhân cách",
-    author: "Carl Rogers",
-    price: "120.000₫",
-    originalPrice: "240.000₫",
-    discount: "-50%",
-    tag: "Thuê",
-    category: "Psychology",
-    image: "https://covers.openlibrary.org/b/isbn/9780395755310-L.jpg",
-    type: "Sách cứng",
-    condition: "85%",
-    year: "Theo kỳ",
-    school: "ĐH KHXH & Nhân văn",
-    faculty: "Khoa Tâm lý học",
-    subject: "Tâm lý học đại cương",
-  },
-  {
-    id: 15,
-    title: "Cơ học chất lỏng",
-    author: "Frank M. White",
-    price: "200.000₫",
-    originalPrice: "400.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Physics",
-    image: "https://covers.openlibrary.org/b/isbn/9780073398273-L.jpg",
-    type: "Sách cứng",
-    condition: "93%",
-    year: "Theo kỳ",
-    school: "ĐH Bách Khoa TP.HCM",
-    faculty: "Khoa Kỹ thuật Giao thông",
-    subject: "Cơ học chất lỏng",
-  },
-  {
-    id: 16,
-    title: "Lập trình Web với React",
-    author: "Kyle Simpson",
-    price: "185.000₫",
-    originalPrice: "370.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Computer Science",
-    image: "https://covers.openlibrary.org/b/isbn/9781492051725-L.jpg",
-    type: "E-book",
-    condition: "100%",
-    year: "Dài hạn",
-    school: "ĐH Công nghệ Thông tin",
-    faculty: "Khoa Kỹ thuật Phần mềm",
-    subject: "Phát triển ứng dụng Web",
-  },
-];
+interface ApiProduct {
+  ProductID: number; Title: string; Author: string; Price: number;
+  OriginalPrice: number | null; DiscountLabel: string | null; RentalPrice: number | null;
+  Condition: number | null; IsForRent: boolean; Status: string; Rating: number | null;
+  ReviewsCount: number; ThumbnailURL: string | null; SellerName: string;
+  Category: string | null; Format: string | null; TermLabel: string | null; Stock: number;
+}
+interface ApiUniversity { UniversityID: number; UName: string; }
+interface ApiFaculty { FacultyID: number; FacultyName: string; }
+interface ApiSubject { SubjectID: number; SubjectCode: string; SubjectName: string; }
 const ITEMS_PER_PAGE = 15;
+
+function fmtVND(n: number | null | undefined): string {
+  if (n == null) return "";
+  return n.toLocaleString("vi-VN") + "₫";
+}
+
 export default function ProductsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-// TEMP (user đang chọn)
-  const [tempSchool, setTempSchool] = useState("");
-  const [tempFaculty, setTempFaculty] = useState("");
-  const [tempMajor, setTempMajor] = useState("");
 
-// APPLIED (dùng để filter)
-  const [selectedSchool, setSelectedSchool] = useState("");
-  const [selectedFaculty, setSelectedFaculty] = useState("");
-  const [selectedMajor, setSelectedMajor] = useState("");
+  // API data
+  const [apiProducts, setApiProducts] = useState<ApiProduct[]>([]);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [universities, setUniversities] = useState<ApiUniversity[]>([]);
+  const [faculties, setFaculties] = useState<ApiFaculty[]>([]);
+  const [subjects, setSubjects] = useState<ApiSubject[]>([]);
 
-  const schools = Object.keys(major_data);
-  const faculties =
-  tempSchool ? Object.keys(major_data[tempSchool]) : [];
+  // Filters
+  const [tempUniversityId, setTempUniversityId] = useState<number | "">("");
+  const [tempFacultyId, setTempFacultyId] = useState<number | "">("");
+  const [tempSubjectId, setTempSubjectId] = useState<number | "">("");
+  const [appliedUniversityId, setAppliedUniversityId] = useState<number | "">("");
+  const [appliedFacultyId, setAppliedFacultyId] = useState<number | "">("");
+  const [appliedSubjectId, setAppliedSubjectId] = useState<number | "">("");
 
-  const majors =
-  tempSchool && tempFaculty
-    ? major_data[tempSchool][tempFaculty] || []: [];
   const [currentPage, setCurrentPage] = useState(1);
   const [favorites, setFavorites] = useState(new Set<number>());
   const [selectedTypes, setSelectedTypes] = useState<string[]>(["Bán", "Thuê"]);
@@ -318,55 +51,77 @@ export default function ProductsPage() {
   const [priceRange, setPriceRange] = useState({ min: 0, max: Infinity });
   const [condition, setCondition] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  // Load universities on mount
+  useEffect(() => {
+    api.get<{ ok: boolean; universities: ApiUniversity[] }>("/universities")
+      .then(d => setUniversities(d.universities))
+      .catch(() => {});
+  }, []);
+
+  // Load faculties when university changes
+  useEffect(() => {
+    if (!tempUniversityId) { setFaculties([]); setSubjects([]); return; }
+    api.get<{ ok: boolean; faculties: ApiFaculty[] }>(`/universities/${tempUniversityId}/faculties`)
+      .then(d => setFaculties(d.faculties))
+      .catch(() => setFaculties([]));
+    setTempFacultyId("");
+    setTempSubjectId("");
+    setSubjects([]);
+  }, [tempUniversityId]);
+
+  // Load subjects when faculty changes
+  useEffect(() => {
+    if (!tempFacultyId) { setSubjects([]); return; }
+    api.get<{ ok: boolean; subjects: ApiSubject[] }>(`/faculties/${tempFacultyId}/subjects`)
+      .then(d => setSubjects(d.subjects))
+      .catch(() => setSubjects([]));
+    setTempSubjectId("");
+  }, [tempFacultyId]);
+
+  // Fetch products from API whenever applied filters or page changes
+  useEffect(() => {
+    setIsLoading(true);
+    const params = new URLSearchParams();
+    params.set("page", String(currentPage));
+    params.set("limit", String(ITEMS_PER_PAGE));
+    if (appliedUniversityId) params.set("universityId", String(appliedUniversityId));
+    if (appliedFacultyId)    params.set("facultyId",    String(appliedFacultyId));
+    if (appliedSubjectId)    params.set("subjectId",    String(appliedSubjectId));
+    // forRent filter based on selectedTypes
+    if (!selectedTypes.includes("Bán") && selectedTypes.includes("Thuê"))  params.set("forRent", "true");
+    if (selectedTypes.includes("Bán")  && !selectedTypes.includes("Thuê")) params.set("forRent", "false");
+    api.get<{ ok: boolean; products: ApiProduct[]; total: number }>(`/products?${params}`)
+      .then(d => { setApiProducts(d.products); setTotal(d.total); })
+      .catch(() => setApiProducts([]))
+      .finally(() => setIsLoading(false));
+  }, [currentPage, appliedUniversityId, appliedFacultyId, appliedSubjectId, selectedTypes]);
+
   const toggleFavorite = (productId: number) => {
-  const newFavorites = new Set(favorites);
-    if (newFavorites.has(productId)) {
-      newFavorites.delete(productId);
-    } else {
-      newFavorites.add(productId);
-    }
-      setFavorites(newFavorites);
-    };
+    setFavorites(prev => {
+      const next = new Set(prev);
+      next.has(productId) ? next.delete(productId) : next.add(productId);
+      return next;
+    });
+  };
 
-  const filteredProducts = products.filter((p) => {
-  const matchSchool =  !selectedSchool || p.school === selectedSchool;
-  const matchFaculty = !selectedFaculty || p.faculty === selectedFaculty;
-  const matchMajor = !selectedMajor || p.subject === selectedMajor;
-  // TYPE (Bán / Thuê)
-  const matchType = selectedTypes.includes(p.tag);
-  // CATEGORY
-  const normalize = (str: string) => str.toLowerCase().replace(/\s+/g, "").replace(/-/g, "");
+  // Client-side secondary filters (price, condition, category)
+  const filteredProducts = apiProducts.filter((p) => {
+    const price = p.IsForRent ? (p.RentalPrice ?? p.Price ?? 0) : (p.Price ?? 0);
+    const matchPrice = price >= priceRange.min && price <= priceRange.max;
+    const cond = p.Condition ?? 0;
+    let matchCondition = true;
+    if (condition === "Mới") matchCondition = cond >= 95;
+    if (condition === "Tốt") matchCondition = cond >= 80 && cond < 95;
+    if (condition === "Khá") matchCondition = cond >= 60 && cond < 80;
+    const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, "").replace(/-/g, "");
+    const matchCategory = selectedCategories.length === 0 ||
+      selectedCategories.some(cat => normalize(cat) === normalize(p.Format ?? ""));
+    return matchPrice && matchCondition && matchCategory;
+  });
 
-  const matchCategory =
-    selectedCategories.length === 0 ||
-    selectedCategories.some(cat => normalize(cat) === normalize(p.type));
-  // PRICE
-  const priceNumber = parseInt(p.price.replace(/\D/g, ""));
-  const matchPrice =
-  priceNumber >= priceRange.min &&
-  priceNumber <= priceRange.max;
-
-  // CONDITION
-  const percent = parseInt(p.condition) || 0;
-  let matchCondition = true;
-
-  if (condition === "Mới") matchCondition = percent >= 95;
-  if (condition === "Tốt") matchCondition = percent >= 80 && percent < 95;
-  if (condition === "Khá") matchCondition = percent >= 60 && percent < 80;
-
-  return matchType &&
-  matchCategory &&
-  matchPrice &&
-  matchCondition &&
-  matchSchool &&
-  matchFaculty &&
-  matchMajor;
-});
- // Pagination
-    const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-    const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIdx = startIdx + ITEMS_PER_PAGE;
-    const paginatedProducts = filteredProducts.slice(startIdx, endIdx);
+  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+  const paginatedProducts = filteredProducts;
   return (
     <main className="bg-gray-50 min-h-screen">
       <HomeNavbar />
@@ -389,39 +144,42 @@ export default function ProductsPage() {
         {/* SELECT FILTER */}
         <div className="grid md:grid-cols-4 gap-4 mb-6">
           <select className="border p-2 rounded-lg"
+            value={tempUniversityId}
             onChange={(e) => {
-              setTempSchool(e.target.value);
-              setTempFaculty("");
-              setTempMajor("");
+              setTempUniversityId(e.target.value ? Number(e.target.value) : "");
+              setTempFacultyId("");
+              setTempSubjectId("");
             }}>
             <option value="">Chọn trường</option>
-              {schools.map((s) => (
-                <option key={s} value={s}>{s}</option>
+            {universities.map((u) => (
+              <option key={u.UniversityID} value={u.UniversityID}>{u.UName}</option>
             ))}
           </select>
           <select className="border p-2 rounded-lg"
+            value={tempFacultyId}
             onChange={(e) => {
-              setTempFaculty(e.target.value);
-              setTempMajor("");
+              setTempFacultyId(e.target.value ? Number(e.target.value) : "");
+              setTempSubjectId("");
             }}
-            disabled={!tempSchool}>
+            disabled={!tempUniversityId}>
             <option value="">Chọn khoa</option>
-              {faculties.map((f) => (
-              <option key={f} value={f}>{f}</option>
-              ))}
+            {faculties.map((f) => (
+              <option key={f.FacultyID} value={f.FacultyID}>{f.FacultyName}</option>
+            ))}
           </select>
           <select className="border p-2 rounded-lg"
-            onChange={(e) => setTempMajor(e.target.value)}
-            disabled={!tempFaculty}>
-            <option value="">Chọn ngành</option>
-              {majors.map((m) => (
-                <option key={m} value={m}>{m}</option>
+            value={tempSubjectId}
+            onChange={(e) => setTempSubjectId(e.target.value ? Number(e.target.value) : "")}
+            disabled={!tempFacultyId}>
+            <option value="">Chọn môn</option>
+            {subjects.map((s) => (
+              <option key={s.SubjectID} value={s.SubjectID}>{s.SubjectName}</option>
             ))}
           </select>
           <button onClick={() => {
-            setSelectedSchool(tempSchool);
-            setSelectedFaculty(tempFaculty);
-            setSelectedMajor(tempMajor);
+            setAppliedUniversityId(tempUniversityId);
+            setAppliedFacultyId(tempFacultyId);
+            setAppliedSubjectId(tempSubjectId);
             setCurrentPage(1);
           }}
           className="bg-blue-600 text-white rounded-lg">
@@ -569,11 +327,14 @@ export default function ProductsPage() {
             </div>
 
             {/* GRID */}
+            {isLoading ? (
+              <div className="lg:col-span-3 flex justify-center py-16 text-gray-400">Đang tải...</div>
+            ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {paginatedProducts.map((product) => (
                 <Link
-                  key={product.id}
-                  href={`/products/${product.id}`}
+                  key={product.ProductID}
+                  href={`/products/${product.ProductID}`}
                   className={
                   viewMode === "grid"
                     ? "group flex flex-col h-full rounded-2xl bg-white p-4 shadow-sm hover:shadow-lg transition"
@@ -584,7 +345,7 @@ export default function ProductsPage() {
                       ? "relative mb-4 overflow-hidden rounded-xl bg-gray-200 h-40 w-full"
                        : "relative overflow-hidden rounded-xl bg-gray-200 h-40 w-40 flex-shrink-0"
                         }>
-                      <img src={product.image} alt={product.title}
+                      <img src={product.ThumbnailURL ?? ""} alt={product.Title}
                         className="h-full w-full object-cover group-hover:scale-110 transition"
                           onError={(e) => {
                             const target = e.currentTarget;
@@ -593,25 +354,25 @@ export default function ProductsPage() {
                             if (parent && !parent.querySelector(".cover-fallback")) {
                               const fallback = document.createElement("div");
                               fallback.className = "cover-fallback h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200";
-                              fallback.innerHTML = `<span style="font-size:2.5rem;font-weight:700;color:#3b5bdb;opacity:0.5;">${product.title.charAt(0)}</span>`;
+                              fallback.innerHTML = `<span style="font-size:2.5rem;font-weight:700;color:#3b5bdb;opacity:0.5;">${product.Title.charAt(0)}</span>`;
                               parent.appendChild(fallback);
                             }
                           }}/>
                       {/* Tag */}
                       <div className="absolute right-2 top-2">
                         <div className="rounded-md bg-orange-500 px-2 py-1 text-xs font-bold text-white">
-                          {product.tag}
+                          {product.IsForRent ? "Thuê" : "Bán"}
                         </div>
                       </div>
                       {/* Wishlist Button */}
                       <button onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        toggleFavorite(product.id);
+                        toggleFavorite(product.ProductID);
                         }}
                         className="absolute left-2 top-2 rounded-full bg-white p-2 shadow-md hover:bg-gray-100 transition"
                       >
-                        <Heart className={`h-4 w-4 transition ${favorites.has(product.id)
+                        <Heart className={`h-4 w-4 transition ${favorites.has(product.ProductID)
                         ? "fill-red-500 text-red-500": "text-gray-400" }`}
                       />
                       </button>
@@ -619,14 +380,14 @@ export default function ProductsPage() {
                     {/* Product Info */}
                     <div className={viewMode === "grid" ? "flex flex-col flex-1" : "flex-1"}>
                       <div className={viewMode === "list" ? "" : "mb-4 flex-1"}>
-                        <p className="text-xs text-gray-500 font-medium">{product.type}</p>
+                        <p className="text-xs text-gray-500 font-medium">{product.Format}</p>
                           <h3 className="mt-1 font-semibold text-gray-900 line-clamp-2">
-                            {product.title}
+                            {product.Title}
                           </h3>
                         <p className="text-xs text-gray-500 mt-1">
-                          {product.condition} • {product.year}
+                          {product.Condition != null ? `${product.Condition}%` : ""} {product.TermLabel ? `• ${product.TermLabel}` : ""}
                         </p>
-                        <p className="mt-1 text-xs text-gray-600">{product.author}</p>
+                        <p className="mt-1 text-xs text-gray-600">{product.Author}</p>
                       </div>
                       {/* Price and Buy Button */}
                       <div className="flex flex-col gap-3">
@@ -634,11 +395,11 @@ export default function ProductsPage() {
                         <div>
                           <div className="flex items-baseline gap-2">
                             <p className="text-lg font-bold text-blue-600">
-                              {product.price}
+                              {fmtVND(product.IsForRent ? product.RentalPrice : product.Price)}
                             </p>
-                            {product.originalPrice && (
+                            {product.OriginalPrice != null && (
                               <p className="text-xs text-gray-500 line-through">
-                                {product.originalPrice}
+                                {fmtVND(product.OriginalPrice)}
                               </p>
                             )}
                           </div>
@@ -672,8 +433,9 @@ export default function ProductsPage() {
                         )}
                     </div>
                   </Link>
-              ))}                       
+              ))}
             </div>
+            )}
 
             {/* PAGINATION */}
               {totalPages > 0 && (

@@ -6,7 +6,14 @@
 --   Interact : Messages · Reviews · Reports
 --   Forum    : Posts · Comments · PostVotes
 -- ============================================================
-CREATE DATABASE EduCart;
+IF DB_ID('EduCart') IS NULL
+BEGIN
+    CREATE DATABASE EduCart;
+END
+GO
+
+USE EduCart;
+GO
 
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
@@ -91,6 +98,7 @@ GO
 CREATE TABLE dbo.Users (
     UserID            INT           IDENTITY(1,1) PRIMARY KEY,
     UserEmail         VARCHAR(100)  NOT NULL UNIQUE,
+    MSSV              VARCHAR(50)   NULL,
 
     -- Họ tên (3 phần)
     FName             NVARCHAR(50)  NULL,
@@ -161,10 +169,25 @@ CREATE TABLE dbo.Products (
     FacultyID   INT            NOT NULL,
     SubjectID   INT            NOT NULL,
     Title       NVARCHAR(255)  NOT NULL,
+    Author      NVARCHAR(255)  NULL,
+    Category    NVARCHAR(100)  NULL,
+    Format      NVARCHAR(50)   NULL,    -- Sách cứng, E-book, ...
+    TermLabel   NVARCHAR(50)   NULL,    -- Theo kỳ, Dài hạn, ...
     Description NVARCHAR(MAX)  NULL,
     Price       DECIMAL(18,2)  NULL     CHECK (Price >= 0),
+    OriginalPrice DECIMAL(18,2) NULL    CHECK (OriginalPrice >= 0),
+    DiscountLabel NVARCHAR(20) NULL,
+    RentalPrice DECIMAL(18,2)  NULL     CHECK (RentalPrice >= 0),
+    Language    NVARCHAR(50)   NULL,
+    Pages       NVARCHAR(50)   NULL,
+    Publisher   NVARCHAR(100)  NULL,
+    PublishYear INT            NULL,
+    ISBN        NVARCHAR(50)   NULL,
     Condition   INT            NULL,    -- tình trạng 0–100 (%)
     IsForRent   BIT            NOT NULL DEFAULT 0,   -- 0=bán/pass  1=cho thuê
+    Stock       INT            NOT NULL DEFAULT 1,
+    Rating      DECIMAL(3,2)   NULL,
+    ReviewsCount INT           NOT NULL DEFAULT 0,
     Status      NVARCHAR(20)   NOT NULL DEFAULT 'Available',
     ViewCount   INT            NOT NULL DEFAULT 0,
     CreatedAt   DATETIME       NOT NULL DEFAULT GETDATE(),
@@ -173,7 +196,9 @@ CREATE TABLE dbo.Products (
     CONSTRAINT FK_Prod_Subject FOREIGN KEY (SubjectID) REFERENCES dbo.Subjects(SubjectID),
     CONSTRAINT CK_Prod_Status  CHECK (Status IN ('Available','Pending','Sold')),
     CONSTRAINT CK_Prod_Cond    CHECK (Condition IS NULL OR Condition BETWEEN 0 AND 100),
-    CONSTRAINT CK_Prod_View    CHECK (ViewCount >= 0)
+    CONSTRAINT CK_Prod_View    CHECK (ViewCount >= 0),
+    CONSTRAINT CK_Prod_Rating  CHECK (Rating IS NULL OR Rating BETWEEN 0 AND 5),
+    CONSTRAINT CK_Prod_Reviews CHECK (ReviewsCount >= 0)
 );
 GO
 
@@ -242,10 +267,17 @@ CREATE TABLE dbo.Orders (
     OrderID     INT            IDENTITY(1,1) PRIMARY KEY,
     BuyerID     INT            NOT NULL,
     SellerID    INT            NOT NULL,   -- người bán (C2C 1 seller / đơn)
+    OrderType   VARCHAR(10)    NOT NULL DEFAULT 'Buy',
+    LifecycleState NVARCHAR(30) NOT NULL DEFAULT 'PendingPayment',
     Status      NVARCHAR(20)   NOT NULL DEFAULT 'Pending',
     Note        NVARCHAR(500)  NULL,       -- ghi chú của người mua
     IsPaid      BIT            NOT NULL DEFAULT 0,
     PaidType    NVARCHAR(30)   NULL,       -- 'Cash'|'BankTransfer'|'EWallet'|'Coin'
+    RentStartDate DATE          NULL,
+    RentEndDate   DATE          NULL,
+    RentDays      INT           NULL,
+    DailyRate     DECIMAL(18,2) NULL,
+    Deposit       DECIMAL(18,2) NULL,
     CreatedAt   DATETIME       NOT NULL DEFAULT GETDATE(),
     UpdatedAt   DATETIME       NULL,
     ReceivedAt  DATETIME       NULL,       -- người mua xác nhận nhận hàng
@@ -257,7 +289,12 @@ CREATE TABLE dbo.Orders (
         ('Pending','Confirmed','Shipped','Completed','Cancelled')),
     CONSTRAINT CK_Ord_PaidType CHECK (PaidType IS NULL
         OR PaidType IN ('Cash','BankTransfer','EWallet','Coin')),
-    CONSTRAINT CK_Ord_NotSelf  CHECK (BuyerID <> SellerID)
+    CONSTRAINT CK_Ord_NotSelf  CHECK (BuyerID <> SellerID),
+    CONSTRAINT CK_Ord_Lifecycle CHECK (LifecycleState IN (
+        'PendingPayment','Paid','Delivering',
+        'ActiveRental','Completed','DepositRefunded','Cancelled'
+    )),
+    CONSTRAINT CK_Ord_Type CHECK (OrderType IN ('Buy','Rent'))
 );
 GO
 
@@ -444,6 +481,7 @@ CREATE TABLE dbo.PaymentTransactions (
     PayMethod   NVARCHAR(30)  NULL,    -- 'MoMo'|'VNPay'|'BankTransfer'|'Cash'
     Status      NVARCHAR(20)  NOT NULL DEFAULT 'Pending',
     RefID       INT           NULL,    -- OrderID nếu là CommissionCollect
+    OrderID     INT           NULL,
     CreatedAt   DATETIME      NOT NULL DEFAULT GETDATE(),
     CompletedAt DATETIME      NULL,
     CONSTRAINT FK_PT_User    FOREIGN KEY (UserID) REFERENCES dbo.Users(UserID),
@@ -506,6 +544,7 @@ CREATE INDEX IX_Cart_UserSaved   ON dbo.CartItems(UserID, SavedForLater);
 CREATE INDEX IX_Ord_BuyerID      ON dbo.Orders(BuyerID);
 CREATE INDEX IX_Ord_SellerID     ON dbo.Orders(SellerID);
 CREATE INDEX IX_Ord_Status       ON dbo.Orders(Status);
+CREATE INDEX IX_Ord_Lifecycle    ON dbo.Orders(LifecycleState);
 CREATE INDEX IX_Ship_MethodID    ON dbo.Shipments(MethodID);
 CREATE INDEX IX_Ship_Status      ON dbo.Shipments(Status);
 CREATE INDEX IX_OI_ProdID        ON dbo.OrderItems(ProductID);
@@ -525,88 +564,6 @@ CREATE INDEX IX_OF_OrderID       ON dbo.OrderFees(OrderID);
 CREATE INDEX IX_CC_Active        ON dbo.CommissionConfigs(EffectiveAt, ExpiredAt);
 GO
 
-GO
--- =========================================================================
--- PROCEDURE: sp_CompleteOrder_And_Payout
--- Tác dụng: Hoàn tất đơn hàng, thanh toán Xu cho Seller và tự động trừ phí sàn
--- =========================================================================
-CREATE OR ALTER PROCEDURE dbo.sp_CompleteOrder_And_Payout
-    @OrderID INT
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    -- Bắt đầu một Transaction an toàn
-    BEGIN TRY
-        BEGIN TRANSACTION;
-
-        -- 1. Lấy thông tin đơn hàng và kiểm tra trạng thái
-        DECLARE @SellerID INT, @CurrentStatus NVARCHAR(20);
-        SELECT @SellerID = SellerID, @CurrentStatus = Status
-        FROM dbo.Orders WHERE OrderID = @OrderID;
-
-        IF @CurrentStatus <> 'Shipped' AND @CurrentStatus <> 'Confirmed' AND @CurrentStatus <> 'Pending'
-        BEGIN
-            RAISERROR(N'Lỗi: Đơn hàng không ở trạng thái hợp lệ để hoàn tất.', 16, 1);
-        END
-
-        -- 2. Tính tổng tiền hàng (Không tính phí ship) từ OrderItems
-        DECLARE @ProductTotal DECIMAL(18,2);
-        SELECT @ProductTotal = ISNULL(SUM(Quantity * UnitPrice), 0)
-        FROM dbo.OrderItems WHERE OrderID = @OrderID;
-
-        -- 3. Lấy cấu hình Phí sàn (Commission) đang Active
-        DECLARE @ConfigID INT, @CommissionRate DECIMAL(5,4);
-        SELECT TOP 1 @ConfigID = ConfigID, @CommissionRate = Rate
-        FROM dbo.CommissionConfigs
-        WHERE ExpiredAt IS NULL
-        ORDER BY EffectiveAt DESC;
-
-        -- 4. Tính toán dòng tiền
-        DECLARE @CommissionAmount DECIMAL(18,2) = @ProductTotal * @CommissionRate;
-        DECLARE @SellerReceive DECIMAL(18,2) = @ProductTotal - @CommissionAmount;
-        DECLARE @SellerWalletID INT = (SELECT WalletID FROM dbo.CoinWallets WHERE UserID = @SellerID);
-
-        -- 5. Cập nhật số dư ví cho Người bán
-        UPDATE dbo.CoinWallets
-        SET Balance = Balance + @SellerReceive, UpdatedAt = GETDATE()
-        WHERE WalletID = @SellerWalletID;
-
-        -- 6. Ghi log vào CoinTransactions (Rất quan trọng để đối soát)
-        -- 6.1 Ghi nhận tiền thu được từ việc bán sách
-        INSERT INTO dbo.CoinTransactions (WalletID, Amount, TxType, RefID, Note)
-        VALUES (@SellerWalletID, @ProductTotal, 'Purchase', @OrderID, N'Nhận tiền bán tài liệu từ Đơn hàng #' + CAST(@OrderID AS NVARCHAR));
-
-        -- 6.2 Ghi nhận khoản bị hệ thống trừ đi làm phí sàn (nếu phí > 0)
-        IF @CommissionAmount > 0
-        BEGIN
-            INSERT INTO dbo.CoinTransactions (WalletID, Amount, TxType, RefID, Note)
-            VALUES (@SellerWalletID, -@CommissionAmount, 'Commission', @OrderID, N'Trừ phí sàn nền tảng cho Đơn hàng #' + CAST(@OrderID AS NVARCHAR));
-        END
-
-        -- 7. Ghi nhận lịch sử áp dụng phí vào bảng OrderFees
-        INSERT INTO dbo.OrderFees (OrderID, ConfigID, CommissionRate, CommissionAmount)
-        VALUES (@OrderID, @ConfigID, @CommissionRate, @CommissionAmount);
-
-        -- 8. Chốt trạng thái Đơn hàng và Sản phẩm
-        UPDATE dbo.Orders 
-        SET Status = 'Completed', CompletedAt = GETDATE(), IsPaid = 1, PaidType = 'Coin' 
-        WHERE OrderID = @OrderID;
-
-        -- Cập nhật tất cả sách trong đơn này thành 'Sold'
-        UPDATE dbo.Products 
-        SET Status = 'Sold', UpdatedAt = GETDATE()
-        WHERE ProductID IN (SELECT ProductID FROM dbo.OrderItems WHERE OrderID = @OrderID);
-
-        -- Nếu tất cả các bước trên không có lỗi -> Chốt dữ liệu
-        COMMIT TRANSACTION;
-    END TRY
-    BEGIN CATCH
-        -- Nếu có bất kỳ lỗi nào xảy ra ở các bước trên -> Hoàn tác toàn bộ
-        ROLLBACK TRANSACTION;
-        
-        DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
-        RAISERROR(@ErrorMessage, 16, 1);
-    END CATCH
-END;
-GO
+-- Triggers    → triggers.sql
+-- Procedures  → stored_procedures.sql
+-- Seed data   → seed_data.sql
