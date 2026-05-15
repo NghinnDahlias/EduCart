@@ -71,6 +71,58 @@ const OrderRepository = {
     }
   },
 
+  async findByUser(userId, role = 'buyer') {
+    const pool = await getPool();
+    const col = role === 'seller' ? 'SellerID' : 'BuyerID';
+    const r = await pool
+      .request()
+      .input('UserID', sql.Int, userId)
+      .query(`
+        SELECT o.*,
+               ub.FName + ' ' + ub.LName AS BuyerName,
+               us.FName + ' ' + us.LName AS SellerName
+        FROM dbo.Orders o
+        JOIN dbo.Users ub ON ub.UserID = o.BuyerID
+        JOIN dbo.Users us ON us.UserID = o.SellerID
+        WHERE o.${col} = @UserID
+        ORDER BY o.CreatedAt DESC
+      `);
+    return r.recordset;
+  },
+
+  async findByIdWithItems(orderId) {
+    const pool = await getPool();
+    const [orderRes, itemsRes] = await Promise.all([
+      pool
+        .request()
+        .input('OrderID', sql.Int, orderId)
+        .query(`
+          SELECT o.*,
+                 ub.FName + ' ' + ub.LName AS BuyerName,
+                 us.FName + ' ' + us.LName AS SellerName
+          FROM dbo.Orders o
+          JOIN dbo.Users ub ON ub.UserID = o.BuyerID
+          JOIN dbo.Users us ON us.UserID = o.SellerID
+          WHERE o.OrderID = @OrderID
+        `),
+      pool
+        .request()
+        .input('OrderID', sql.Int, orderId)
+        .query(`
+          SELECT oi.OrderID, oi.ProductID, oi.Quantity, oi.UnitPrice,
+                 p.Title, p.Author,
+                 (SELECT TOP 1 ImageURL FROM dbo.ProductImages
+                  WHERE ProductID = p.ProductID ORDER BY SortOrder) AS ThumbnailURL
+          FROM dbo.OrderItems oi
+          JOIN dbo.Products p ON p.ProductID = oi.ProductID
+          WHERE oi.OrderID = @OrderID
+        `),
+    ]);
+    const order = orderRes.recordset[0];
+    if (!order) return null;
+    return { ...order, items: itemsRes.recordset };
+  },
+
   async updateLifecycleState(orderId, newState, { isPaid, paidType } = {}) {
     const pool = await getPool();
     const req = pool

@@ -78,6 +78,16 @@ class OrderService {
    * seller hits "ship"). The webhook handler bypasses this and
    * goes through the EventBus instead.
    */
+  async getOrders(userId, role) {
+    return this.orders.findByUser(userId, role);
+  }
+
+  async getOrder(orderId) {
+    const order = await this.orders.findByIdWithItems(orderId);
+    if (!order) throw new AppError('Order not found', 404);
+    return order;
+  }
+
   async transition(orderId, event) {
     const order = await this.orders.findById(orderId);
     if (!order) throw new AppError('Order not found', 404);

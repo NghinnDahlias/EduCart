@@ -7,29 +7,31 @@ EduCart frontend is built with Next.js App Router, Tailwind CSS, Framer Motion, 
 - Node.js 18+ (recommended Node.js 20)
 - npm 9+
 
-## Run locally
+## Environment setup
 
-1. Open terminal at this folder c:\Users\user\Desktop\EduCart\frontend :
+1. Create a local env file (if it does not exist yet):
 
-   cd fe
+   cp .env.example .env
 
-2. Install dependencies:
+2. Update these values as needed:
+
+   PORT=3000
+   NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+   NEXT_PUBLIC_API_BASE_URL_PROD=
+
+`NEXT_PUBLIC_API_BASE_URL_PROD` is optional. If it is empty, the dev value is used.
+
+## Run frontend
+
+1. Install dependencies:
 
    npm install
 
-2'. Install Framer Motion
-
-   npm install framer-motion lucide-react
-
-2.2. 
-
-   npm install @radix-ui/react-accordion lucide-react clsx tailwind-merge
-
-3. Start development server:
+2. Start development server:
 
    npm run dev
 
-4. Open browser:
+3. Open browser:
 
    http://localhost:3000
 
@@ -60,23 +62,22 @@ EduCart frontend is built with Next.js App Router, Tailwind CSS, Framer Motion, 
 
 ## Run backend + frontend together
 
-1. Open terminal at workspace root:
+1. Backend (Docker):
 
-   c:\Users\user\Desktop\EduCart
+   cd ../be
+   docker compose up --build
 
-2. Install root helper dependency:
+2. Frontend:
 
-   npm install
-
-3. Install backend dependencies:
-
-   npm --prefix backend install
-
-4. Start both services in one command:
-
+   cd ../fe
    npm run dev
 
-5. Access services:
+3. Access services:
 
 - Frontend: http://localhost:3000
-- Backend: http://localhost:5000
+- Backend: http://localhost:5000/api/health
+
+## Port conflicts
+
+If a port is blocked (for example 5000), update PORT in be/.env and update
+NEXT_PUBLIC_API_BASE_URL in fe/.env to match the new backend port.

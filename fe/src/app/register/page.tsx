@@ -1,32 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, User, Eye, EyeOff, BookOpen } from "lucide-react";
-
-const universities = [
-    "Đại Học Bách Khoa Hà Nội",
-    "Đại Học Quốc Gia Hà Nội",
-    "Đại Học Kinh Tế Quốc Dân",
-    "Đại Học Ngoại Thương",
-    "Đại Học Khoa Học Tự Nhiên",
-    "Đại Học Công Nghệ",
-    "Đại Học Sài Gòn",
-    "Đại Học Bách Khoa TP.HCM"
-];
-
-const majors = [
-    "Khoa học Máy tính",
-    "Kỹ thuật Máy tính",
-    "Kỹ Thuật Phần Mềm",
-    "Công Nghệ Thông Tin",
-    "Kinh Tế",
-    "Quản Lý Kinh Doanh",
-    "Kỹ Thuật Cơ Khí",
-    "Kỹ Thuật Điện",
-    "Luật"
-];
+import { api } from "@/lib/api";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -44,6 +22,14 @@ export default function RegisterPage() {
     const [agreeTerms, setAgreeTerms] = useState(false);
     const [error, setError] = useState("");
     const [showSuccess, setShowSuccess] = useState(false);
+    const [universities, setUniversities] = useState<Array<{ UniversityID: number; UName: string }>>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        api.get<{ ok: boolean; universities: Array<{ UniversityID: number; UName: string }> }>("/universities")
+            .then(d => setUniversities(d.universities))
+            .catch(() => {});
+    }, []);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -54,8 +40,8 @@ export default function RegisterPage() {
         setError("");
     };
 
-    const handleRegister = () => {
-        if (!formData.fullName || !formData.email || !formData.studentId || !formData.university || !formData.major || !formData.password || !formData.confirmPassword) {
+    const handleRegister = async () => {
+        if (!formData.fullName || !formData.email || !formData.studentId || !formData.university || !formData.password || !formData.confirmPassword) {
             setError("Vui lòng điền đầy đủ thông tin");
             return;
         }
@@ -67,10 +53,26 @@ export default function RegisterPage() {
             setError("Vui lòng đồng ý với điều khoản dịch vụ");
             return;
         }
-        // Handle register logic here
-        setTimeout(() => {
+        setLoading(true);
+        setError("");
+        try {
+            const nameParts = formData.fullName.trim().split(" ");
+            const lname = nameParts[0];
+            const fname = nameParts.slice(1).join(" ") || lname;
+            await api.post("/auth/register", {
+                email: formData.email,
+                password: formData.password,
+                mssv: formData.studentId,
+                universityId: Number(formData.university),
+                fname,
+                lname,
+            });
             setShowSuccess(true);
-        }, 500);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Đăng ký thất bại");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -187,7 +189,7 @@ export default function RegisterPage() {
                                 >
                                     <option value="">Chọn trường</option>
                                     {universities.map(uni => (
-                                        <option key={uni} value={uni}>{uni}</option>
+                                        <option key={uni.UniversityID} value={uni.UniversityID}>{uni.UName}</option>
                                     ))}
                                 </select>
                             </div>
@@ -205,9 +207,15 @@ export default function RegisterPage() {
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 bg-white"
                             >
                                 <option value="">Chọn ngành học</option>
-                                {majors.map(major => (
-                                    <option key={major} value={major}>{major}</option>
-                                ))}
+                                <option value="Khoa học Máy tính">Khoa học Máy tính</option>
+                                <option value="Kỹ thuật Máy tính">Kỹ thuật Máy tính</option>
+                                <option value="Kỹ Thuật Phần Mềm">Kỹ Thuật Phần Mềm</option>
+                                <option value="Công Nghệ Thông Tin">Công Nghệ Thông Tin</option>
+                                <option value="Kinh Tế">Kinh Tế</option>
+                                <option value="Quản Lý Kinh Doanh">Quản Lý Kinh Doanh</option>
+                                <option value="Kỹ Thuật Cơ Khí">Kỹ Thuật Cơ Khí</option>
+                                <option value="Kỹ Thuật Điện">Kỹ Thuật Điện</option>
+                                <option value="Luật">Luật</option>
                             </select>
                         </div>
 

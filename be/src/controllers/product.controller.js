@@ -18,6 +18,34 @@ const createSchema = Joi.object({
   subjectId: Joi.number().integer().required(),
   condition: Joi.number().integer().min(0).max(100).optional(),
   stock: Joi.number().integer().min(1).default(1),
+  // Metadata fields
+  author: Joi.string().max(255).optional(),
+  category: Joi.string().max(100).optional(),
+  format: Joi.string().max(50).optional(),
+  termLabel: Joi.string().max(50).optional(),
+  originalPrice: Joi.number().min(0).optional(),
+  discountLabel: Joi.string().max(50).optional(),
+  rentalPrice: Joi.number().min(0).optional(),
+  language: Joi.string().max(50).optional(),
+  pages: Joi.number().integer().min(1).optional(),
+  publisher: Joi.string().max(255).optional(),
+  publishYear: Joi.number().integer().min(1000).max(9999).optional(),
+  isbn: Joi.string().max(20).optional(),
+});
+
+const list = asyncHandler(async (req, res) => {
+  const { search, status, page, limit, universityId, facultyId, subjectId, forRent } = req.query;
+  const result = await services.productService.list({
+    search,
+    status,
+    page: Number(page) || 1,
+    limit: Number(limit) || 20,
+    universityId: universityId ? Number(universityId) : undefined,
+    facultyId: facultyId ? Number(facultyId) : undefined,
+    subjectId: subjectId ? Number(subjectId) : undefined,
+    forRent: forRent !== undefined ? forRent === 'true' : undefined,
+  });
+  res.json({ ok: true, ...result });
 });
 
 const create = asyncHandler(async (req, res) => {
@@ -43,7 +71,10 @@ const create = asyncHandler(async (req, res) => {
 
   const product = await services.productService.createProduct({
     sellerId: req.user.id,
-    dto: { ...value, isForRent: value.type === 'Rent' },
+    dto: {
+      ...value,
+      isForRent: value.type === 'Rent',
+    },
     imageUrls,
   });
   res.status(201).json({ ok: true, product, images: imageUrls });
@@ -54,4 +85,4 @@ const getById = asyncHandler(async (req, res) => {
   res.json({ ok: true, product });
 });
 
-module.exports = { create, getById };
+module.exports = { list, create, getById };

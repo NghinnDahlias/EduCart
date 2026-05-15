@@ -39,6 +39,17 @@ const transitionSchema = Joi.object({
     .required(),
 });
 
+const list = asyncHandler(async (req, res) => {
+  const role = req.query.role === 'seller' ? 'seller' : 'buyer';
+  const orders = await services.orderService.getOrders(req.user.id, role);
+  res.json({ ok: true, orders });
+});
+
+const getById = asyncHandler(async (req, res) => {
+  const order = await services.orderService.getOrder(Number(req.params.id));
+  res.json({ ok: true, order });
+});
+
 const create = asyncHandler(async (req, res) => {
   const order = await services.orderService.createOrder({
     buyerId: req.user.id,
@@ -56,6 +67,8 @@ const transition = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  list,
+  getById,
   create,
   transition,
   createValidator: validate(createSchema),

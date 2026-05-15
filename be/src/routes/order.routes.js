@@ -4,6 +4,8 @@ const ctrl = require('../controllers/order.controller');
 
 const router = express.Router();
 
+router.get('/', requireAuth, ctrl.list);
+router.get('/:id', requireAuth, ctrl.getById);
 router.post('/', requireAuth, ctrl.createValidator, ctrl.create);
 router.post(
   '/:id/transitions',

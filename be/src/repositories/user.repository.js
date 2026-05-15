@@ -33,14 +33,15 @@ const UserRepository = {
         .input('Password', sql.VarChar(255), passwordHash)
         .input('FName', sql.NVarChar(50), fname || null)
         .input('LName', sql.NVarChar(50), lname || null)
+        .input('MSSV', sql.VarChar(50), mssv || null)
         .input('Role', sql.NVarChar(20), role)
         .input('EduLevel', sql.NVarChar(20), 'Undergraduate')
         .input('Year', sql.TinyInt, 1)
         .query(`
           INSERT INTO dbo.Users
-            (UserEmail, Password, FName, LName, Role, EducationLevel, StudentYear)
+            (UserEmail, Password, FName, LName, MSSV, Role, EducationLevel, StudentYear)
           OUTPUT INSERTED.*
-          VALUES (@Email, @Password, @FName, @LName, @Role, @EduLevel, @Year);
+          VALUES (@Email, @Password, @FName, @LName, @MSSV, @Role, @EduLevel, @Year);
         `);
 
       const user = insertUser.recordset[0];
@@ -53,15 +54,6 @@ const UserRepository = {
             INSERT INTO dbo.UserUniversity (UserID, UniversityID, EnrolledAt)
             VALUES (@UserID, @UniversityID, GETDATE());
           `);
-      }
-
-      // MSSV is captured into a Bio note for now — schema doesn't have
-      // a dedicated column. Store it pragmatically without altering the table.
-      if (mssv) {
-        await new sql.Request(tx)
-          .input('UserID', sql.Int, user.UserID)
-          .input('Bio', sql.NVarChar(500), `MSSV:${mssv}`)
-          .query('UPDATE dbo.Users SET Bio = @Bio WHERE UserID = @UserID');
       }
 
       await tx.commit();

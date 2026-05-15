@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, BookOpen } from "lucide-react";
+import { api, setToken, setUser } from "@/lib/api";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -13,6 +14,7 @@ export default function LoginPage() {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -23,13 +25,26 @@ export default function LoginPage() {
         setError("");
     };
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         if (!formData.email || !formData.password) {
             setError("Vui lòng điền đầy đủ thông tin");
             return;
         }
-        // Handle login logic here
-        router.push("/");
+        setLoading(true);
+        setError("");
+        try {
+            const data = await api.post<{ ok: boolean; token: string; user: Record<string, unknown> }>(
+                "/auth/login",
+                { email: formData.email, password: formData.password }
+            );
+            setToken(data.token);
+            setUser(data.user);
+            router.push("/");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Đăng nhập thất bại");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -140,9 +155,10 @@ export default function LoginPage() {
                         {/* Login Button */}
                         <button
                             onClick={handleLogin}
-                            className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition duration-200"
+                            disabled={loading}
+                            className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            Đăng nhập
+                            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
                         </button>
 
                         {/* Signup Link */}
