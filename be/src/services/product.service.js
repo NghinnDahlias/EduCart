@@ -112,3 +112,4 @@ class ProductService {
     await this.products.delete(productId);
   }
 }
+module.exports = ProductService;
