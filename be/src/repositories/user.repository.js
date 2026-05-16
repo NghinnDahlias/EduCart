@@ -23,7 +23,7 @@ const UserRepository = {
     return r.recordset[0] || null;
   },
 
-  async create({ email, passwordHash, fname, lname, mssv, universityId, role = 'Student' }) {
+  async create({ email, passwordHash, fname, lname, mssv, universityId, role = 'Buyer', eduLevel = 'Undergraduate', year = 1 }) {
     const pool = await getPool();
     const tx = new sql.Transaction(pool);
     await tx.begin();
@@ -35,8 +35,8 @@ const UserRepository = {
         .input('LName', sql.NVarChar(50), lname || null)
         .input('MSSV', sql.VarChar(50), mssv || null)
         .input('Role', sql.NVarChar(20), role)
-        .input('EduLevel', sql.NVarChar(20), 'Undergraduate')
-        .input('Year', sql.TinyInt, 1)
+        .input('EduLevel', sql.NVarChar(20), eduLevel)
+        .input('Year', sql.TinyInt, year)
         .query(`
           INSERT INTO dbo.Users
             (UserEmail, Password, FName, LName, MSSV, Role, EducationLevel, StudentYear)

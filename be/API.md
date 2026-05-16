@@ -177,6 +177,61 @@ Create a new product listing.
 
 ---
 
+### PUT /products/:id `[Auth required]`
+Update an existing product listing. Only the seller who created the product can update it.
+Products with status `Sold` or `Renting` cannot be updated.
+
+**Body** (all fields optional, `multipart/form-data`)
+```json
+{
+  "title": "Updated Title",
+  "description": "Updated description",
+  "price": 150000,
+  "stock": 3,
+  "condition": 90,
+  "author": "Author Name",
+  "category": "Category",
+  "format": "Sách mềm",
+  "termLabel": "Theo kỳ",
+  "originalPrice": 300000,
+  "discountLabel": "-50%",
+  "rentalPrice": 10000,
+  "language": "Vietnamese",
+  "pages": 500,
+  "publisher": "NXB Giáo Dục",
+  "publishYear": 2024,
+  "isbn": "978-0000000000"
+}
+```
+
+**Response 200**
+```json
+{ "ok": true, "product": { "ProductID": 1, ... } }
+```
+
+**Error Responses**
+- `403` — Not the product owner
+- `400` — Product is sold or renting
+- `404` — Product not found
+
+---
+
+### DELETE /products/:id `[Auth required]`
+Delete a product listing. Only the seller who created the product can delete it.
+Products with status `Sold` or `Renting` cannot be deleted.
+
+**Response 200**
+```json
+{ "ok": true, "message": "Product deleted successfully" }
+```
+
+**Error Responses**
+- `403` — Not the product owner
+- `400` — Product is sold or renting
+- `404` — Product not found
+
+---
+
 ## Orders
 
 ### GET /orders `[Auth required]`

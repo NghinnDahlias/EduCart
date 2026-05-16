@@ -1,27 +1,13 @@
-const path = require('path');
-const fs = require('fs');
-const multer = require('multer');
-const AppError = require('../utils/AppError');
-
-const UPLOAD_DIR = path.join(__dirname, '..', '..', 'uploads', 'products');
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination(_req, _file, cb) {
-    cb(null, UPLOAD_DIR);
-  },
-  filename(_req, file, cb) {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const safe = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, safe);
-  },
-});
+const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
+const AppError = require("../utils/AppError");
 
 const ALLOWED_MIME = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
 ]);
 
 function fileFilter(_req, file, cb) {
@@ -31,10 +17,33 @@ function fileFilter(_req, file, cb) {
   return cb(null, true);
 }
 
+function makeStorage(subdir) {
+  const dir = path.join(__dirname, "..", "..", "uploads", subdir);
+  fs.mkdirSync(dir, { recursive: true });
+  return multer.diskStorage({
+    destination(_req, _file, cb) {
+      cb(null, dir);
+    },
+    filename(_req, file, cb) {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+    },
+  });
+}
+
+// Product images: up to 5, 5 MB each
 const upload = multer({
-  storage,
+  storage: makeStorage("products"),
   fileFilter,
   limits: { fileSize: 5 * 1024 * 1024, files: 5 },
 });
 
+// Avatar: single image, 2 MB
+const uploadAvatar = multer({
+  storage: makeStorage("avatars"),
+  fileFilter,
+  limits: { fileSize: 2 * 1024 * 1024, files: 1 },
+});
+
 module.exports = upload;
+module.exports.uploadAvatar = uploadAvatar;

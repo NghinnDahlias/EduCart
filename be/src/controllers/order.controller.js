@@ -1,11 +1,12 @@
-const Joi = require('joi');
-const asyncHandler = require('../utils/asyncHandler');
-const validate = require('../utils/validate');
-const { services } = require('../container');
+const Joi = require("joi");
+const asyncHandler = require("../utils/asyncHandler");
+const validate = require("../utils/validate");
+const AppError = require("../utils/AppError");
+const { services } = require("../container");
 
 const createSchema = Joi.object({
-  type: Joi.string().valid('Buy', 'Rent').required(),
-  note: Joi.string().allow('').optional(),
+  type: Joi.string().valid("Buy", "Rent").required(),
+  note: Joi.string().allow("").optional(),
   items: Joi.array()
     .items(
       Joi.object({
@@ -15,38 +16,42 @@ const createSchema = Joi.object({
     )
     .min(1)
     .required(),
-  // Rent-only fields. The Factory throws if these are missing for Rent.
-  rentStartDate: Joi.when('type', {
-    is: 'Rent',
+  rentStartDate: Joi.when("type", {
+    is: "Rent",
     then: Joi.date().required(),
     otherwise: Joi.optional(),
   }),
-  rentEndDate: Joi.when('type', {
-    is: 'Rent',
+  rentEndDate: Joi.when("type", {
+    is: "Rent",
     then: Joi.date().required(),
     otherwise: Joi.optional(),
   }),
-  dailyRate: Joi.when('type', {
-    is: 'Rent',
+  dailyRate: Joi.when("type", {
+    is: "Rent",
     then: Joi.number().positive().required(),
     otherwise: Joi.optional(),
   }),
 });
 
 const transitionSchema = Joi.object({
+  // onPaymentSucceeded is reserved for the payment webhook — not exposed to end-users
   event: Joi.string()
-    .valid('onShip', 'onDeliver', 'onComplete', 'onRefundDeposit', 'onCancel')
+    .valid("onShip", "onDeliver", "onComplete", "onRefundDeposit", "onCancel")
     .required(),
 });
 
 const list = asyncHandler(async (req, res) => {
-  const role = req.query.role === 'seller' ? 'seller' : 'buyer';
+  const role = req.query.role === "seller" ? "seller" : "buyer";
   const orders = await services.orderService.getOrders(req.user.id, role);
   res.json({ ok: true, orders });
 });
 
 const getById = asyncHandler(async (req, res) => {
   const order = await services.orderService.getOrder(Number(req.params.id));
+  // Only the buyer or seller of this order may view it
+  if (order.BuyerID !== req.user.id && order.SellerID !== req.user.id) {
+    throw new AppError("You do not have permission to view this order", 403);
+  }
   res.json({ ok: true, order });
 });
 
