@@ -1,18 +1,29 @@
-const Joi = require('joi');
-const asyncHandler = require('../utils/asyncHandler');
-const validate = require('../utils/validate');
-const { services } = require('../container');
+const Joi = require("joi");
+const asyncHandler = require("../utils/asyncHandler");
+const validate = require("../utils/validate");
+const { services } = require("../container");
 
 const initiateSchema = Joi.object({
   orderId: Joi.number().integer().required(),
-  method: Joi.string().valid('MoMo', 'VNPay').required(),
+  method: Joi.string().valid("MoMo", "VNPay").required(),
   returnUrl: Joi.string().uri().optional(),
 });
 
 const webhookSchema = Joi.object({
-  method: Joi.string().valid('MoMo', 'VNPay').required(),
+  method: Joi.string().valid("MoMo", "VNPay").required(),
   signature: Joi.string().required(),
   payload: Joi.object().required(),
+});
+
+const list = asyncHandler(async (req, res) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 20;
+  const result = await services.paymentService.getPaymentHistory(
+    req.user.id,
+    page,
+    limit,
+  );
+  res.json({ ok: true, ...result });
 });
 
 const initiate = asyncHandler(async (req, res) => {
@@ -36,6 +47,7 @@ const webhook = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  list,
   initiate,
   webhook,
   initiateValidator: validate(initiateSchema),

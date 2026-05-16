@@ -1,11 +1,9 @@
-const { sql, getPool } = require('../config/db');
+const { sql, getPool } = require("../config/db");
 
 const ProductRepository = {
   async findById(productId) {
     const pool = await getPool();
-    const prod = await pool
-      .request()
-      .input('ProductID', sql.Int, productId)
+    const prod = await pool.request().input("ProductID", sql.Int, productId)
       .query(`
         SELECT p.*,
                u.FName + ' ' + u.LName AS SellerName,
@@ -15,9 +13,7 @@ const ProductRepository = {
         JOIN dbo.Users u ON u.UserID = p.SellerID
         WHERE p.ProductID = @ProductID
       `);
-    const imgs = await pool
-      .request()
-      .input('ProductID', sql.Int, productId)
+    const imgs = await pool.request().input("ProductID", sql.Int, productId)
       .query(`
         SELECT ImageID, ImageURL, SortOrder
         FROM dbo.ProductImages
@@ -39,7 +35,7 @@ const ProductRepository = {
       return `@p${i}`;
     });
     const r = await req.query(
-      `SELECT * FROM dbo.Products WHERE ProductID IN (${placeholders.join(',')})`,
+      `SELECT * FROM dbo.Products WHERE ProductID IN (${placeholders.join(",")})`,
     );
     return r.recordset;
   },
@@ -64,34 +60,34 @@ const ProductRepository = {
 
     const conditions = [];
     if (search) {
-      req.input('Search', sql.NVarChar(255), `%${search}%`);
-      conditions.push('(p.Title LIKE @Search OR p.Author LIKE @Search)');
+      req.input("Search", sql.NVarChar(255), `%${search}%`);
+      conditions.push("(p.Title LIKE @Search OR p.Author LIKE @Search)");
     }
     if (status) {
-      req.input('Status', sql.NVarChar(20), status);
-      conditions.push('p.Status = @Status');
+      req.input("Status", sql.NVarChar(20), status);
+      conditions.push("p.Status = @Status");
     }
     if (universityId !== undefined) {
-      req.input('UniversityID', sql.Int, universityId);
-      conditions.push('p.UniversityID = @UniversityID');
+      req.input("UniversityID", sql.Int, universityId);
+      conditions.push("p.UniversityID = @UniversityID");
     }
     if (facultyId !== undefined) {
-      req.input('FacultyID', sql.Int, facultyId);
-      conditions.push('p.FacultyID = @FacultyID');
+      req.input("FacultyID", sql.Int, facultyId);
+      conditions.push("p.FacultyID = @FacultyID");
     }
     if (subjectId !== undefined) {
-      req.input('SubjectID', sql.Int, subjectId);
-      conditions.push('p.SubjectID = @SubjectID');
+      req.input("SubjectID", sql.Int, subjectId);
+      conditions.push("p.SubjectID = @SubjectID");
     }
     if (forRent !== undefined) {
-      req.input('IsForRent', sql.Bit, forRent ? 1 : 0);
-      conditions.push('p.IsForRent = @IsForRent');
+      req.input("IsForRent", sql.Bit, forRent ? 1 : 0);
+      conditions.push("p.IsForRent = @IsForRent");
     }
 
-    req.input('Offset', sql.Int, offset);
-    req.input('Limit', sql.Int, limit);
+    req.input("Offset", sql.Int, offset);
+    req.input("Limit", sql.Int, limit);
 
-    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
     const r = await req.query(`
       SELECT
         COUNT(*) OVER() AS TotalCount,
@@ -158,29 +154,28 @@ const ProductRepository = {
     await tx.begin();
     try {
       const insertProd = await new sql.Request(tx)
-        .input('SellerID', sql.Int, sellerId)
-        .input('UniversityID', sql.Int, universityId)
-        .input('FacultyID', sql.Int, facultyId)
-        .input('SubjectID', sql.Int, subjectId)
-        .input('Title', sql.NVarChar(255), title)
-        .input('Description', sql.NVarChar(sql.MAX), description || null)
-        .input('Price', sql.Decimal(18, 2), price)
-        .input('Condition', sql.Int, condition)
-        .input('IsForRent', sql.Bit, isForRent ? 1 : 0)
-        .input('Stock', sql.Int, stock)
-        .input('Author', sql.NVarChar(255), author)
-        .input('Category', sql.NVarChar(100), category)
-        .input('Format', sql.NVarChar(50), format)
-        .input('TermLabel', sql.NVarChar(50), termLabel)
-        .input('OriginalPrice', sql.Decimal(18, 2), originalPrice)
-        .input('DiscountLabel', sql.NVarChar(50), discountLabel)
-        .input('RentalPrice', sql.Decimal(18, 2), rentalPrice)
-        .input('Language', sql.NVarChar(50), language)
-        .input('Pages', sql.Int, pages)
-        .input('Publisher', sql.NVarChar(255), publisher)
-        .input('PublishYear', sql.SmallInt, publishYear)
-        .input('ISBN', sql.VarChar(20), isbn)
-        .query(`
+        .input("SellerID", sql.Int, sellerId)
+        .input("UniversityID", sql.Int, universityId)
+        .input("FacultyID", sql.Int, facultyId)
+        .input("SubjectID", sql.Int, subjectId)
+        .input("Title", sql.NVarChar(255), title)
+        .input("Description", sql.NVarChar(sql.MAX), description || null)
+        .input("Price", sql.Decimal(18, 2), price)
+        .input("Condition", sql.Int, condition)
+        .input("IsForRent", sql.Bit, isForRent ? 1 : 0)
+        .input("Stock", sql.Int, stock)
+        .input("Author", sql.NVarChar(255), author)
+        .input("Category", sql.NVarChar(100), category)
+        .input("Format", sql.NVarChar(50), format)
+        .input("TermLabel", sql.NVarChar(50), termLabel)
+        .input("OriginalPrice", sql.Decimal(18, 2), originalPrice)
+        .input("DiscountLabel", sql.NVarChar(50), discountLabel)
+        .input("RentalPrice", sql.Decimal(18, 2), rentalPrice)
+        .input("Language", sql.NVarChar(50), language)
+        .input("Pages", sql.Int, pages)
+        .input("Publisher", sql.NVarChar(255), publisher)
+        .input("PublishYear", sql.SmallInt, publishYear)
+        .input("ISBN", sql.VarChar(20), isbn).query(`
           INSERT INTO dbo.Products
             (SellerID, UniversityID, FacultyID, SubjectID, Title, Description,
              Price, Condition, IsForRent, Stock,
@@ -199,10 +194,9 @@ const ProductRepository = {
       for (let i = 0; i < images.length; i += 1) {
         // eslint-disable-next-line no-await-in-loop
         await new sql.Request(tx)
-          .input('ProductID', sql.Int, product.ProductID)
-          .input('ImageURL', sql.VarChar(500), images[i])
-          .input('SortOrder', sql.TinyInt, i)
-          .query(`
+          .input("ProductID", sql.Int, product.ProductID)
+          .input("ImageURL", sql.VarChar(500), images[i])
+          .input("SortOrder", sql.TinyInt, i).query(`
             INSERT INTO dbo.ProductImages (ProductID, ImageURL, SortOrder)
             VALUES (@ProductID, @ImageURL, @SortOrder);
           `);
@@ -218,19 +212,149 @@ const ProductRepository = {
 
   async decrementStock(productId, qty, isRental = false) {
     const pool = await getPool();
-    const newStatus = isRental ? 'Pending' : 'Sold';
+    const newStatus = isRental ? "Pending" : "Sold";
     await pool
       .request()
-      .input('ProductID', sql.Int, productId)
-      .input('Qty', sql.Int, qty)
-      .input('NewStatus', sql.NVarChar(20), newStatus)
-      .query(`
+      .input("ProductID", sql.Int, productId)
+      .input("Qty", sql.Int, qty)
+      .input("NewStatus", sql.NVarChar(20), newStatus).query(`
         UPDATE dbo.Products
         SET Stock = CASE WHEN Stock - @Qty < 0 THEN 0 ELSE Stock - @Qty END,
             Status = CASE WHEN Stock - @Qty <= 0 THEN @NewStatus ELSE Status END,
             UpdatedAt = GETDATE()
         WHERE ProductID = @ProductID;
       `);
+  },
+
+  /**
+   * Update product fields. Only seller can update their own product.
+   */
+  async update({
+    productId,
+    imageUrls = null,
+    title,
+    description,
+    price,
+    stock,
+    condition,
+    author,
+    category,
+    format,
+    termLabel,
+    originalPrice,
+    discountLabel,
+    rentalPrice,
+    language,
+    pages,
+    publisher,
+    publishYear,
+    isbn,
+  }) {
+    const pool = await getPool();
+    const r = await pool
+      .request()
+      .input("ProductID", sql.Int, productId)
+      .input("Title", sql.NVarChar(255), title)
+      .input("Description", sql.NVarChar(sql.MAX), description)
+      .input("Price", sql.Decimal(18, 2), price)
+      .input("Stock", sql.Int, stock)
+      .input("Condition", sql.Int, condition)
+      .input("Author", sql.NVarChar(255), author)
+      .input("Category", sql.NVarChar(100), category)
+      .input("Format", sql.NVarChar(50), format)
+      .input("TermLabel", sql.NVarChar(50), termLabel)
+      .input("OriginalPrice", sql.Decimal(18, 2), originalPrice)
+      .input("DiscountLabel", sql.NVarChar(50), discountLabel)
+      .input("RentalPrice", sql.Decimal(18, 2), rentalPrice)
+      .input("Language", sql.NVarChar(50), language)
+      .input("Pages", sql.Int, pages)
+      .input("Publisher", sql.NVarChar(255), publisher)
+      .input("PublishYear", sql.SmallInt, publishYear)
+      .input("ISBN", sql.VarChar(20), isbn).query(`
+        UPDATE dbo.Products
+        SET Title = @Title,
+            Description = @Description,
+            Price = @Price,
+            Stock = @Stock,
+            Condition = @Condition,
+            Author = @Author,
+            Category = @Category,
+            Format = @Format,
+            TermLabel = @TermLabel,
+            OriginalPrice = @OriginalPrice,
+            DiscountLabel = @DiscountLabel,
+            RentalPrice = @RentalPrice,
+            Language = @Language,
+            Pages = @Pages,
+            Publisher = @Publisher,
+            PublishYear = @PublishYear,
+            ISBN = @ISBN,
+            UpdatedAt = GETDATE()
+        OUTPUT INSERTED.*
+        WHERE ProductID = @ProductID;
+      `);
+    const prod = r.recordset[0];
+    if (!prod) return null;
+
+    // If new imageUrls provided, replace existing images in a transaction
+    if (imageUrls !== null && imageUrls !== undefined) {
+      const tx = new sql.Transaction(pool);
+      await tx.begin();
+      try {
+        await new sql.Request(tx)
+          .input("ProductID", sql.Int, productId)
+          .query("DELETE FROM dbo.ProductImages WHERE ProductID = @ProductID");
+        for (let i = 0; i < imageUrls.length; i += 1) {
+          // eslint-disable-next-line no-await-in-loop
+          await new sql.Request(tx)
+            .input("ProductID", sql.Int, productId)
+            .input("ImageURL", sql.VarChar(500), imageUrls[i])
+            .input("SortOrder", sql.TinyInt, i)
+            .query(
+              "INSERT INTO dbo.ProductImages (ProductID, ImageURL, SortOrder) VALUES (@ProductID, @ImageURL, @SortOrder)",
+            );
+        }
+        await tx.commit();
+      } catch (err) {
+        await tx.rollback();
+        throw err;
+      }
+    }
+
+    // Fetch images
+    const imgs = await pool.request().input("ProductID", sql.Int, productId)
+      .query(`
+        SELECT ImageID, ImageURL, SortOrder
+        FROM dbo.ProductImages
+        WHERE ProductID = @ProductID
+        ORDER BY SortOrder
+      `);
+    return { ...prod, images: imgs.recordset };
+  },
+
+  /**
+   * Delete product and associated images (cascade).
+   */
+  async delete(productId) {
+    const pool = await getPool();
+    const tx = new sql.Transaction(pool);
+    await tx.begin();
+    try {
+      // Delete images first
+      await new sql.Request(tx)
+        .input("ProductID", sql.Int, productId)
+        .query("DELETE FROM dbo.ProductImages WHERE ProductID = @ProductID");
+
+      // Delete product
+      await new sql.Request(tx)
+        .input("ProductID", sql.Int, productId)
+        .query("DELETE FROM dbo.Products WHERE ProductID = @ProductID");
+
+      await tx.commit();
+    } catch (err) {
+      await tx.rollback();
+      throw err;
+    }
   },
 };
 

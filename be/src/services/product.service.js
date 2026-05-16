@@ -1,4 +1,4 @@
-const AppError = require('../utils/AppError');
+const AppError = require("../utils/AppError");
 
 class ProductService {
   constructor({ productRepository }) {
@@ -11,7 +11,7 @@ class ProductService {
 
   async createProduct({ sellerId, dto, imageUrls }) {
     if (imageUrls && imageUrls.length > 5) {
-      throw new AppError('A product can have at most 5 images', 400);
+      throw new AppError("A product can have at most 5 images", 400);
     }
 
     const product = await this.products.create({
@@ -44,9 +44,72 @@ class ProductService {
 
   async getById(id) {
     const p = await this.products.findById(id);
-    if (!p) throw new AppError('Product not found', 404);
+    if (!p) throw new AppError("Product not found", 404);
     return p;
   }
-}
 
+  async updateProduct({ productId, sellerId, dto }) {
+    // Verify ownership
+    const product = await this.products.findById(productId);
+    if (!product) throw new AppError("Product not found", 404);
+    if (product.SellerID !== sellerId) {
+      throw new AppError(
+        "Unauthorized: You can only edit your own products",
+        403,
+      );
+    }
+
+    // Cannot update sold/rented products
+    if (product.Status === "Sold" || product.Status === "Renting") {
+      throw new AppError(
+        "Cannot update a product that is sold or renting",
+        400,
+      );
+    }
+
+    const updated = await this.products.update({
+      productId,
+      title: dto.title ?? product.Title,
+      description: dto.description ?? product.Description,
+      price: dto.price ?? product.Price,
+      stock: dto.stock ?? product.Stock,
+      condition: dto.condition ?? product.Condition,
+      author: dto.author ?? product.Author,
+      category: dto.category ?? product.Category,
+      format: dto.format ?? product.Format,
+      termLabel: dto.termLabel ?? product.TermLabel,
+      originalPrice: dto.originalPrice ?? product.OriginalPrice,
+      discountLabel: dto.discountLabel ?? product.DiscountLabel,
+      rentalPrice: dto.rentalPrice ?? product.RentalPrice,
+      language: dto.language ?? product.Language,
+      pages: dto.pages ?? product.Pages,
+      publisher: dto.publisher ?? product.Publisher,
+      publishYear: dto.publishYear ?? product.PublishYear,
+      isbn: dto.isbn ?? product.ISBN,
+    });
+    return updated;
+  }
+
+  async deleteProduct({ productId, sellerId }) {
+    // Verify ownership
+    const product = await this.products.findById(productId);
+    if (!product) throw new AppError("Product not found", 404);
+    if (product.SellerID !== sellerId) {
+      throw new AppError(
+        "Unauthorized: You can only delete your own products",
+        403,
+      );
+    }
+
+    // Cannot delete sold/rented products
+    if (product.Status === "Sold" || product.Status === "Renting") {
+      throw new AppError(
+        "Cannot delete a product that is sold or renting",
+        400,
+      );
+    }
+
+    await this.products.delete(productId);
+  }
+}
 module.exports = ProductService;

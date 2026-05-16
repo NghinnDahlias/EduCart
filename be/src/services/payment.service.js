@@ -1,13 +1,44 @@
-const AppError = require('../utils/AppError');
-const paymentContext = require('../patterns/strategy/PaymentContext');
-const { eventBus } = require('../patterns/observer');
+const AppError = require("../utils/AppError");
+const paymentContext = require("../patterns/strategy/PaymentContext");
+const { eventBus } = require("../patterns/observer");
 
 class PaymentService {
-  constructor({ paymentRepository, orderRepository, strategies = paymentContext, bus = eventBus }) {
+  constructor({
+    paymentRepository,
+    orderRepository,
+    strategies = paymentContext,
+    bus = eventBus,
+  }) {
     this.payments = paymentRepository;
     this.orders = orderRepository;
     this.strategies = strategies;
     this.bus = bus;
+  }
+
+  /**
+   * Get payment history for a user with pagination.
+   */
+  async getPaymentHistory(userId, page = 1, limit = 20) {
+    const result = await this.payments.findByUser(userId, page, limit);
+    return {
+      transactions: result.transactions.map((tx) => ({
+        PayTxID: tx.PayTxID,
+        Amount: tx.Amount,
+        PayMethod: tx.PayMethod,
+        OrderID: tx.OrderID,
+        TxType: tx.TxType,
+        Status: tx.Status,
+        CreatedAt: tx.CreatedAt,
+        CompletedAt: tx.CompletedAt,
+        OrderType: tx.OrderType,
+        LifecycleState: tx.LifecycleState,
+        RelatedUserName: tx.RelatedUserName,
+      })),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      pages: result.pages,
+    };
   }
 
   /**
@@ -17,11 +48,11 @@ class PaymentService {
    */
   async initiate({ userId, orderId, method, returnUrl, ipAddr }) {
     const order = await this.orders.findById(orderId);
-    if (!order) throw new AppError('Order not found', 404);
+    if (!order) throw new AppError("Order not found", 404);
     if (order.BuyerID !== userId) {
-      throw new AppError('You can only pay for your own order', 403);
+      throw new AppError("You can only pay for your own order", 403);
     }
-    if (order.LifecycleState !== 'PendingPayment') {
+    if (order.LifecycleState !== "PendingPayment") {
       throw new AppError(
         `Order is in state ${order.LifecycleState} and cannot be paid`,
         409,
@@ -35,7 +66,7 @@ class PaymentService {
       0,
     );
     const amount =
-      order.OrderType === 'Rent'
+      order.OrderType === "Rent"
         ? Number(order.Deposit || 0) +
           Number(order.DailyRate || 0) * Number(order.RentDays || 0)
         : subtotal;
@@ -64,25 +95,24 @@ class PaymentService {
   async handleWebhook({ method, payload, signature }) {
     const strategy = this.strategies.get(method);
     const ok = strategy.verifyWebhookSignature(payload, signature);
-    if (!ok) throw new AppError('Invalid webhook signature', 401);
+    if (!ok) throw new AppError("Invalid webhook signature", 401);
 
-    const orderId =
-      Number(payload.orderId) || Number(payload.vnp_TxnRef);
-    if (!orderId) throw new AppError('Webhook missing orderId', 400);
+    const orderId = Number(payload.orderId) || Number(payload.vnp_TxnRef);
+    if (!orderId) throw new AppError("Webhook missing orderId", 400);
 
     const tx = await this.payments.findByOrderId(orderId);
     const succeeded =
-      String(payload.resultCode) === '0' ||
-      String(payload.vnp_ResponseCode) === '00';
+      String(payload.resultCode) === "0" ||
+      String(payload.vnp_ResponseCode) === "00";
 
     if (!succeeded) {
       if (tx) await this.payments.markFailed(tx.PayTxID);
-      await this.bus.emit('PAYMENT_FAILED', { orderId, gateway: method });
+      await this.bus.emit("PAYMENT_FAILED", { orderId, gateway: method });
       return { ok: false, orderId };
     }
 
     if (tx) await this.payments.markCompleted(tx.PayTxID);
-    await this.bus.emit('PAYMENT_SUCCESS', {
+    await this.bus.emit("PAYMENT_SUCCESS", {
       orderId,
       gateway: method,
       amount: payload.amount || payload.vnp_Amount,
