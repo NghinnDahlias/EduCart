@@ -4,13 +4,15 @@ const validate = require("../utils/validate");
 const { services } = require("../container");
 
 const registerSchema = Joi.object({
-  email: Joi.string().email().required(),
+  email: Joi.string()
+    .email({ tlds: { allow: false } })
+    .required(),
   password: Joi.string().min(8).required(),
   mssv: Joi.string().required(),
   universityId: Joi.number().integer().required(),
   firstName: Joi.string().max(50).optional(),
   lastName: Joi.string().max(50).optional(),
-  role: Joi.string().valid("Buyer", "Seller", "Student", "Admin").optional(),
+  role: Joi.string().valid("Student", "Admin").optional(),
   eduLevel: Joi.string()
     .valid("Undergraduate", "Graduate", "Postgraduate")
     .optional(),
@@ -18,7 +20,9 @@ const registerSchema = Joi.object({
 });
 
 const loginSchema = Joi.object({
-  email: Joi.string().email().required(),
+  email: Joi.string()
+    .email({ tlds: { allow: false } })
+    .required(),
   password: Joi.string().required(),
 });
 

@@ -96,7 +96,7 @@ GO
     SELECT N'Đại Học Công Nghệ' UNION ALL
     SELECT N'Đại Học Sài Gòn' UNION ALL
     SELECT N'Đại Học Bách Khoa TP.HCM' UNION ALL
-    SELECT N'ĐH Bách Khoa TP.HCM' UNION ALL
+    
     SELECT N'ĐH Kinh tế TP.HCM' UNION ALL
     SELECT N'ĐH Khoa học Tự nhiên' UNION ALL
     SELECT N'ĐH Quốc gia TP.HCM' UNION ALL
@@ -114,13 +114,13 @@ WHERE NOT EXISTS (
 GO
 
 -- ============================================================================
--- Seed faculties
+-- Seed faculties (Đã sửa đổi sang tên trường chuẩn)
 -- ============================================================================
 ;WITH FacultySeeds AS (
-    SELECT N'ĐH Bách Khoa TP.HCM' AS UniversityName, N'Khoa Khoa học Ứng dụng' AS FacultyName UNION ALL
-    SELECT N'ĐH Bách Khoa TP.HCM', N'Khoa Khoa học & Kỹ thuật Máy tính' UNION ALL
-    SELECT N'ĐH Bách Khoa TP.HCM', N'Khoa Kỹ thuật Hóa học' UNION ALL
-    SELECT N'ĐH Bách Khoa TP.HCM', N'Khoa Kỹ thuật Giao thông' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM' AS UniversityName, N'Khoa Khoa học Ứng dụng' AS FacultyName UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Khoa học & Kỹ thuật Máy tính' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Kỹ thuật Hóa học' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Kỹ thuật Giao thông' UNION ALL
 
     SELECT N'ĐH Kinh tế TP.HCM', N'Khoa Kinh tế' UNION ALL
     SELECT N'ĐH Kinh tế TP.HCM', N'Khoa Quản trị' UNION ALL
@@ -152,14 +152,14 @@ WHERE NOT EXISTS (
 GO
 
 -- ============================================================================
--- Seed subjects (includes product subjects + register majors)
+-- Seed subjects (Đã sửa đổi sang tên trường chuẩn)
 -- ============================================================================
 ;WITH SubjectSeeds AS (
-    SELECT N'ĐH Bách Khoa TP.HCM' AS UniversityName, N'Khoa Khoa học Ứng dụng' AS FacultyName, NULL AS SubjectCode, N'All' AS SubjectName UNION ALL
-    SELECT N'ĐH Bách Khoa TP.HCM', N'Khoa Khoa học Ứng dụng', NULL, N'Vật lý 1' UNION ALL
-    SELECT N'ĐH Bách Khoa TP.HCM', N'Khoa Khoa học & Kỹ thuật Máy tính', NULL, N'Cấu trúc dữ liệu và Giải thuật' UNION ALL
-    SELECT N'ĐH Bách Khoa TP.HCM', N'Khoa Kỹ thuật Hóa học', NULL, N'Hóa hữu cơ' UNION ALL
-    SELECT N'ĐH Bách Khoa TP.HCM', N'Khoa Kỹ thuật Giao thông', NULL, N'Cơ học chất lỏng' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM' AS UniversityName, N'Khoa Khoa học Ứng dụng' AS FacultyName, NULL AS SubjectCode, N'All' AS SubjectName UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Khoa học Ứng dụng', NULL, N'Vật lý 1' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Khoa học & Kỹ thuật Máy tính', NULL, N'Cấu trúc dữ liệu và Giải thuật' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Kỹ thuật Hóa học', NULL, N'Hóa hữu cơ' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Kỹ thuật Giao thông', NULL, N'Cơ học chất lỏng' UNION ALL
 
     SELECT N'ĐH Kinh tế TP.HCM', N'Khoa Kinh tế', NULL, N'Kinh tế vi mô' UNION ALL
     SELECT N'ĐH Kinh tế TP.HCM', N'Khoa Quản trị', NULL, N'Quản trị kinh doanh' UNION ALL
@@ -201,7 +201,7 @@ WHERE NOT EXISTS (
 GO
 
 -- ============================================================================
--- Seed products (from FE mock lists)
+-- Seed products (Đã sửa đổi sang tên trường chuẩn)
 -- ============================================================================
 ;WITH ProductSeeds AS (
     SELECT 1 AS ProductId, N'Calculus: Early Transcendentals' AS Title, N'James Stewart' AS Author,
@@ -211,7 +211,7 @@ GO
         2023 AS PublishYear, N'978-0357700013' AS ISBN,
         4.5 AS Rating, 128 AS ReviewsCount,
         95 AS Condition, 0 AS IsForRent,
-        N'ĐH Bách Khoa TP.HCM' AS UniversityName, N'Khoa Khoa học Ứng dụng' AS FacultyName, N'All' AS SubjectName,
+        N'Đại Học Bách Khoa TP.HCM' AS UniversityName, N'Khoa Khoa học Ứng dụng' AS FacultyName, N'All' AS SubjectName,
         N'https://covers.openlibrary.org/b/isbn/9781285741550-L.jpg' AS ImageUrl
     UNION ALL
     SELECT 2, N'Nguyên lý Kinh tế học', N'N. Gregory Mankiw',
@@ -251,7 +251,7 @@ GO
         2022, N'978-0262046305',
         4.9, 256,
         100, 0,
-        N'ĐH Bách Khoa TP.HCM', N'Khoa Khoa học & Kỹ thuật Máy tính', N'Cấu trúc dữ liệu và Giải thuật',
+        N'Đại Học Bách Khoa TP.HCM' AS UniversityName, N'Khoa Khoa học & Kỹ thuật Máy tính' AS FacultyName, N'Cấu trúc dữ liệu và Giải thuật' AS SubjectName,
         N'https://covers.openlibrary.org/b/isbn/9780262033848-L.jpg'
     UNION ALL
     SELECT 6, N'Vật lý đại cương A1', N'TS. Lê Công C',
@@ -261,7 +261,7 @@ GO
         2022, N'978-8016548392',
         4.4, 89,
         90, 0,
-        N'ĐH Bách Khoa TP.HCM', N'Khoa Khoa học Ứng dụng', N'Vật lý 1',
+        N'Đại Học Bách Khoa TP.HCM' AS UniversityName, N'Khoa Khoa học Ứng dụng' AS FacultyName, N'Vật lý 1' AS SubjectName,
         N'https://covers.openlibrary.org/b/isbn/9781305952195-L.jpg'
     UNION ALL
     SELECT 7, N'Linear Algebra and Its Applications', N'David C. Lay',
@@ -331,7 +331,7 @@ GO
         2021, N'978-0199270293',
         4.5, 70,
         100, 0,
-        N'ĐH Bách Khoa TP.HCM', N'Khoa Kỹ thuật Hóa học', N'Hóa hữu cơ',
+        N'Đại Học Bách Khoa TP.HCM' AS UniversityName, N'Khoa Kỹ thuật Hóa học' AS FacultyName, N'Hóa hữu cơ' AS SubjectName,
         N'https://covers.openlibrary.org/b/isbn/9780199270293-L.jpg'
     UNION ALL
     SELECT 14, N'Tâm lý học nhân cách', N'Carl Rogers',
@@ -351,7 +351,7 @@ GO
         2016, N'978-0073398273',
         4.2, 60,
         93, 0,
-        N'ĐH Bách Khoa TP.HCM', N'Khoa Kỹ thuật Giao thông', N'Cơ học chất lỏng',
+        N'Đại Học Bách Khoa TP.HCM' AS UniversityName, N'Khoa Kỹ thuật Giao thông' AS FacultyName, N'Cơ học chất lỏng' AS SubjectName,
         N'https://covers.openlibrary.org/b/isbn/9780073398273-L.jpg'
     UNION ALL
     SELECT 16, N'Lập trình Web với React', N'Kyle Simpson',
@@ -466,36 +466,36 @@ WHERE NOT EXISTS (
 GO
 
 -- ============================================================================
--- Seed cart items (demo user)
+-- Seed transactional data (Cart, Orders, Messages, Reviews)
 -- ============================================================================
 DECLARE @BuyerId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'buyer@educart.local');
+DECLARE @SellerId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'seller@educart.local');
+
 DECLARE @CalcId INT = (SELECT TOP 1 ProductID FROM dbo.Products WHERE Title = N'Calculus: Early Transcendentals');
 DECLARE @EconId INT = (SELECT TOP 1 ProductID FROM dbo.Products WHERE Title = N'Nguyên lý Kinh tế học');
-
-IF @BuyerId IS NOT NULL AND @CalcId IS NOT NULL
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM dbo.CartItems WHERE UserID = @BuyerId AND ProductID = @CalcId)
-        INSERT INTO dbo.CartItems (UserID, ProductID, SavedForLater)
-        VALUES (@BuyerId, @CalcId, 0);
-END
-GO
-
-IF @BuyerId IS NOT NULL AND @EconId IS NOT NULL
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM dbo.CartItems WHERE UserID = @BuyerId AND ProductID = @EconId)
-        INSERT INTO dbo.CartItems (UserID, ProductID, SavedForLater)
-        VALUES (@BuyerId, @EconId, 0);
-END
-GO
-
--- ============================================================================
--- Seed orders (demo user)
--- ============================================================================
-DECLARE @SellerId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'seller@educart.local');
 DECLARE @AlgoId INT = (SELECT TOP 1 ProductID FROM dbo.Products WHERE Title = N'Introduction to Algorithms');
 DECLARE @PhysicsId INT = (SELECT TOP 1 ProductID FROM dbo.Products WHERE Title = N'Vật lý đại cương A1');
 DECLARE @PhilosophyId INT = (SELECT TOP 1 ProductID FROM dbo.Products WHERE Title = N'Triết học Mác - Lênin');
 
+DECLARE @HoangId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'hoangnam@educart.local');
+DECLARE @MinhId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'minhanh@educart.local');
+DECLARE @KhoaId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'khoa@educart.local');
+DECLARE @LinhId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'phuonglinh@educart.local');
+
+-- 1. Cart Items
+IF @BuyerId IS NOT NULL AND @CalcId IS NOT NULL
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM dbo.CartItems WHERE UserID = @BuyerId AND ProductID = @CalcId)
+        INSERT INTO dbo.CartItems (UserID, ProductID, SavedForLater) VALUES (@BuyerId, @CalcId, 0);
+END
+
+IF @BuyerId IS NOT NULL AND @EconId IS NOT NULL
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM dbo.CartItems WHERE UserID = @BuyerId AND ProductID = @EconId)
+        INSERT INTO dbo.CartItems (UserID, ProductID, SavedForLater) VALUES (@BuyerId, @EconId, 0);
+END
+
+-- 2. Orders
 IF @BuyerId IS NOT NULL AND @SellerId IS NOT NULL AND @EconId IS NOT NULL
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM dbo.Orders WHERE Note = N'seed-order-rent-1')
@@ -510,11 +510,9 @@ BEGIN
         );
 
         DECLARE @OrderRentId INT = SCOPE_IDENTITY();
-        INSERT INTO dbo.OrderItems (OrderID, ProductID, Quantity, UnitPrice)
-        VALUES (@OrderRentId, @EconId, 1, 25000);
+        INSERT INTO dbo.OrderItems (OrderID, ProductID, Quantity, UnitPrice) VALUES (@OrderRentId, @EconId, 1, 25000);
     END
 END
-GO
 
 IF @BuyerId IS NOT NULL AND @SellerId IS NOT NULL AND @AlgoId IS NOT NULL
 BEGIN
@@ -528,11 +526,9 @@ BEGIN
         );
 
         DECLARE @OrderBuyId INT = SCOPE_IDENTITY();
-        INSERT INTO dbo.OrderItems (OrderID, ProductID, Quantity, UnitPrice)
-        VALUES (@OrderBuyId, @AlgoId, 1, 220000);
+        INSERT INTO dbo.OrderItems (OrderID, ProductID, Quantity, UnitPrice) VALUES (@OrderBuyId, @AlgoId, 1, 220000);
     END
 END
-GO
 
 IF @BuyerId IS NOT NULL AND @SellerId IS NOT NULL AND @PhysicsId IS NOT NULL
 BEGIN
@@ -546,11 +542,9 @@ BEGIN
         );
 
         DECLARE @OrderBuy2Id INT = SCOPE_IDENTITY();
-        INSERT INTO dbo.OrderItems (OrderID, ProductID, Quantity, UnitPrice)
-        VALUES (@OrderBuy2Id, @PhysicsId, 1, 110000);
+        INSERT INTO dbo.OrderItems (OrderID, ProductID, Quantity, UnitPrice) VALUES (@OrderBuy2Id, @PhysicsId, 1, 110000);
     END
 END
-GO
 
 IF @BuyerId IS NOT NULL AND @SellerId IS NOT NULL AND @PhilosophyId IS NOT NULL
 BEGIN
@@ -566,72 +560,56 @@ BEGIN
         );
 
         DECLARE @OrderRent2Id INT = SCOPE_IDENTITY();
-        INSERT INTO dbo.OrderItems (OrderID, ProductID, Quantity, UnitPrice)
-        VALUES (@OrderRent2Id, @PhilosophyId, 1, 15000);
+        INSERT INTO dbo.OrderItems (OrderID, ProductID, Quantity, UnitPrice) VALUES (@OrderRent2Id, @PhilosophyId, 1, 15000);
     END
 END
-GO
 
--- ============================================================================
--- Seed chat messages (demo user)
--- ============================================================================
-DECLARE @HoangId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'hoangnam@educart.local');
-DECLARE @MinhId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'minhanh@educart.local');
-DECLARE @KhoaId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'khoa@educart.local');
-DECLARE @LinhId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'phuonglinh@educart.local');
-
+-- 3. Chat Messages
 IF @BuyerId IS NOT NULL AND @HoangId IS NOT NULL
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM dbo.Messages
-        WHERE SenderID = @HoangId AND ReceiverID = @BuyerId
-          AND Content = N'Bạn có sách Giải tích 1 của James Stewart không?'
-    )
-        INSERT INTO dbo.Messages (SenderID, ReceiverID, Content, SentAt)
-        VALUES (@HoangId, @BuyerId, N'Bạn có sách Giải tích 1 của James Stewart không?', DATEADD(minute, -12, GETDATE()));
+    IF NOT EXISTS (SELECT 1 FROM dbo.Messages WHERE SenderID = @HoangId AND ReceiverID = @BuyerId AND Content = N'Bạn có sách Giải tích 1 của James Stewart không?')
+        INSERT INTO dbo.Messages (SenderID, ReceiverID, Content, SentAt) VALUES (@HoangId, @BuyerId, N'Bạn có sách Giải tích 1 của James Stewart không?', DATEADD(minute, -12, GETDATE()));
 
-    IF NOT EXISTS (
-        SELECT 1 FROM dbo.Messages
-        WHERE SenderID = @BuyerId AND ReceiverID = @HoangId
-          AND Content = N'Có chứ, còn 2 cuốn, tình trạng rất tốt'
-    )
-        INSERT INTO dbo.Messages (SenderID, ReceiverID, Content, SentAt)
-        VALUES (@BuyerId, @HoangId, N'Có chứ, còn 2 cuốn, tình trạng rất tốt', DATEADD(minute, -10, GETDATE()));
+    IF NOT EXISTS (SELECT 1 FROM dbo.Messages WHERE SenderID = @BuyerId AND ReceiverID = @HoangId AND Content = N'Có chứ, còn 2 cuốn, tình trạng rất tốt')
+        INSERT INTO dbo.Messages (SenderID, ReceiverID, Content, SentAt) VALUES (@BuyerId, @HoangId, N'Có chứ, còn 2 cuốn, tình trạng rất tốt', DATEADD(minute, -10, GETDATE()));
 END
-GO
 
 IF @BuyerId IS NOT NULL AND @MinhId IS NOT NULL
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM dbo.Messages
-        WHERE SenderID = @MinhId AND ReceiverID = @BuyerId
-          AND Content = N'Cảm ơn bạn, sách rất tuyệt vời!'
-    )
-        INSERT INTO dbo.Messages (SenderID, ReceiverID, Content, SentAt)
-        VALUES (@MinhId, @BuyerId, N'Cảm ơn bạn, sách rất tuyệt vời!', DATEADD(hour, -1, GETDATE()));
+    IF NOT EXISTS (SELECT 1 FROM dbo.Messages WHERE SenderID = @MinhId AND ReceiverID = @BuyerId AND Content = N'Cảm ơn bạn, sách rất tuyệt vời!')
+        INSERT INTO dbo.Messages (SenderID, ReceiverID, Content, SentAt) VALUES (@MinhId, @BuyerId, N'Cảm ơn bạn, sách rất tuyệt vời!', DATEADD(hour, -1, GETDATE()));
 END
-GO
 
 IF @BuyerId IS NOT NULL AND @KhoaId IS NOT NULL
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM dbo.Messages
-        WHERE SenderID = @KhoaId AND ReceiverID = @BuyerId
-          AND Content = N'Bạn có còn sách này không?'
-    )
-        INSERT INTO dbo.Messages (SenderID, ReceiverID, Content, SentAt)
-        VALUES (@KhoaId, @BuyerId, N'Bạn có còn sách này không?', DATEADD(hour, -3, GETDATE()));
+    IF NOT EXISTS (SELECT 1 FROM dbo.Messages WHERE SenderID = @KhoaId AND ReceiverID = @BuyerId AND Content = N'Bạn có còn sách này không?')
+        INSERT INTO dbo.Messages (SenderID, ReceiverID, Content, SentAt) VALUES (@KhoaId, @BuyerId, N'Bạn có còn sách này không?', DATEADD(hour, -3, GETDATE()));
 END
-GO
 
 IF @BuyerId IS NOT NULL AND @LinhId IS NOT NULL
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM dbo.Messages
-        WHERE SenderID = @LinhId AND ReceiverID = @BuyerId
-          AND Content = N'Mình đã nhận được sách, cảm ơn bạn!'
-    )
-        INSERT INTO dbo.Messages (SenderID, ReceiverID, Content, SentAt)
-        VALUES (@LinhId, @BuyerId, N'Mình đã nhận được sách, cảm ơn bạn!', DATEADD(day, -1, GETDATE()));
+    IF NOT EXISTS (SELECT 1 FROM dbo.Messages WHERE SenderID = @LinhId AND ReceiverID = @BuyerId AND Content = N'Mình đã nhận được sách, cảm ơn bạn!')
+        INSERT INTO dbo.Messages (SenderID, ReceiverID, Content, SentAt) VALUES (@LinhId, @BuyerId, N'Mình đã nhận được sách, cảm ơn bạn!', DATEADD(day, -1, GETDATE()));
+END
+
+-- 4. Reviews (Đã tối ưu hóa luồng biến chạy mượt mà)
+IF @BuyerId IS NOT NULL AND @AlgoId IS NOT NULL
+BEGIN
+    DECLARE @RevOrderId INT = (SELECT TOP 1 OrderID FROM dbo.Orders WHERE Note = N'seed-order-buy-1');
+    IF @RevOrderId IS NOT NULL
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM dbo.Reviews WHERE OrderID = @RevOrderId AND ProductID = @AlgoId)
+        BEGIN
+            INSERT INTO dbo.Reviews (ReviewerID, ProductID, OrderID, Rating, Comment, CreatedAt)
+            VALUES (
+                @BuyerId, 
+                @AlgoId, 
+                @RevOrderId, 
+                5, 
+                N'Sách Calculus và Thuật toán chất lượng cực kỳ tốt, chủ shop bọc lót cẩn thận, rất đáng tiền nha mọi người!', 
+                GETDATE()
+            );
+        END
+    END
 END
 GO

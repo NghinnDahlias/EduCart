@@ -37,7 +37,7 @@ class AuthService {
       lname: lastName,
       mssv,
       universityId,
-      role: role || "Buyer",
+      role: role || "Student",
       eduLevel: eduLevel || "Undergraduate",
       year: year || 1,
     });
