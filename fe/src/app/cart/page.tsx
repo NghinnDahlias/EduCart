@@ -17,7 +17,6 @@ interface CartItem {
   status: "SẴN SÀNG" | "HẾT HÀNG";
 }
 
-
 export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
@@ -40,7 +39,7 @@ export default function CartPage() {
         setCartItems(mapped);
         setSelectedItems(new Set(mapped.filter(i => i.status !== "HẾT HÀNG").map(i => i.id)));
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -61,7 +60,7 @@ export default function CartPage() {
   const handleRemoveItem = async (item: CartItem) => {
     try {
       await api.delete(`/cart/${item.productId}`, true);
-    } catch {}
+    } catch { }
     setCartItems(prev => prev.filter(i => i.id !== item.id));
     setSelectedItems(prev => { const s = new Set(prev); s.delete(item.id); return s; });
   };
@@ -69,7 +68,8 @@ export default function CartPage() {
   const selectedItemsData = cartItems.filter(item => selectedItems.has(item.id));
   const subtotal = selectedItemsData.reduce((sum, item) => sum + item.price, 0);
   const serviceFee = selectedItemsData.length > 0 ? 15000 : 0;
-  const total = subtotal + serviceFee;
+  const discount = 0;
+  const total = subtotal + serviceFee - discount;
 
   return (
     <main className="min-h-screen bg-[#F8FAFC]">
@@ -160,7 +160,6 @@ export default function CartPage() {
                 </div>
               </>
             )}
-
           </div>
 
           {/* Right: Sidebar */}
@@ -177,6 +176,12 @@ export default function CartPage() {
                   <span className="text-gray-500 font-medium">Phí dịch vụ</span>
                   <span className="font-bold text-[#193967]">{serviceFee.toLocaleString("vi-VN")} VNĐ</span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500 font-medium">Khuyến mãi</span>
+                    <span className="font-bold text-blue-600">-{discount.toLocaleString("vi-VN")} VNĐ</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-between items-center mb-6 pt-4 border-t border-gray-200">
@@ -202,7 +207,7 @@ export default function CartPage() {
                 <p className="text-[10px] font-bold uppercase tracking-wider">Bảo mật giao dịch bởi EduCart</p>
               </div>
               <p className="text-[10px] text-gray-400 leading-relaxed mt-2">
-                Bằng cách nhấn thanh toán, bạn đồng ý với các Điều khoản & Chính sách của chúng tôi.
+                Bằng cách nhấn thanh toán, bạn đồng ý với các Điều khoản &amp; Chính sách của chúng tôi.
               </p>
             </div>
           </div>

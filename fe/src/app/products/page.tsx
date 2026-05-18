@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Heart, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
-import HomeNavbar from "@/components/HomeNavbar";
 import HomeFooter from "@/components/HomeFooter";
+import HomeNavbar from "@/components/HomeNavbar";
 import { api } from "@/lib/api";
+import { ChevronLeft, ChevronRight, Heart, ShoppingCart } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface ApiProduct {
   ProductID: number; Title: string; Author: string; Price: number;
@@ -25,6 +26,8 @@ function fmtVND(n: number | null | undefined): string {
 }
 
 export default function ProductsPage() {
+
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // API data
@@ -56,7 +59,7 @@ export default function ProductsPage() {
   useEffect(() => {
     api.get<{ ok: boolean; universities: ApiUniversity[] }>("/universities")
       .then(d => setUniversities(d.universities))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   // Load faculties when university changes
@@ -86,11 +89,11 @@ export default function ProductsPage() {
     params.set("page", String(currentPage));
     params.set("limit", String(ITEMS_PER_PAGE));
     if (appliedUniversityId) params.set("universityId", String(appliedUniversityId));
-    if (appliedFacultyId)    params.set("facultyId",    String(appliedFacultyId));
-    if (appliedSubjectId)    params.set("subjectId",    String(appliedSubjectId));
+    if (appliedFacultyId) params.set("facultyId", String(appliedFacultyId));
+    if (appliedSubjectId) params.set("subjectId", String(appliedSubjectId));
     // forRent filter based on selectedTypes
-    if (!selectedTypes.includes("Bán") && selectedTypes.includes("Thuê"))  params.set("forRent", "true");
-    if (selectedTypes.includes("Bán")  && !selectedTypes.includes("Thuê")) params.set("forRent", "false");
+    if (!selectedTypes.includes("Bán") && selectedTypes.includes("Thuê")) params.set("forRent", "true");
+    if (selectedTypes.includes("Bán") && !selectedTypes.includes("Thuê")) params.set("forRent", "false");
     api.get<{ ok: boolean; products: ApiProduct[]; total: number }>(`/products?${params}`)
       .then(d => { setApiProducts(d.products); setTotal(d.total); })
       .catch(() => setApiProducts([]))
@@ -121,7 +124,8 @@ export default function ProductsPage() {
   });
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
-  const paginatedProducts = filteredProducts;
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   return (
     <main className="bg-gray-50 min-h-screen">
       <HomeNavbar />
@@ -130,8 +134,8 @@ export default function ProductsPage() {
         <div className="mb-4 flex items-center justify-between text-sm text-gray-600">
           <div className="flex items-center gap-2">
             <Link href="/" className="hover:text-blue-600">Trang chủ</Link>
-              <span>/</span>
-              <span className="text-gray-900 font-medium">Sản phẩm</span>
+            <span>/</span>
+            <span className="text-gray-900 font-medium">Sản phẩm</span>
           </div>
         </div>
       </div>
@@ -182,7 +186,7 @@ export default function ProductsPage() {
             setAppliedSubjectId(tempSubjectId);
             setCurrentPage(1);
           }}
-          className="bg-blue-600 text-white rounded-lg">
+            className="bg-blue-600 text-white rounded-lg">
             Cập nhật
           </button>
         </div>
@@ -194,42 +198,42 @@ export default function ProductsPage() {
             {/* CATEGORY */}
             <h3 className="font-bold mb-3">Danh mục sản phẩm</h3>
             <div className="space-y-2">
-              {["SÁCH CHUYÊN NGÀNH", "E-BOOK", "SÁCH CỨNG", "CHEATSHEET","ĐỀ THI","DỤNG CỤ VẼ KỸ THUẬT", "BỘ KIT / BOARD MẠCH", "DỤNG CỤ CHUYÊN DỤNG"].map(i => (
-              <label key={i} className="flex gap-2">
-                <input
-                  type="checkbox"
-                  onChange={() => {
-                    setSelectedCategories(prev =>
-                    prev.includes(i)? prev.filter(x => x !== i) : [...prev, i]
-                    );
-                    setCurrentPage(1);
-                  }}
-              />
-              {i}
-              </label>
+              {["SÁCH CHUYÊN NGÀNH", "E-BOOK", "SÁCH CỨNG", "CHEATSHEET", "ĐỀ THI", "DỤNG CỤ VẼ KỸ THUẬT", "BỘ KIT / BOARD MẠCH", "DỤNG CỤ CHUYÊN DỤNG"].map(i => (
+                <label key={i} className="flex gap-2">
+                  <input
+                    type="checkbox"
+                    onChange={() => {
+                      setSelectedCategories(prev =>
+                        prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i]
+                      );
+                      setCurrentPage(1);
+                    }}
+                  />
+                  {i}
+                </label>
               ))}
             </div>
 
             {/* PRICE */}
             <h3 className="font-bold mt-6 mb-3">Khoảng giá</h3>
             <div className="flex gap-2 mb-2">
-              <input 
+              <input
                 type="number"
-                placeholder="Từ" 
-                className="border p-2 w-1/2 rounded text-sm" 
+                placeholder="Từ"
+                className="border p-2 w-1/2 rounded text-sm"
                 value={minPriceInput}
                 onChange={(e) => setMinPriceInput(e.target.value)}
               />
-              <input 
+              <input
                 type="number"
-                placeholder="Đến" 
-                className="border p-2 w-1/2 rounded text-sm" 
+                placeholder="Đến"
+                className="border p-2 w-1/2 rounded text-sm"
                 value={maxPriceInput}
                 onChange={(e) => setMaxPriceInput(e.target.value)}
               />
             </div>
             {/* Nút Áp dụng */}
-            <button 
+            <button
               onClick={() => {
                 const min = minPriceInput ? parseInt(minPriceInput) : 0;
                 const max = maxPriceInput ? parseInt(maxPriceInput) : Infinity;
@@ -244,31 +248,31 @@ export default function ProductsPage() {
             <h3 className="font-bold mt-6 mb-3">Độ mới tài liệu</h3>
             <div className="space-y-2 flex flex-col">
               <label className="cursor-pointer flex items-center gap-2">
-                <input 
-                  type="radio" 
-                  name="cond" 
+                <input
+                  type="radio"
+                  name="cond"
                   checked={condition === "Mới"}
-                  onClick={() => setCondition(condition === "Mới" ? "" : "Mới")} 
+                  onClick={() => setCondition(condition === "Mới" ? "" : "Mới")}
                   readOnly
                 /> Mới (95-100%)
               </label>
 
               <label className="cursor-pointer flex items-center gap-2">
-                <input 
-                  type="radio" 
-                  name="cond" 
+                <input
+                  type="radio"
+                  name="cond"
                   checked={condition === "Tốt"}
-                  onClick={() => setCondition(condition === "Tốt" ? "" : "Tốt")} 
+                  onClick={() => setCondition(condition === "Tốt" ? "" : "Tốt")}
                   readOnly
                 /> Tốt (80-95%)
               </label>
 
               <label className="cursor-pointer flex items-center gap-2">
-                <input 
-                  type="radio" 
-                  name="cond" 
+                <input
+                  type="radio"
+                  name="cond"
                   checked={condition === "Khá"}
-                  onClick={() => setCondition(condition === "Khá" ? "" : "Khá")} 
+                  onClick={() => setCondition(condition === "Khá" ? "" : "Khá")}
                   readOnly
                 /> Khá (60-80%)
               </label>
@@ -279,7 +283,7 @@ export default function ProductsPage() {
             <div className="space-y-2">
               <label className="bg-blue-50 p-2 rounded flex items-center gap-2 cursor-pointer text-blue-700 font-medium">
                 <input
-                  type="checkbox" 
+                  type="checkbox"
                   checked={selectedTypes.includes("Bán")}
                   onChange={() => {
                     setSelectedTypes(prev =>
@@ -291,7 +295,7 @@ export default function ProductsPage() {
                 />
                 Đang Bán
               </label>
-              
+
               <label className="bg-orange-50 p-2 rounded flex items-center gap-2 cursor-pointer text-orange-700 font-medium">
                 <input
                   type="checkbox"
@@ -330,146 +334,142 @@ export default function ProductsPage() {
             {isLoading ? (
               <div className="lg:col-span-3 flex justify-center py-16 text-gray-400">Đang tải...</div>
             ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedProducts.map((product) => (
-                <Link
-                  key={product.ProductID}
-                  href={`/products/${product.ProductID}`}
-                  className={
-                  viewMode === "grid"
-                    ? "group flex flex-col h-full rounded-2xl bg-white p-4 shadow-sm hover:shadow-lg transition"
-                    : "flex gap-4 rounded-2xl bg-white p-4 shadow-sm hover:shadow-lg transition"
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedProducts.map((product) => (
+                  <div
+                    key={product.ProductID}
+                    className={
+                      viewMode === "grid"
+                        ? "group flex flex-col h-full rounded-2xl bg-white p-4 shadow-sm hover:shadow-lg transition"
+                        : "flex gap-4 rounded-2xl bg-white p-4 shadow-sm hover:shadow-lg transition"
                     }>
-                    {/* Image */}
-                    <div className={viewMode === "grid"
-                      ? "relative mb-4 overflow-hidden rounded-xl bg-gray-200 h-40 w-full"
-                       : "relative overflow-hidden rounded-xl bg-gray-200 h-40 w-40 flex-shrink-0"
-                        }>
-                      <img src={product.ThumbnailURL ?? ""} alt={product.Title}
-                        className="h-full w-full object-cover group-hover:scale-110 transition"
-                          onError={(e) => {
-                            const target = e.currentTarget;
-                            target.style.display = "none";
-                            const parent = target.parentElement;
-                            if (parent && !parent.querySelector(".cover-fallback")) {
-                              const fallback = document.createElement("div");
-                              fallback.className = "cover-fallback h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200";
-                              fallback.innerHTML = `<span style="font-size:2.5rem;font-weight:700;color:#3b5bdb;opacity:0.5;">${product.Title.charAt(0)}</span>`;
-                              parent.appendChild(fallback);
-                            }
-                          }}/>
-                      {/* Tag */}
-                      <div className="absolute right-2 top-2">
-                        <div className="rounded-md bg-orange-500 px-2 py-1 text-xs font-bold text-white">
-                          {product.IsForRent ? "Thuê" : "Bán"}
-                        </div>
-                      </div>
-                      {/* Wishlist Button */}
-                      <button onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        toggleFavorite(product.ProductID);
-                        }}
-                        className="absolute left-2 top-2 rounded-full bg-white p-2 shadow-md hover:bg-gray-100 transition"
-                      >
-                        <Heart className={`h-4 w-4 transition ${favorites.has(product.ProductID)
-                        ? "fill-red-500 text-red-500": "text-gray-400" }`}
-                      />
-                      </button>
-                    </div>
-                    {/* Product Info */}
-                    <div className={viewMode === "grid" ? "flex flex-col flex-1" : "flex-1"}>
-                      <div className={viewMode === "list" ? "" : "mb-4 flex-1"}>
-                        <p className="text-xs text-gray-500 font-medium">{product.Format}</p>
-                          <h3 className="mt-1 font-semibold text-gray-900 line-clamp-2">
-                            {product.Title}
-                          </h3>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {product.Condition != null ? `${product.Condition}%` : ""} {product.TermLabel ? `• ${product.TermLabel}` : ""}
-                        </p>
-                        <p className="mt-1 text-xs text-gray-600">{product.Author}</p>
-                      </div>
-                      {/* Price and Buy Button */}
-                      <div className="flex flex-col gap-3">
-                        {/* Price */}
-                        <div>
-                          <div className="flex items-baseline gap-2">
-                            <p className="text-lg font-bold text-blue-600">
-                              {fmtVND(product.IsForRent ? product.RentalPrice : product.Price)}
-                            </p>
-                            {product.OriginalPrice != null && (
-                              <p className="text-xs text-gray-500 line-through">
-                                {fmtVND(product.OriginalPrice)}
-                              </p>
-                            )}
-                          </div>
-                        </div>
+                    {/* CLICK VÀO ĐÂY → đi product detail */}
+                    <Link href={`/products/${product.ProductID}`}>
+                      <>
+                        {/* Image */}
+                        <div
+                          className={
+                            viewMode === "grid"
+                              ? "relative mb-4 overflow-hidden rounded-xl bg-gray-200 h-40 w-full"
+                              : "relative overflow-hidden rounded-xl bg-gray-200 h-40 w-40 flex-shrink-0"
+                          }
+                        >
+                          <img
+                            src={product.ThumbnailURL ?? "/placeholder-book.png"}
+                            alt={product.Title}
+                            className="h-full w-full object-cover group-hover:scale-110 transition"
+                          />
 
-                        {/* Buy Button */}
-                          {viewMode === "grid" && (
-                            <button onClick={(e) => {
+                          {/* Tag */}
+                          <div className="absolute right-2 top-2">
+                            <div
+                              className={`rounded-md px-2 py-1 text-xs font-bold text-white ${product.IsForRent ? "bg-orange-500" : "bg-blue-600"}`}>
+                              {product.IsForRent ? "Thuê" : "Bán"}
+                            </div>
+                          </div>
+
+                          {/* Wishlist */}
+                          <button
+                            onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
+                              toggleFavorite(product.ProductID);
                             }}
-                              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 transition flex items-center justify-center gap-2"
-                            >
-                              <ShoppingCart className="h-4 w-4" />
-                                Mua ngay
-                            </button>
-                          )}
+                            className="absolute left-2 top-2 rounded-full bg-white p-2 shadow-md"
+                          >
+                            <Heart
+                              className={`h-4 w-4 ${favorites.has(product.ProductID)
+                                ? "fill-red-500 text-red-500"
+                                : "text-gray-400"
+                                }`}
+                            />
+                          </button>
+                        </div>
+
+                        {/* Info */}
+                        <div className="mb-4">
+                          <p className="text-xs text-gray-500">{product.Format ?? product.Category}</p>
+                          <h3 className="font-semibold line-clamp-2">
+                            {product.Title}
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            {product.Condition != null ? `${product.Condition}% mới` : ""} • {product.SellerName}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            {product.Author}
+                          </p>
+                        </div>
+                      </>
+                    </Link>
+
+                    {/* PRICE + BUTTON  */}
+                    <div className="mt-auto flex flex-col gap-3">
+                      {/* Price */}
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-lg font-bold text-blue-600">
+                          {product.IsForRent ? fmtVND(product.RentalPrice) : fmtVND(product.Price)}
+                        </p>
+                        {product.OriginalPrice != null && (
+                          <p className="text-xs line-through text-gray-500">
+                            {fmtVND(product.OriginalPrice)}
+                          </p>
+                        )}
                       </div>
 
-                      {/* Buy Button for List View */}
-                      {viewMode === "list" && (
-                        <button onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          }}
-                          className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-bold text-white hover:bg-blue-700 transition flex items-center justify-center gap-2 h-fit"
-                        >
-                          <ShoppingCart className="h-4 w-4" />
-                            Mua ngay
-                          </button>
-                        )}
+                      {/* Button */}
+                      <button
+                        onClick={() => {
+                          if (product.IsForRent) {
+                            router.push(`/products/${product.ProductID}`);
+                          } else {
+                            router.push(`/checkout/${product.ProductID}`);
+                          }
+                        }}
+                        className={`w-full rounded-lg px-4 py-2 text-sm font-bold text-white flex items-center justify-center gap-2 ${product.IsForRent ? "bg-orange-500 hover:bg-orange-600"
+                          : "bg-blue-600 hover:bg-blue-700"
+                          }`}>
+                        <ShoppingCart className="h-4 w-4" />
+                        {product.IsForRent ? "Thuê ngay" : "Mua ngay"}
+                      </button>
                     </div>
-                  </Link>
-              ))}
-            </div>
+                  </div>
+                ))}
+              </div>
             )}
 
             {/* PAGINATION */}
-              {totalPages > 0 && (
-                <div className="mt-8 flex items-center justify-center gap-2">
-                                    <button
-                                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                        disabled={currentPage === 1}
-                                        className="rounded-lg p-2 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                    >
-                                        <ChevronLeft className="h-5 w-5" />
-                                    </button>
+            {totalPages > 0 && (
+              <div className="mt-8 flex items-center justify-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="rounded-lg p-2 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
 
-                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                        <button
-                                            key={page}
-                                            onClick={() => setCurrentPage(page)}
-                                            className={`h-10 w-10 rounded-lg font-bold transition ${currentPage === page
-                                                ? "bg-blue-600 text-white"
-                                                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                                                }`}
-                                        >
-                                            {page}
-                                        </button>
-                                    ))}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`h-10 w-10 rounded-lg font-bold transition ${currentPage === page
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
+                  >
+                    {page}
+                  </button>
+                ))}
 
-                                    <button
-                                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                                        disabled={currentPage === totalPages}
-                                        className="rounded-lg p-2 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                    >
-                                        <ChevronRight className="h-5 w-5" />
-                                    </button>
-                                </div>
-                            )}
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="rounded-lg p-2 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

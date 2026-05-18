@@ -57,6 +57,14 @@ export const api = {
     const token = auth ? getToken() : null;
     const headers: Record<string, string> = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
-    return apiFetch<T>(path, { method: "POST", body, headers, auth: false });
+
+    return apiFetch<T>(path, {
+      method: "POST",
+      body,
+      headers,
+      // Nếu auth=true thì API fetch sẽ tự gắn Authorization, còn ở đây ta đã gắn thủ công.
+      // Giữ auth=false để tránh trùng.
+      auth: false,
+    });
   },
 };
