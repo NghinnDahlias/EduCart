@@ -1,18 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShoppingCart, MessageCircle, LogOut, User, BookOpen } from "lucide-react";
 import Link from "next/link";
+import { api, getToken, clearToken, clearUser } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function HomeNavbar() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [user, setUser] = useState<any>(null);
+    const [cartCount, setCartCount] = useState(0);
+    const router = useRouter();
 
-    const handleSignIn = () => {
+    useEffect(() => {
+        const token = getToken();
+        if (!token) return;
+
         setIsLoggedIn(true);
-    };
+
+        // Lấy thông tin user mới nhất từ API
+        api.get<{ ok: boolean; user: any }>("/users/me", true)
+            .then(res => { if (res.ok && res.user) setUser(res.user); })
+            .catch(() => {});
+
+        // Lấy số lượng giỏ hàng
+        api.get<{ ok: boolean; items: any[] }>("/cart", true)
+            .then(res => { if (res.ok && res.items) setCartCount(res.items.length); })
+            .catch(() => {});
+    }, []);
 
     const handleLogOut = () => {
+        clearToken();
+        clearUser();
         setIsLoggedIn(false);
+        router.push("/login");
     };
 
     return (
@@ -69,9 +90,9 @@ export default function HomeNavbar() {
 
                         <Link href="/cart" className="rounded-lg p-2 hover:bg-gray-100 relative inline-flex">
                             <ShoppingCart className="h-5 w-5 text-gray-700" />
-                            {isLoggedIn && (
+                            {isLoggedIn && cartCount > 0 && (
                                 <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-                                    2
+                                    {cartCount}
                                 </span>
                             )}
                         </Link>
@@ -85,12 +106,17 @@ export default function HomeNavbar() {
                             </Link>
                         ) : (
                             <div className="flex items-center gap-2">
-                                <Link href="/profile" className="rounded-lg p-2 hover:bg-gray-100">
-                                    <User className="h-5 w-5 text-gray-700" />
+                                <Link href="/profile" className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-gray-100 transition">
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-semibold text-sm">
+                                        {user?.LName?.charAt(0) || user?.FName?.charAt(0) || <User className="h-4 w-4" />}
+                                    </div>
+                                    <span className="text-sm font-semibold text-gray-700 hidden sm:block pr-2">
+                                        {`${user?.LName ?? ""} ${user?.FName ?? ""}`.trim() || "Tài khoản"}
+                                    </span>
                                 </Link>
                                 <button
                                     onClick={handleLogOut}
-                                    className="rounded-lg p-2 hover:bg-gray-100"
+                                    className="rounded-lg p-2 hover:bg-gray-100 transition"
                                     title="Đăng xuất"
                                 >
                                     <LogOut className="h-5 w-5 text-gray-700" />

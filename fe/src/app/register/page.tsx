@@ -64,8 +64,8 @@ export default function RegisterPage() {
                 password: formData.password,
                 mssv: formData.studentId,
                 universityId: Number(formData.university),
-                fname,
-                lname,
+                firstName: fname,
+                lastName: lname,
             });
             setShowSuccess(true);
         } catch (err: unknown) {

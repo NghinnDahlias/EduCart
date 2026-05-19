@@ -37,7 +37,7 @@ registerObservers({
 
 async function startServer() {
   app.listen(PORT, async () => {
-    console.log(`Server is listening on port ${PORT}`);
+    console.log(`Server is listening on port local: http://localhost:${PORT}`);
     try {
       await getPool();
       console.log('Connected to SQL Server successfully');

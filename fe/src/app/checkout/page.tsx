@@ -221,11 +221,6 @@ export default function CheckoutPage() {
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between items-center mb-6 pt-4 border-t border-gray-200">
-                                        <span className="text-sm font-bold text-[#193967] uppercase tracking-wider">TỔNG CỘNG</span>
-                                        <span className="text-2xl font-bold text-blue-600">{total.toLocaleString("vi-VN")} VNĐ</span>
-                                    </div>
-
                                     <button onClick={handlePlaceOrder} disabled={isProcessing || cartItems.length === 0}
                                         className={`w-full py-3 text-white text-center font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${isProcessing || cartItems.length === 0 ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}>
                                         {isProcessing ? (
