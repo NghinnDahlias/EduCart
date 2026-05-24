@@ -1,10 +1,10 @@
 "use client";
 
+import { api, getImageUrl } from "@/lib/api";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { Heart, ShoppingCart } from "lucide-react";
 import Link from "next/link";
-import { ShoppingCart, Heart } from "lucide-react";
-import { api } from "@/lib/api";
+import { useEffect, useState } from "react";
 
 interface ApiProduct {
   ProductID: number;
@@ -92,8 +92,8 @@ export default function ProductSection() {
                     {/* Product Image */}
                     <div className="relative mb-4 overflow-hidden rounded-xl bg-gray-200">
                       {product.ThumbnailURL ? (
-                        <img src={product.ThumbnailURL} alt={product.Title}
-                          className="h-48 w-full object-cover transition-transform group-hover:scale-110" />
+                        <img src={getImageUrl(product.ThumbnailURL)} alt={product.Title}
+                             className="h-48 w-full object-cover transition-transform group-hover:scale-110" />
                       ) : (
                         <div className="h-48 w-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200">
                           <span style={{ fontSize: "2.5rem", fontWeight: 700, color: "#3b5bdb", opacity: 0.4 }}>{product.Title.charAt(0)}</span>
@@ -136,7 +136,17 @@ export default function ProductSection() {
 
                     {/* Add to Cart Button */}
                     <button
-                      onClick={async e => { e.preventDefault(); e.stopPropagation(); try { await api.post("/cart", { productId: product.ProductID }); } catch {} }}
+                      type="button"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        try {
+                          await api.post("/cart", { productId: product.ProductID }, true);
+                          alert("Đã thêm vào giỏ hàng!");
+                        } catch (error) {
+                          alert(error instanceof Error ? error.message : "Lỗi khi thêm vào giỏ hàng.");
+                        }
+                      }}
                       className="w-full rounded-lg bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700 transition flex items-center justify-center gap-2"
                     >
                       <ShoppingCart className="h-4 w-4" />

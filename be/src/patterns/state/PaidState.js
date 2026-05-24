@@ -8,6 +8,10 @@ class PaidState extends OrderState {
   onShip() {
     return 'Delivering';
   }
+
+  onCancel() {
+    return 'Cancelled';
+  }
 }
 
 module.exports = PaidState;

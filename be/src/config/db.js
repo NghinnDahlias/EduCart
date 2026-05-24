@@ -33,6 +33,7 @@ const sqlConfig = {
   options: {
     encrypt: false,
     trustServerCertificate: true,
+    useUTC: false,
   },
 };
 

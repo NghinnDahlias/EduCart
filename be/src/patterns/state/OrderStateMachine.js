@@ -6,6 +6,7 @@ const ActiveRentalState = require('./ActiveRentalState');
 const CompletedState = require('./CompletedState');
 const DepositRefundedState = require('./DepositRefundedState');
 const CancelledState = require('./CancelledState');
+const ReturnedState = require('./ReturnedState');
 
 const STATE_REGISTRY = {
   PendingPayment: new PendingPaymentState(),
@@ -15,6 +16,7 @@ const STATE_REGISTRY = {
   Completed: new CompletedState(),
   DepositRefunded: new DepositRefundedState(),
   Cancelled: new CancelledState(),
+  Returned: new ReturnedState(),
 };
 
 /**

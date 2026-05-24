@@ -36,7 +36,7 @@ const createSchema = Joi.object({
 const transitionSchema = Joi.object({
   // onPaymentSucceeded is reserved for the payment webhook — not exposed to end-users
   event: Joi.string()
-    .valid("onShip", "onDeliver", "onComplete", "onRefundDeposit", "onCancel")
+    .valid("onShip", "onDeliver", "onComplete", "onRefundDeposit", "onCancel", "onReturn")
     .required(),
 });
 

@@ -5,6 +5,7 @@ const ctrl = require('../controllers/message.controller');
 const router = express.Router();
 
 router.get('/conversations', requireAuth, ctrl.getConversations);
+router.get('/unread-count', requireAuth, ctrl.getUnreadCount);
 router.get('/', requireAuth, ctrl.getMessages);
 router.post('/', requireAuth, ctrl.sendValidator, ctrl.send);
 

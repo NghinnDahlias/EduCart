@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Check, Upload } from "lucide-react";
-import HomeNavbar from "@/components/HomeNavbar";
 import HomeFooter from "@/components/HomeFooter";
+import HomeNavbar from "@/components/HomeNavbar";
 import { api } from "@/lib/api";
+import { Check, Upload } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 interface University { UniversityID: number; UName: string; }
 interface Faculty { FacultyID: number; FacultyName: string; }
@@ -52,7 +52,7 @@ export default function PostBookPage() {
     useEffect(() => {
         api.get<{ ok: boolean; universities: University[] }>("/universities")
             .then(d => setUniversities(d.universities ?? []))
-            .catch(() => {});
+            .catch(() => { });
     }, []);
 
     // Load faculties when university changes
@@ -125,7 +125,7 @@ export default function PostBookPage() {
             formData.append("title", productName);
             formData.append("price", yourPrice);
             formData.append("type", saleType === "rent" ? "Rent" : "Sell");
-            formData.append("subjectCode", subjectCode);
+            formData.append("subjectCode", subjectCode || "N/A");
             formData.append("universityId", String(universityId));
             formData.append("facultyId", String(facultyId));
             formData.append("subjectId", String(subjectId));
@@ -136,7 +136,8 @@ export default function PostBookPage() {
             uploadedFiles.forEach(file => formData.append("images", file));
 
             await api.postForm("/products", formData, true);
-            window.location.href = "/orders";
+            // Hiển thị sản phẩm mới sau khi đăng bán
+            window.location.href = "/products";
         } catch (err: any) {
             alert(err?.message ?? "Có lỗi xảy ra. Vui lòng thử lại.");
         } finally {

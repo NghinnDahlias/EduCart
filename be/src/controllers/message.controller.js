@@ -21,6 +21,10 @@ const getMessages = asyncHandler(async (req, res) => {
   const messages = await repositories.messageRepository.getMessages(req.user.id, otherUserId);
   res.json({ ok: true, messages });
 });
+const getUnreadCount = asyncHandler(async (req, res) => {
+  const count = await repositories.messageRepository.getUnreadCount(req.user.id);
+  res.json({ ok: true, count });
+});
 
 const send = asyncHandler(async (req, res) => {
   if (req.body.receiverId === req.user.id) throw new AppError('Cannot message yourself', 400);
@@ -33,4 +37,4 @@ const send = asyncHandler(async (req, res) => {
   res.status(201).json({ ok: true, message });
 });
 
-module.exports = { getConversations, getMessages, send, sendValidator: validate(sendSchema) };
+module.exports = { getConversations, getMessages, getUnreadCount, send, sendValidator: validate(sendSchema) };
