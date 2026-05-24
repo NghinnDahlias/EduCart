@@ -36,7 +36,7 @@ class RentOrder extends BaseOrder {
 
     // Deposit defaults to 50% of the gross rental fee, capped at the
     // sum of item unit prices (we should never hold more than the item is worth).
-    const grossRent = this.dailyRate * this.rentDays;
+    const grossRent = this.dailyRate; // Flat rental rate, not multiplied by days
     const itemsValue = this.items.reduce(
       (s, it) => s + Number(it.unitPrice) * Number(it.quantity),
       0,
@@ -52,7 +52,7 @@ class RentOrder extends BaseOrder {
    * Deposit is refunded when the order reaches DepositRefunded.
    */
   getFinalAmount() {
-    return this.dailyRate * this.rentDays + this.deposit;
+    return this.dailyRate + this.deposit;
   }
 
   toPersistencePayload() {

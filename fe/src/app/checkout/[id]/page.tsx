@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { api, getImageUrl } from "@/lib/api";
 import {
   ChevronLeft,
   MapPin,
@@ -19,296 +20,70 @@ import {
 
 import HomeNavbar from "@/components/HomeNavbar";
 
-const products = [
-  {
-    id: 1,
-    title: "Calculus: Early Transcendentals",
-    author: "James Stewart",
-    price: "125.000₫",
-    originalPrice: "250.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Calculus",
-    image: "https://covers.openlibrary.org/b/isbn/9781285741550-L.jpg",
-    type: "Sách cứng",
-    condition: "95%",
-    year: "Theo kỳ",
-    school: "ĐH Bách Khoa TP.HCM",
-    faculty: "Khoa Khoa học Ứng dụng",
-    subject: "All",
-  },
-  {
-    id: 2,
-    title: "Nguyên lý Kinh tế học",
-    author: "N. Gregory Mankiw",
-    price: "25.000₫",
-    originalPrice: "50.000₫",
-    discount: "-50%",
-    tag: "Thuê",
-    category: "Economics",
-    image: "https://covers.openlibrary.org/b/isbn/9781305585126-L.jpg",
-    type: "E-book",
-    condition: "100%",
-    year: "Theo kỳ",
-    school: "ĐH Kinh tế TP.HCM",
-    faculty: "Khoa Kinh tế",
-    subject: "Kinh tế vi mô",
-  },
-  {
-    id: 3,
-    title: "Chemistry: A Molecular Approach",
-    author: "Nivaldo Jr. Tro",
-    price: "180.000₫",
-    originalPrice: "360.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Chemistry",
-    image: "https://covers.openlibrary.org/b/isbn/9780321809247-L.jpg",
-    type: "Sách cứng",
-    condition: "90%",
-    year: "Theo kỳ",
-    school: "ĐH Khoa học Tự nhiên",
-    faculty: "Khoa Hóa học",
-    subject: "Hóa học đại cương",
-  },
-  {
-    id: 4,
-    title: "Triết học Mác - Lênin",
-    author: "NXB Lao động",
-    price: "15.000₫",
-    originalPrice: "30.000₫",
-    discount: "-50%",
-    tag: "Thuê",
-    category: "Philosophy",
-    image: "https://covers.openlibrary.org/b/isbn/9780717804405-L.jpg",
-    type: "Sách mềm",
-    condition: "85%",
-    year: "Theo kỳ",
-    school: "ĐH Quốc gia TP.HCM",
-    faculty: "Khoa Lý luận Chính trị",
-    subject: "Triết học Mác - Lênin",
-  },
-  {
-    id: 5,
-    title: "Introduction to Algorithms",
-    author: "Thomas H. Cormen",
-    price: "220.000₫",
-    originalPrice: "440.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Computer Science",
-    image: "https://covers.openlibrary.org/b/isbn/9780262033848-L.jpg",
-    type: "E-book",
-    condition: "100%",
-    year: "Dài hạn",
-    school: "ĐH Bách Khoa TP.HCM",
-    faculty: "Khoa Khoa học & Kỹ thuật Máy tính",
-    subject: "Cấu trúc dữ liệu và Giải thuật",
-  },
-  {
-    id: 6,
-    title: "Vật lý đại cương A1",
-    author: "TS. Lê Công C",
-    price: "110.000₫",
-    originalPrice: "220.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Physics",
-    image: "https://covers.openlibrary.org/b/isbn/9781305952195-L.jpg",
-    type: "Sách cứng",
-    condition: "90%",
-    year: "Theo kỳ",
-    school: "ĐH Bách Khoa TP.HCM",
-    faculty: "Khoa Khoa học Ứng dụng",
-    subject: "Vật lý 1",
-  },
-  {
-    id: 7,
-    title: "Linear Algebra and Its Applications",
-    author: "David C. Lay",
-    price: "195.000₫",
-    originalPrice: "250.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Mathematics",
-    image: "https://covers.openlibrary.org/b/isbn/9780321982384-L.jpg",
-    type: "Sách cứng",
-    condition: "92%",
-    year: "Theo kỳ",
-    school: "ĐH Khoa học Tự nhiên",
-    faculty: "Khoa Toán - Tin học",
-    subject: "Đại số tuyến tính",
-  },
-  {
-    id: 8,
-    title: "Sinh học phân tử",
-    author: "James D. Watson",
-    price: "240.000₫",
-    originalPrice: "480.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Biology",
-    image: "https://covers.openlibrary.org/b/isbn/9780321762436-L.jpg",
-    type: "E-book",
-    condition: "100%",
-    year: "Dài hạn",
-    school: "ĐH Y Dược TP.HCM",
-    faculty: "Khoa Y",
-    subject: "Sinh học đại cương",
-  },
-  {
-    id: 9,
-    title: "Tiếng Anh giao tiếp cơ bản",
-    author: "Oxford English",
-    price: "85.000₫",
-    originalPrice: "170.000₫",
-    discount: "-50%",
-    tag: "Thuê",
-    category: "Language",
-    image: "https://covers.openlibrary.org/b/isbn/9780194579858-L.jpg",
-    type: "Sách cứng",
-    condition: "80%",
-    year: "Theo kỳ",
-    school: "ĐH Sư phạm TP.HCM",
-    faculty: "Khoa Tiếng Anh",
-    subject: "Anh văn cơ bản",
-  },
-  {
-    id: 10,
-    title: "Lịch sử Việt Nam hiện đại",
-    author: "TS. Trần Văn Giàu",
-    price: "65.000₫",
-    originalPrice: "130.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "History",
-    image: "https://covers.openlibrary.org/b/isbn/9780313341960-L.jpg",
-    type: "Sách cứng",
-    condition: "88%",
-    year: "Dài hạn",
-    school: "ĐH KHXH & Nhân văn",
-    faculty: "Khoa Lịch sử",
-    subject: "Lịch sử Việt Nam",
-  },
-  {
-    id: 11,
-    title: "Data Science Handbook",
-    author: "Jake VanderPlas",
-    price: "210.000₫",
-    originalPrice: "420.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Computer Science",
-    image: "https://covers.openlibrary.org/b/isbn/9781491912058-L.jpg",
-    type: "E-book",
-    condition: "100%",
-    year: "Dài hạn",
-    school: "ĐH Công nghệ Thông tin",
-    faculty: "Khoa Khoa học Dữ liệu",
-    subject: "Nhập môn Khoa học Dữ liệu",
-  },
-  {
-    id: 12,
-    title: "Quản trị Kinh doanh",
-    author: "Stephen P. Robbins",
-    price: "175.000₫",
-    originalPrice: "350.000₫",
-    discount: "-50%",
-    tag: "Thuê",
-    category: "Business",
-    image: "https://covers.openlibrary.org/b/isbn/9780133910292-L.jpg",
-    type: "Sách cứng",
-    condition: "90%",
-    year: "Theo kỳ",
-    school: "ĐH Kinh tế TP.HCM",
-    faculty: "Khoa Quản trị",
-    subject: "Quản trị kinh doanh",
-  },
-  {
-    id: 13,
-    title: "Hóa học hữu cơ nâng cao",
-    author: "Jonathan Clayden",
-    price: "245.000₫",
-    originalPrice: "490.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Chemistry",
-    image: "https://covers.openlibrary.org/b/isbn/9780199270293-L.jpg",
-    type: "E-book",
-    condition: "100%",
-    year: "Theo kỳ",
-    school: "ĐH Bách Khoa TP.HCM",
-    faculty: "Khoa Kỹ thuật Hóa học",
-    subject: "Hóa hữu cơ",
-  },
-  {
-    id: 14,
-    title: "Tâm lý học nhân cách",
-    author: "Carl Rogers",
-    price: "120.000₫",
-    originalPrice: "240.000₫",
-    discount: "-50%",
-    tag: "Thuê",
-    category: "Psychology",
-    image: "https://covers.openlibrary.org/b/isbn/9780395755310-L.jpg",
-    type: "Sách cứng",
-    condition: "85%",
-    year: "Theo kỳ",
-    school: "ĐH KHXH & Nhân văn",
-    faculty: "Khoa Tâm lý học",
-    subject: "Tâm lý học đại cương",
-  },
-  {
-    id: 15,
-    title: "Cơ học chất lỏng",
-    author: "Frank M. White",
-    price: "200.000₫",
-    originalPrice: "400.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Physics",
-    image: "https://covers.openlibrary.org/b/isbn/9780073398273-L.jpg",
-    type: "Sách cứng",
-    condition: "93%",
-    year: "Theo kỳ",
-    school: "ĐH Bách Khoa TP.HCM",
-    faculty: "Khoa Kỹ thuật Giao thông",
-    subject: "Cơ học chất lỏng",
-  },
-  {
-    id: 16,
-    title: "Lập trình Web với React",
-    author: "Kyle Simpson",
-    price: "185.000₫",
-    originalPrice: "370.000₫",
-    discount: "-50%",
-    tag: "Bán",
-    category: "Computer Science",
-    image: "https://covers.openlibrary.org/b/isbn/9781492051725-L.jpg",
-    type: "E-book",
-    condition: "100%",
-    year: "Dài hạn",
-    school: "ĐH Công nghệ Thông tin",
-    faculty: "Khoa Kỹ thuật Phần mềm",
-    subject: "Phát triển ứng dụng Web",
-  },
-];
+type ApiProductDetail = {
+    ProductID: number;
+    Title: string;
+    Author: string;
+    Price: number;
+    OriginalPrice: number | null;
+    DiscountLabel: string | null;
+    RentalPrice: number | null;
+    IsForRent: boolean;
+    Status: string;
+    Rating: number | null;
+    ReviewsCount: number;
+    ThumbnailURL: string | null;
+    SellerName: string;
+    Category: string | null;
+    Format: string | null;
+    TermLabel: string | null;
+    Stock: number;
+    Description?: string;
+    Language?: string | null;
+    Pages?: number | null;
+    Publisher?: string | null;
+    PublishYear?: number | null;
+    ISBN?: string | null;
+    Condition?: number | null;
+    SellerAvatarURL?: string | null;
+    images?: Array<{ ImageID: number; ImageURL: string; SortOrder: number }>;
+};
 
 export default function CheckoutPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const productId = Number(params.id);
 
-  const product = products.find((p) => p.id === productId);
+  const [product, setProduct] = useState<ApiProductDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [paymentMethod, setPaymentMethod] = useState<
     "direct" | "cod"
   >("direct");
 
   const [quantity, setQuantity] = useState(1);
-
   const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    if (!productId) return;
+    
+    api.get<{ ok: boolean; product: ApiProductDetail }>(`/products/${productId}`)
+      .then(res => setProduct(res.product))
+      .catch(console.error)
+      .finally(() => setIsLoading(false));
+  }, [productId]);
+
+  if (isLoading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4 text-gray-500">Đang tải...</h1>
+        </div>
+      </main>
+    );
+  }
 
   if (!product) {
     return (
@@ -329,21 +104,39 @@ export default function CheckoutPage() {
     );
   }
 
-  const numericPrice = Number(
-    product.price.replace(/\./g, "").replace("₫", "")
-  );
-
+  const numericPrice = product.IsForRent ? (product.RentalPrice ?? product.Price ?? 0) : (product.Price ?? 0);
   const subtotal = numericPrice * quantity;
+  const total = subtotal;
 
-  
-  const total = subtotal ;
-
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     setIsProcessing(true);
 
-    setTimeout(() => {
-      router.push("/orders");
-    }, 2000);
+    try {
+      if (product.IsForRent) {
+        const queryStart = searchParams.get("startDate");
+        const queryEnd = searchParams.get("endDate");
+        const startDate = queryStart ? new Date(queryStart) : new Date();
+        const endDate = queryEnd ? new Date(queryEnd) : new Date();
+        if (!queryEnd) endDate.setDate(endDate.getDate() + 7);
+
+        await api.post("/orders", {
+          type: "Rent",
+          items: [{ productId: product.ProductID, quantity }],
+          rentStartDate: startDate.toISOString(),
+          rentEndDate: endDate.toISOString(),
+          dailyRate: product.RentalPrice ?? product.Price ?? 0,
+        }, true);
+      } else {
+        await api.post("/orders", {
+          type: "Buy",
+          items: [{ productId: product.ProductID, quantity }]
+        }, true);
+      }
+      window.location.href = "/orders";
+    } catch (err: any) {
+      alert(err?.message || "Đã xảy ra lỗi");
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -535,29 +328,29 @@ export default function CheckoutPage() {
               <div className="flex gap-4 pb-6 border-b border-gray-200">
                 <div className="w-20 h-28 rounded-xl overflow-hidden bg-gray-100 shrink-0">
                   <img
-                    src={product.image}
-                    alt={product.title}
+                    src={getImageUrl(product.images?.[0]?.ImageURL || product.ThumbnailURL)}
+                    alt={product.Title}
                     className="w-full h-full object-cover"
                   />
                 </div>
 
                 <div className="flex-1">
                   <h4 className="font-bold text-[#193967] line-clamp-2">
-                    {product.title}
+                    {product.Title}
                   </h4>
 
                   <p className="text-sm text-gray-400 mt-1">
-                    {product.author}
+                    {product.Author}
                   </p>
 
                   <div
                     className={`inline-block mt-2 px-2 py-1 rounded-md text-xs font-bold text-white ${
-                      product.tag === "Thuê"
+                      product.IsForRent
                         ? "bg-orange-500"
                         : "bg-blue-600"
                     }`}
                   >
-                    {product.tag}
+                    {product.IsForRent ? "Thuê" : "Bán"}
                   </div>
 
                   <p className="text-lg font-bold text-blue-600 mt-3">

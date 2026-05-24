@@ -39,24 +39,57 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    api.get<{ ok: boolean; conversations: Conversation[] }>("/messages/conversations", true)
-      .then(d => {
-        const convs = d.conversations ?? [];
-        setConversations(convs);
-        if (convs.length > 0) setSelected(convs[0]);
-      })
-      .catch(() => {})
-      .finally(() => setIsLoadingConvs(false));
+    let alive = true;
+    const fetchConvs = () => {
+      api.get<{ ok: boolean; conversations: Conversation[] }>("/messages/conversations", true)
+        .then(d => {
+          if (!alive) return;
+          const convs = d.conversations ?? [];
+          setConversations(convs);
+          setSelected(prev => prev || (convs.length > 0 ? convs[0] : null));
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (alive) setIsLoadingConvs(false);
+        });
+    };
+
+    fetchConvs();
+    const interval = setInterval(fetchConvs, 3000);
+    return () => {
+      alive = false;
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
     if (!selected) return;
-    setIsLoadingMsgs(true);
-    api.get<{ ok: boolean; messages: ApiMessage[] }>(`/messages?with=${selected.OtherUserID}`, true)
-      .then(d => setMessages(d.messages ?? []))
-      .catch(() => setMessages([]))
-      .finally(() => setIsLoadingMsgs(false));
-  }, [selected]);
+    let alive = true;
+    
+    const fetchMsgs = (isInitial = false) => {
+      if (isInitial) setIsLoadingMsgs(true);
+      api.get<{ ok: boolean; messages: ApiMessage[] }>(`/messages?with=${selected.OtherUserID}`, true)
+        .then(d => {
+          if (!alive) return;
+          setMessages(d.messages ?? []);
+        })
+        .catch(() => {
+          if (!alive) return;
+          if (isInitial) setMessages([]);
+        })
+        .finally(() => {
+          if (alive && isInitial) setIsLoadingMsgs(false);
+        });
+    };
+
+    fetchMsgs(true);
+    const interval = setInterval(() => fetchMsgs(false), 3000);
+    
+    return () => {
+      alive = false;
+      clearInterval(interval);
+    };
+  }, [selected?.OtherUserID]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -71,7 +104,18 @@ export default function ChatPage() {
         receiverId: selected.OtherUserID,
         content,
       }, true);
-      if (d.message) setMessages(prev => [...prev, d.message]);
+      if (d.message) {
+        setMessages(prev => [...prev, d.message]);
+        setConversations(prev => {
+          const exists = prev.some(c => c.OtherUserID === selected.OtherUserID);
+          if (!exists) return prev; // Polling will catch it anyway if it's new
+          return prev.map(c => 
+            c.OtherUserID === selected.OtherUserID 
+              ? { ...c, LastMessage: d.message.Content, LastSentAt: d.message.SentAt }
+              : c
+          );
+        });
+      }
     } catch {}
   };
 

@@ -38,13 +38,12 @@ interface Order extends ApiOrder {
 
 function lifecycleToUI(state: string, orderType: "Buy" | "Rent"): UIOrderStatus {
   const map: Record<string, UIOrderStatus> = {
-    Pending: "ordered",
-    Shipped: "shipping",
-    Delivered: orderType === "Rent" ? "renting" : "completed",
-    Renting: "renting",
-    ReturnPending: "renting",
-    Returned: "returned",
-    Completed: "completed",
+    PendingPayment: "ordered",
+    Paid: "ordered",
+    Delivering: "shipping",
+    ActiveRental: "renting",
+    Completed: orderType === "Rent" ? "renting" : "completed",
+    DepositRefunded: "returned",
     Cancelled: "cancelled",
   };
   return map[state] ?? "ordered";
@@ -59,11 +58,12 @@ const buyStages = [
 ];
 const rentStages = [
   { label: "ĐÃ ĐẶT", key: "ordered", icon: Package },
+  { label: "ĐANG GIAO", key: "shipping", icon: Truck },
   { label: "ĐANG THUÊ", key: "renting", icon: BookOpen },
   { label: "ĐÃ HOÀN TRẢ", key: "returned", icon: RotateCcw },
 ];
 const buyStageIndex: Record<string, number> = { ordered: 0, shipping: 1, completed: 2 };
-const rentStageIndex: Record<string, number> = { ordered: 0, renting: 1, returned: 2 };
+const rentStageIndex: Record<string, number> = { ordered: 0, shipping: 1, renting: 2, returned: 3 };
 
 // ─── OrderTimeline ────────────────────────────────────────────────────────────
 
@@ -178,6 +178,23 @@ function OrderCard({ order }: { order: Order }) {
             >
               <MessageSquare className="h-3.5 w-3.5" /> Nhắn tin
             </button>
+            {(order.LifecycleState === "PendingPayment" || order.LifecycleState === "Paid") && (
+              <button
+                onClick={async (e) => {
+                  e.preventDefault(); e.stopPropagation();
+                  if (!confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) return;
+                  try {
+                    await api.post(`/orders/${order.OrderID}/transitions`, { event: "onCancel" }, true);
+                    window.location.reload();
+                  } catch (err: unknown) {
+                    alert(err instanceof Error ? err.message : "Có lỗi xảy ra");
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors"
+              >
+                Hủy đơn
+              </button>
+            )}
             {(order.status === "shipping" || order.status === "ordered") && (
               <button
                 onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -357,7 +374,10 @@ export default function OrdersPage() {
                   <span className="text-center">Thao tác</span>
                 </div>
                 {sellerOrders.map((order, i) => {
-                  const isPending = order.LifecycleState === "Pending";
+                  const isPending =
+                    order.LifecycleState === "Pending" ||
+                    order.LifecycleState === "PendingPayment" ||
+                    order.LifecycleState === "Paid";
                   const isCompleted = order.LifecycleState === "Completed" || order.LifecycleState === "Returned";
                   return (
                     <div
@@ -418,7 +438,39 @@ export default function OrdersPage() {
                             <Truck className="h-3.5 w-3.5" /> Giao hàng
                           </button>
                         )}
-                        {!isPending && (
+                        {order.LifecycleState === "ActiveRental" && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await api.post(`/orders/${order.OrderID}/transitions`, { event: "onComplete" }, true);
+                                window.location.reload();
+                              } catch (err: unknown) {
+                                alert(err instanceof Error ? err.message : "Có lỗi xảy ra");
+                              }
+                            }}
+                            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
+                            style={{ color: "#059669", background: "#d1fae5" }}
+                          >
+                            <CheckCircle className="h-3.5 w-3.5" /> Đã nhận lại sách
+                          </button>
+                        )}
+                        {order.LifecycleState === "Completed" && order.OrderType === "Rent" && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await api.post(`/orders/${order.OrderID}/transitions`, { event: "onRefundDeposit" }, true);
+                                window.location.reload();
+                              } catch (err: unknown) {
+                                alert(err instanceof Error ? err.message : "Có lỗi xảy ra");
+                              }
+                            }}
+                            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
+                            style={{ color: "#d97706", background: "#fef3c7" }}
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" /> Hoàn cọc
+                          </button>
+                        )}
+                        {(!isPending && order.LifecycleState !== "ActiveRental" && !(order.LifecycleState === "Completed" && order.OrderType === "Rent")) && (
                           <button
                             onClick={() => router.push(`/review?orderId=${order.OrderID}`)}
                             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"

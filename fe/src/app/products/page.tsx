@@ -2,7 +2,7 @@
 
 import HomeFooter from "@/components/HomeFooter";
 import HomeNavbar from "@/components/HomeNavbar";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 import { ChevronLeft, ChevronRight, Heart, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -51,6 +51,7 @@ export default function ProductsPage() {
   const [selectedTypes, setSelectedTypes] = useState<string[]>(["Bán", "Thuê"]);
   const [minPriceInput, setMinPriceInput] = useState("");
   const [maxPriceInput, setMaxPriceInput] = useState("");
+  // Mặc định không áp dụng filter giá để chắc chắn sản phẩm mới hiển thị
   const [priceRange, setPriceRange] = useState({ min: 0, max: Infinity });
   const [condition, setCondition] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -355,7 +356,7 @@ export default function ProductsPage() {
                           }
                         >
                           <img
-                            src={product.ThumbnailURL ?? "/placeholder-book.png"}
+                            src={getImageUrl(product.ThumbnailURL)}
                             alt={product.Title}
                             className="h-full w-full object-cover group-hover:scale-110 transition"
                           />

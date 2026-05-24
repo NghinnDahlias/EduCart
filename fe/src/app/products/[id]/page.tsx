@@ -2,18 +2,18 @@
 
 import HomeFooter from "@/components/HomeFooter";
 import HomeNavbar from "@/components/HomeNavbar";
-import { ChevronLeft, ChevronRight, Heart, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, Star, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 
 type ApiReview = {
-    rating: number;
-    comment: string;
-    date?: string;
-    helpful?: number;
-    userName?: string;
+    Rating: number;
+    Comment: string;
+    CreatedAt: string;
+    ReviewerName: string;
+    ReviewerAvatarURL?: string;
 };
 
 type ApiProductDetail = {
@@ -29,6 +29,7 @@ type ApiProductDetail = {
     Rating: number | null;
     ReviewsCount: number;
     ThumbnailURL: string | null;
+    SellerID: number;
     SellerName: string;
     Category: string | null;
     Format: string | null;
@@ -68,7 +69,6 @@ export default function ProductPage() {
     const [rentalStartDate, setRentalStartDate] = useState("");
     const [rentalEndDate, setRentalEndDate] = useState("");
     const [rentalDays, setRentalDays] = useState(7);
-    const [rentalType, setRentalType] = useState<"daily" | "long">("daily");
 
     const productId = useMemo(() => {
         if (!rawId || typeof rawId !== "string") return null;
@@ -123,13 +123,8 @@ export default function ProductPage() {
     }, [productId]);
 
     useEffect(() => {
-        if (rentalType === "daily") {
-            setRentalDays(1);
-            return;
-        }
-
         if (!rentalStartDate || !rentalEndDate) {
-            setRentalDays(7);
+            setRentalDays(1);
             return;
         }
 
@@ -138,7 +133,7 @@ export default function ProductPage() {
         const diffTime = end.getTime() - start.getTime();
         const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         setRentalDays(days > 0 ? days : 1);
-    }, [rentalStartDate, rentalEndDate, rentalType]);
+    }, [rentalStartDate, rentalEndDate]);
 
     if (!rawId || typeof rawId !== "string" || !productId) {
         return (
@@ -185,7 +180,7 @@ export default function ProductPage() {
 
     const rentalPrice = product.RentalPrice ?? 0;
     const depositFee = 100000;
-    const rentalTotal = rentalPrice * rentalDays;
+    const rentalTotal = rentalPrice;
     const total = rentalTotal + depositFee;
 
     const normalizedRating = product.Rating ?? 0;
@@ -220,7 +215,7 @@ export default function ProductPage() {
                         <div className="flex flex-col gap-6">
                             <div className="relative overflow-hidden rounded-2xl bg-gray-100 h-[400px]">
                                 <img
-                                    src={safeImages[selectedImage]?.ImageURL || product.ThumbnailURL || ""}
+                                    src={getImageUrl(safeImages[selectedImage]?.ImageURL || product.ThumbnailURL)}
                                     alt={product.Title}
                                     className="h-full w-full object-cover"
                                 />
@@ -266,7 +261,7 @@ export default function ProductPage() {
                                         onClick={() => setSelectedImage(index)}
                                         className={`h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg border-2 transition ${selectedImage === index ? "border-blue-600" : "border-gray-200"}`}
                                     >
-                                        <img src={img.ImageURL} alt={`${product.Title} ${index + 1}`} className="h-full w-full object-cover" />
+                                        <img src={getImageUrl(img.ImageURL)} alt={`${product.Title} ${index + 1}`} className="h-full w-full object-cover" />
                                     </button>
                                 ))}
                             </div>
@@ -288,6 +283,28 @@ export default function ProductPage() {
                                     </div>
                                 </div>
 
+                                <div className="mb-4">
+                                    <button 
+                                        onClick={async () => {
+                                            if (!product.SellerID) return;
+                                            try {
+                                                await api.post("/messages", {
+                                                    receiverId: product.SellerID,
+                                                    productId: product.ProductID,
+                                                    content: `Chào bạn, tôi muốn hỏi về sản phẩm "${product.Title}"`,
+                                                }, true);
+                                                router.push("/chat");
+                                            } catch (err) {
+                                                alert("Vui lòng đăng nhập để nhắn tin");
+                                            }
+                                        }}
+                                        className="w-full flex justify-center items-center gap-2 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-3 rounded-xl transition"
+                                    >
+                                        <MessageSquare className="h-5 w-5" />
+                                        Nhắn tin cho người bán
+                                    </button>
+                                </div>
+
                                 <div className="pt-6 border-t border-gray-200">
                                     <h4 className="font-bold text-gray-900 mb-3 text-sm">NỘI DUNG</h4>
                                     <p className="text-sm text-gray-700 leading-relaxed">{product.Description || ""}</p>
@@ -301,20 +318,7 @@ export default function ProductPage() {
                                 <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                                     <h2 className="text-3xl font-bold text-gray-900 mb-6">Đặt thuê ngay</h2>
 
-                                    <div className="grid grid-cols-2 bg-blue-50 rounded-xl p-1 mb-6">
-                                        <button
-                                            onClick={() => setRentalType("daily")}
-                                            className={`py-2 rounded-lg font-semibold text-sm transition ${rentalType === "daily" ? "bg-white text-blue-600 shadow" : "text-gray-600"}`}
-                                        >
-                                            Thuê trong ngày
-                                        </button>
-                                        <button
-                                            onClick={() => setRentalType("long")}
-                                            className={`py-2 rounded-lg font-semibold text-sm transition ${rentalType === "long" ? "bg-white text-blue-600 shadow" : "text-gray-600"}`}
-                                        >
-                                            Thuê dài hạn
-                                        </button>
-                                    </div>
+
 
                                     <div className="grid grid-cols-2 gap-4 mb-5">
                                         <div>
@@ -340,7 +344,7 @@ export default function ProductPage() {
                                     <div className="bg-gray-50 rounded-2xl p-5 mb-6">
                                         <div className="space-y-4">
                                             <div className="flex justify-between text-sm">
-                                                <span className="text-gray-600">Phí thuê ({rentalDays} ngày)</span>
+                                                <span className="text-gray-600">Phí thuê</span>
                                                 <span className="font-semibold text-gray-900">{rentalTotal.toLocaleString("vi-VN")}₫</span>
                                             </div>
                                             <div className="flex justify-between text-sm">
@@ -358,7 +362,11 @@ export default function ProductPage() {
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            router.push(`/orders`);
+                                            if (!rentalStartDate || !rentalEndDate) {
+                                                alert("Vui lòng chọn ngày nhận và ngày trả hàng!");
+                                                return;
+                                            }
+                                            router.push(`/checkout/${product.ProductID}?startDate=${rentalStartDate}&endDate=${rentalEndDate}`);
                                         }}
                                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition text-lg"
                                     >
@@ -439,7 +447,14 @@ export default function ProductPage() {
                                                 🛒 {product.Stock === 0 ? "Hết hàng" : "Thêm vào giỏ hàng"}
                                             </button>
                                             <button
-                                                onClick={() => router.push(`/checkout`)}
+                                                    onClick={async () => {
+                                                        try {
+                                                            await api.post("/cart", { productId: product.ProductID }, true);
+                                                            router.push(`/checkout`);
+                                                        } catch (err: unknown) {
+                                                            alert(err instanceof Error ? err.message : "Vui lòng đăng nhập để mua hàng");
+                                                        }
+                                                    }}
                                                 disabled={product.Stock === 0}
                                                 className="w-full bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 disabled:border-gray-300 disabled:text-gray-400 disabled:cursor-not-allowed font-bold py-4 rounded-xl transition text-lg"
                                             >
@@ -484,22 +499,29 @@ export default function ProductPage() {
                                             {reviewList.map((review, idx) => (
                                                 <div key={idx} className="mb-4 pb-4 border-b border-gray-100 last:border-0">
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <span className="font-semibold text-sm text-gray-800">{review.userName || "Ẩn danh"}</span>
-                                                        <div className="flex">
+                                                        {review.ReviewerAvatarURL ? (
+                                                            <img src={getImageUrl(review.ReviewerAvatarURL)} alt="Avatar" className="w-6 h-6 rounded-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
+                                                                {(review.ReviewerName || "U").charAt(0)}
+                                                            </div>
+                                                        )}
+                                                        <span className="font-semibold text-sm text-gray-800">{review.ReviewerName || "Ẩn danh"}</span>
+                                                        <div className="flex ml-2">
                                                             {[1, 2, 3, 4, 5].map((s) => (
                                                                 <Star
                                                                     key={s}
-                                                                    className={`h-3 w-3 ${s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`}
+                                                                    className={`h-3 w-3 ${s <= (review.Rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`}
                                                                 />
                                                             ))}
                                                         </div>
                                                     </div>
-                                                    {review.comment && (
-                                                        <p className="text-sm text-gray-600">{review.comment}</p>
+                                                    {review.Comment && (
+                                                        <p className="text-sm text-gray-600 mt-1">{review.Comment}</p>
                                                     )}
-                                                    {review.date && (
+                                                    {review.CreatedAt && (
                                                         <p className="text-xs text-gray-400 mt-1">
-                                                            {new Date(review.date).toLocaleDateString("vi-VN")}
+                                                            {new Date(review.CreatedAt).toLocaleDateString("vi-VN")}
                                                         </p>
                                                     )}
                                                 </div>

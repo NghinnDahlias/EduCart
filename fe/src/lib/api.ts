@@ -4,6 +4,12 @@ const prodBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL_PROD;
 const rawBase = process.env.NODE_ENV === "production" && prodBaseUrl ? prodBaseUrl : devBaseUrl;
 export const API_BASE_URL = rawBase.endsWith("/") ? rawBase.slice(0, -1) : rawBase;
 
+export const getImageUrl = (url: string | null | undefined): string => {
+  if (!url) return "/placeholder-book.png";
+  if (url.startsWith("http")) return url;
+  return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
 // Token management (client-side only)
 export const getToken = (): string | null => {
   if (typeof window === "undefined") return null;
@@ -43,7 +49,11 @@ export async function apiFetch<T = unknown>(path: string, opts: RequestOptions =
   });
 
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message || `HTTP ${res.status}`);
+  if (!res.ok) {
+    const errMessage = data?.error || data?.message || `HTTP ${res.status}`;
+    const details = data?.details ? JSON.stringify(data.details) : "";
+    throw new Error(details ? `${errMessage}: ${details}` : errMessage);
+  }
   return data as T;
 }
 

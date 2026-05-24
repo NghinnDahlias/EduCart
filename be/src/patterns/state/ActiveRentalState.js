@@ -8,6 +8,10 @@ class ActiveRentalState extends OrderState {
   onComplete() {
     return 'Completed';
   }
+
+  onReturn() {
+    return 'Returned';
+  }
 }
 
 module.exports = ActiveRentalState;
