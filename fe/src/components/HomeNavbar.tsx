@@ -10,6 +10,7 @@ export default function HomeNavbar() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [user, setUser] = useState<any>(null);
     const [cartCount, setCartCount] = useState(0);
+    const [unreadCount, setUnreadCount] = useState(0);
     const router = useRouter();
 
     useEffect(() => {
@@ -27,6 +28,17 @@ export default function HomeNavbar() {
         api.get<{ ok: boolean; items: any[] }>("/cart", true)
             .then(res => { if (res.ok && res.items) setCartCount(res.items.length); })
             .catch(() => {});
+
+        const fetchUnread = () => {
+            api.get<{ ok: boolean; count: number }>("/messages/unread-count", true)
+                .then(res => { if (res.ok && res.count !== undefined) setUnreadCount(res.count); })
+                .catch(() => {});
+        };
+
+        fetchUnread();
+        const interval = setInterval(fetchUnread, 5000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const handleLogOut = () => {
@@ -84,8 +96,13 @@ export default function HomeNavbar() {
 
                     {/* Right: Icons */}
                     <div className="flex items-center gap-4">
-                        <Link href="/chat" className="rounded-lg p-2 hover:bg-gray-100">
+                        <Link href="/chat" className="rounded-lg p-2 hover:bg-gray-100 relative inline-flex">
                             <MessageCircle className="h-5 w-5 text-gray-700" />
+                            {isLoggedIn && unreadCount > 0 && (
+                                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                                    {unreadCount}
+                                </span>
+                            )}
                         </Link>
 
                         <Link href="/cart" className="rounded-lg p-2 hover:bg-gray-100 relative inline-flex">

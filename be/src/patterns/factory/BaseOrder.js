@@ -21,7 +21,7 @@ class BaseOrder {
     this.items = items; // [{ productId, quantity, unitPrice }]
     this.note = note;
     this.orderType = 'Buy';
-    this.lifecycleState = 'PendingPayment';
+    this.lifecycleState = 'Paid';
   }
 
   /**

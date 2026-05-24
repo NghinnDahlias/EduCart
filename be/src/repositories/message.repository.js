@@ -73,7 +73,19 @@ const MessageRepository = {
                INSERTED.Content, INSERTED.IsRead, INSERTED.SentAt, INSERTED.ProductID
         VALUES (@SenderID, @ReceiverID, @Content, @ProductID)
       `);
-    return r.recordset[0];
+  },
+
+  async getUnreadCount(userId) {
+    const pool = await getPool();
+    const r = await pool
+      .request()
+      .input('UserID', sql.Int, userId)
+      .query(`
+        SELECT COUNT(DISTINCT SenderID) AS UnreadCount
+        FROM dbo.Messages
+        WHERE ReceiverID = @UserID AND IsRead = 0
+      `);
+    return r.recordset[0].UnreadCount;
   },
 };
 

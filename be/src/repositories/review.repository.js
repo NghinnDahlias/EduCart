@@ -42,8 +42,8 @@ const ReviewRepository = {
       .input("Rating", sql.TinyInt, rating)
       .input("Comment", sql.NVarChar(sql.MAX), comment || null).query(`
         INSERT INTO dbo.Reviews (ReviewerID, ProductID, OrderID, Rating, Comment)
-        OUTPUT INSERTED.*
         VALUES (@ReviewerID, @ProductID, @OrderID, @Rating, @Comment);
+        SELECT TOP 1 * FROM dbo.Reviews WHERE ReviewID = SCOPE_IDENTITY();
       `);
     return r.recordset[0];
   },

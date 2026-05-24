@@ -1,20 +1,20 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
 import {
-  CheckCircle2,
-  Star,
-  ShieldCheck,
   AlertTriangle,
+  CheckCircle2,
   ChevronDown,
   Loader2,
+  ShieldCheck,
+  Star,
 } from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
-import HomeNavbar from "@/components/HomeNavbar";
 import HomeFooter from "@/components/HomeFooter";
-import { api } from "@/lib/api";
+import HomeNavbar from "@/components/HomeNavbar";
+import { api, getImageUrl } from "@/lib/api";
 
 interface ApiOrderItem {
   ProductID: number;
@@ -26,6 +26,7 @@ interface ApiOrderItem {
 }
 
 interface ApiOrder {
+  SellerID: number;
   OrderID: number;
   OrderType: "Buy" | "Rent";
   LifecycleState: string;
@@ -48,12 +49,15 @@ function ReviewPageInner() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg] = useState("");
   const [success, setSuccess] = useState(false);
+  const [mode, setMode] = useState<"review" | "return">("review");
+  const [returnReason, setReturnReason] = useState("");
+  const [returnSuccess, setReturnSuccess] = useState(false);
 
   useEffect(() => {
     if (!orderId) { setIsLoading(false); return; }
     api.get<{ ok: boolean; order: ApiOrder }>(`/orders/${orderId}`, true)
       .then(d => setOrder(d.order))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setIsLoading(false));
   }, [orderId]);
 
@@ -62,8 +66,12 @@ function ReviewPageInner() {
     setIsSubmitting(true);
     setSubmitMsg("");
     try {
-      // Mark order as complete
-      await api.post(`/orders/${order.OrderID}/transitions`, { event: "onComplete" }, true);
+      // Mark order as complete (Rent orders need this, Buy orders might already be complete)
+      try {
+        await api.post(`/orders/${order.OrderID}/transitions`, { event: "onComplete" }, true);
+      } catch {
+        // ignore, may already be in completed state
+      }
 
       // Submit review for each product in the order
       if (order.items && order.items.length > 0) {
@@ -76,7 +84,45 @@ function ReviewPageInner() {
         }
       }
 
+      // Gửi tin nhắn tự động cho người bán
+      try {
+        await api.post("/messages", {
+          receiverId: order.SellerID,
+          productId: order.items?.[0]?.ProductID || null,
+          content: `Hệ thống: Người mua đã đánh giá ${rating} sao cho đơn hàng #${order.OrderID}.${comment ? ` Nội dung: "${comment}"` : ""}`,
+        }, true);
+      } catch {
+        // ignore
+      }
+
       setSuccess(true);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "Có lỗi xảy ra. Vui lòng thử lại.";
+      setSubmitMsg(errMsg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReturn = async () => {
+    if (!order) return;
+    setIsSubmitting(true);
+    setSubmitMsg("");
+    try {
+      await api.post(`/orders/${order.OrderID}/transitions`, { event: "onReturn" }, true);
+
+      // Gửi tin nhắn tự động cho người bán
+      try {
+        await api.post("/messages", {
+          receiverId: order.SellerID,
+          productId: order.items?.[0]?.ProductID || null, // Fixed by system
+          content: `Hệ thống: YÊU CẦU TRẢ HÀNG (Đơn #${order.OrderID}). Lý do: ${returnReason}.`,
+        }, true);
+      } catch {
+        // ignore
+      }
+
+      setReturnSuccess(true);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Có lỗi xảy ra. Vui lòng thử lại.";
       setSubmitMsg(errMsg);
@@ -110,7 +156,7 @@ function ReviewPageInner() {
               Đánh giá của bạn đã được ghi nhận. Đơn hàng đã được xác nhận hoàn tất.
             </p>
             <button
-              onClick={() => router.push("/orders")}
+              onClick={() => window.location.href = "/orders"}
               className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition"
             >
               Về trang đơn hàng
@@ -122,8 +168,31 @@ function ReviewPageInner() {
     );
   }
 
-  const firstItem = order?.items?.[0];
-
+  if (returnSuccess) {
+    return (
+      <main className="min-h-screen bg-[#f7f7fb] flex flex-col">
+        <HomeNavbar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md p-8">
+            <div className="w-20 h-20 rounded-2xl bg-red-500 mx-auto flex items-center justify-center mb-6 shadow-md">
+              <CheckCircle2 className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold text-[#0f172a] mb-4">Gửi yêu cầu thành công!</h2>
+            <p className="text-gray-600 mb-6">
+              Yêu cầu trả hàng của bạn đã được ghi nhận và gửi đến người bán.
+            </p>
+            <button
+              onClick={() => window.location.href = "/orders"}
+              className="px-8 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition"
+            >
+              Về trang đơn hàng
+            </button>
+          </div>
+        </div>
+        <HomeFooter />
+      </main>
+    );
+  }
   return (
     <main className="min-h-screen bg-[#f7f7fb] flex flex-col">
       <HomeNavbar />
@@ -170,34 +239,45 @@ function ReviewPageInner() {
               <div className="bg-white border border-gray-200 rounded-2xl p-6">
                 <h2 className="text-3xl font-bold text-[#0f172a] mb-6">Sản phẩm đã mua</h2>
 
-                {firstItem ? (
-                  <div className="flex gap-4">
-                    <div className="w-28 h-40 rounded-lg overflow-hidden bg-gray-100 border flex-shrink-0">
-                      {firstItem.ThumbnailURL ? (
-                        <img
-                          src={firstItem.ThumbnailURL}
-                          alt={firstItem.Title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-gray-400">
-                          {firstItem.Title.charAt(0)}
+                {order?.items && order.items.length > 0 ? (
+                  <div className="space-y-6">
+                    {order.items.map((item, idx) => (
+                      <div key={idx} className="flex gap-4 pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                        <div className="w-28 h-40 rounded-lg overflow-hidden bg-gray-100 border flex-shrink-0">
+                          {item.ThumbnailURL ? (
+                            <img
+                              src={getImageUrl(item.ThumbnailURL)}
+                              alt={item.Title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-gray-400">
+                              {item.Title.charAt(0)}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
 
-                    <div className="flex-1">
-                      <p className="text-blue-600 font-bold uppercase text-sm">
-                        {order?.OrderType === "Rent" ? "THUÊ SÁCH" : "MUA SÁCH"}
-                      </p>
-                      <h3 className="font-bold text-2xl text-[#0f172a] leading-snug mt-1">
-                        {firstItem.Title}
-                      </h3>
-                      <p className="text-gray-500 mt-3">{firstItem.Author}</p>
-                      <p className="text-blue-600 font-bold text-2xl mt-2">
-                        {firstItem.UnitPrice.toLocaleString("vi-VN")}đ
-                      </p>
-                    </div>
+                        <div className="flex-1">
+                          <p className="text-blue-600 font-bold uppercase text-sm">
+                            {order.OrderType === "Rent" ? "THUÊ SÁCH" : "MUA SÁCH"}
+                          </p>
+                          <h3 className="font-bold text-2xl text-[#0f172a] leading-snug mt-1">
+                            {item.Title}
+                          </h3>
+                          <p className="text-gray-500 mt-3">{item.Author}</p>
+                          <div className="flex items-center gap-3 mt-2">
+                            <p className="text-blue-600 font-bold text-2xl">
+                              {item.UnitPrice.toLocaleString("vi-VN")}đ
+                            </p>
+                            {item.Quantity > 1 && (
+                              <p className="text-gray-500 font-medium text-lg">
+                                x {item.Quantity}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <p className="text-gray-400 text-sm">
@@ -254,103 +334,148 @@ function ReviewPageInner() {
 
             {/* Right */}
             <div className="bg-white border border-gray-200 rounded-2xl p-8">
-              <h2 className="text-4xl font-bold text-[#0f172a] mb-10">Xác nhận &amp; Đánh giá</h2>
-
-              {/* Rating */}
-              <div className="mb-10">
-                <p className="text-sm font-bold tracking-wide text-gray-500 mb-4">
-                  MỨC ĐỘ HÀI LÒNG
-                </p>
-
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    {[1, 2, 3, 4, 5].map((item) => (
-                      <button
-                        key={item}
-                        type="button"
-                        onClick={() => setRating(item)}
-                        className="transition-transform hover:scale-110"
-                      >
-                        <Star
-                          className={`w-8 h-8 transition-all ${
-                            item <= rating
-                              ? "text-blue-500 fill-blue-500"
-                              : "text-gray-300"
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-
-                  <span className="text-blue-600 font-bold text-2xl">
-                    {rating === 1 && "Rất tệ"}
-                    {rating === 2 && "Tệ"}
-                    {rating === 3 && "Bình thường"}
-                    {rating === 4 && "Tốt"}
-                    {rating === 5 && "Xuất sắc"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Comment */}
-              <div className="mb-10">
-                <p className="text-sm font-bold tracking-wide text-gray-500 mb-4">
-                  NỘI DUNG ĐÁNH GIÁ
-                </p>
-
-                <textarea
-                  rows={6}
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Hãy viết cảm nhận của bạn về sản phẩm và thái độ phục vụ của người bán..."
-                  className="w-full border border-gray-300 rounded-xl p-5 resize-none outline-none focus:border-blue-600 text-gray-700"
-                />
-              </div>
-
-              {/* Return request */}
-              <div className="border-t border-gray-200 pt-10">
-                <h3 className="text-4xl font-bold text-red-600 mb-8">
-                  Yêu cầu trả hàng (nếu có)
-                </h3>
-
-                <div className="mb-8">
-                  <p className="text-sm font-bold tracking-wide text-gray-500 mb-4">
-                    LÝ DO TRẢ HÀNG *
-                  </p>
-
-                  <div className="relative">
-                    <select className="w-full border border-gray-300 rounded-xl px-5 py-4 appearance-none outline-none focus:border-blue-600 text-gray-700">
-                      <option>Chọn lý do trả hàng</option>
-                      <option>Sản phẩm lỗi</option>
-                      <option>Sai mô tả</option>
-                      <option>Thiếu phụ kiện</option>
-                    </select>
-
-                    <ChevronDown className="w-5 h-5 absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <ShieldCheck className="w-5 h-5" />
-                    <span>Đánh giá của bạn sẽ được hiển thị công khai</span>
-                  </div>
-
-                  {submitMsg && (
-                    <p className="text-red-500 text-sm font-medium">{submitMsg}</p>
+              <div className="flex gap-8 mb-10 border-b border-gray-200">
+                <button
+                  onClick={() => setMode("review")}
+                  className={`pb-4 text-xl font-bold transition-colors relative ${mode === "review"
+                      ? "text-blue-600"
+                      : "text-gray-400 hover:text-gray-600"
+                    }`}
+                >
+                  Xác nhận &amp; Đánh giá
+                  {mode === "review" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />
                   )}
-
-                  <button
-                    onClick={handleSubmit}
-                    disabled={isSubmitting || !orderId || !order}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition text-white font-bold px-12 py-4 rounded-xl text-lg shadow-md flex items-center gap-2"
-                  >
-                    {isSubmitting && <Loader2 className="h-5 w-5 animate-spin" />}
-                    {isSubmitting ? "ĐANG GỬI..." : "GỬI ĐÁNH GIÁ"}
-                  </button>
-                </div>
+                </button>
+                <button
+                  onClick={() => setMode("return")}
+                  className={`pb-4 text-xl font-bold transition-colors relative ${mode === "return"
+                      ? "text-red-600"
+                      : "text-gray-400 hover:text-gray-600"
+                    }`}
+                >
+                  Yêu cầu trả hàng
+                  {mode === "return" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-600 rounded-t-full" />
+                  )}
+                </button>
               </div>
+
+              {mode === "review" ? (
+                <div>
+                  {/* Rating */}
+                  <div className="mb-10">
+                    <p className="text-sm font-bold tracking-wide text-gray-500 mb-4">
+                      MỨC ĐỘ HÀI LÒNG
+                    </p>
+
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        {[1, 2, 3, 4, 5].map((item) => (
+                          <button
+                            key={item}
+                            type="button"
+                            onClick={() => setRating(item)}
+                            className="transition-transform hover:scale-110"
+                          >
+                            <Star
+                              className={`w-8 h-8 transition-all ${item <= rating
+                                  ? "text-blue-500 fill-blue-500"
+                                  : "text-gray-300"
+                                }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+
+                      <span className="text-blue-600 font-bold text-2xl">
+                        {rating === 1 && "Rất tệ"}
+                        {rating === 2 && "Tệ"}
+                        {rating === 3 && "Bình thường"}
+                        {rating === 4 && "Tốt"}
+                        {rating === 5 && "Xuất sắc"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Comment */}
+                  <div className="mb-10">
+                    <p className="text-sm font-bold tracking-wide text-gray-500 mb-4">
+                      NỘI DUNG ĐÁNH GIÁ
+                    </p>
+
+                    <textarea
+                      rows={6}
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder="Hãy viết cảm nhận của bạn về sản phẩm và thái độ phục vụ của người bán..."
+                      className="w-full border border-gray-300 rounded-xl p-5 resize-none outline-none focus:border-blue-600 text-gray-700"
+                    />
+                  </div>
+
+                  {/* Footer */}
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 pt-10 border-t border-gray-200">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <ShieldCheck className="w-5 h-5" />
+                      <span>Đánh giá của bạn sẽ được hiển thị công khai</span>
+                    </div>
+
+                    {submitMsg && (
+                      <p className="text-red-500 text-sm font-medium">{submitMsg}</p>
+                    )}
+
+                    <button
+                      onClick={handleSubmit}
+                      disabled={isSubmitting || !orderId || !order}
+                      className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition text-white font-bold px-12 py-4 rounded-xl text-lg shadow-md flex items-center gap-2"
+                    >
+                      {isSubmitting && <Loader2 className="h-5 w-5 animate-spin" />}
+                      {isSubmitting ? "ĐANG GỬI..." : "GỬI ĐÁNH GIÁ"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {/* Return request */}
+                  <div className="mb-8">
+                    <p className="text-sm font-bold tracking-wide text-gray-500 mb-4">
+                      LÝ DO TRẢ HÀNG *
+                    </p>
+
+                    <div className="relative">
+                      <select
+                        value={returnReason}
+                        onChange={(e) => setReturnReason(e.target.value)}
+                        className="w-full border border-gray-300 rounded-xl px-5 py-4 appearance-none outline-none focus:border-red-600 text-gray-700"
+                      >
+                        <option value="">Chọn lý do trả hàng</option>
+                        <option value="Sản phẩm lỗi">Sản phẩm lỗi</option>
+                        <option value="Sai mô tả">Sai mô tả</option>
+                        <option value="Thiếu phụ kiện">Thiếu phụ kiện</option>
+                      </select>
+
+                      <ChevronDown className="w-5 h-5 absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 pt-10 border-t border-gray-200">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <AlertTriangle className="w-5 h-5 text-red-500" />
+                      <span>Yêu cầu sẽ được gửi cho người bán phê duyệt</span>
+                    </div>
+
+                    <button
+                      onClick={handleReturn}
+                      disabled={!returnReason || isSubmitting}
+                      className="bg-red-600 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition text-white font-bold px-12 py-4 rounded-xl text-lg shadow-md flex items-center gap-2"
+                    >
+                      {isSubmitting && <Loader2 className="h-5 w-5 animate-spin" />}
+                      {isSubmitting ? "ĐANG GỬI..." : "GỬI YÊU CẦU"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

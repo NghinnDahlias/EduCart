@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChevronLeft, MapPin, CreditCard, Truck, ShieldCheck, CheckCircle2, Phone, User, Handshake } from "lucide-react";
 import HomeNavbar from "../../components/HomeNavbar";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 
 interface CartItem {
     id: number;
@@ -33,7 +33,7 @@ export default function CheckoutPage() {
                         productId: item.ProductID,
                         title: item.Title,
                         author: item.Author,
-                        image: item.ThumbnailURL ?? "",
+                        image: getImageUrl(item.ThumbnailURL),
                         price: item.IsForRent ? (item.RentalPrice ?? item.Price ?? 0) : (item.Price ?? 0),
                         type: item.IsForRent ? "rent" : "buy",
                         rentalPrice: item.RentalPrice ?? null,

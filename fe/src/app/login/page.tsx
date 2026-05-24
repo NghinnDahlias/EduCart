@@ -94,7 +94,13 @@ export default function LoginPage() {
                         <p className="text-gray-600">Nhập tài khoản của bạn để tiếp tục</p>
                     </div>
 
-                    <div className="space-y-5">
+                    <form 
+                        className="space-y-5"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            handleLogin();
+                        }}
+                    >
                         {/* Email Input */}
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -154,7 +160,7 @@ export default function LoginPage() {
 
                         {/* Login Button */}
                         <button
-                            onClick={handleLogin}
+                            type="submit"
                             disabled={loading}
                             className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
@@ -168,7 +174,7 @@ export default function LoginPage() {
                                 Đăng ký ngay
                             </Link>
                         </p>
-                    </div>
+                    </form>
 
                     {/* Divider */}
                     <div className="my-8 relative flex items-center justify-center">

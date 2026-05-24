@@ -8,7 +8,7 @@ const createSchema = Joi.object({
   description: Joi.string().allow("").optional(),
   price: Joi.number().min(0).required(),
   type: Joi.string().valid("Sell", "Rent").required(),
-  subjectCode: Joi.string().required(),
+  subjectCode: Joi.string().allow("").optional(),
   universityId: Joi.number().integer().required(),
   facultyId: Joi.number().integer().required(),
   subjectId: Joi.number().integer().required(),

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Trash2, AlertCircle, Check, ShieldCheck, X } from "lucide-react";
 import HomeNavbar from "../../components/HomeNavbar";
-import { api } from "@/lib/api";
+import { api, getImageUrl } from "@/lib/api";
 
 interface CartItem {
   id: number;
@@ -31,7 +31,7 @@ export default function CartPage() {
           productId: item.ProductID,
           title: item.Title,
           author: item.Author,
-          image: item.ThumbnailURL ?? "",
+          image: getImageUrl(item.ThumbnailURL),
           price: item.IsForRent ? (item.RentalPrice ?? item.Price ?? 0) : (item.Price ?? 0),
           type: item.IsForRent ? "rent" : "buy",
           status: (item.Stock > 0 && item.Status === "Available") ? "SẴN SÀNG" : "HẾT HÀNG",

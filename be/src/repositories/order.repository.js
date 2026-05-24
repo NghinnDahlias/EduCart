@@ -80,7 +80,11 @@ const OrderRepository = {
       .query(`
         SELECT o.*,
                ub.FName + ' ' + ub.LName AS BuyerName,
-               us.FName + ' ' + us.LName AS SellerName
+               us.FName + ' ' + us.LName AS SellerName,
+               CASE 
+                 WHEN o.OrderType = 'Rent' THEN COALESCE(o.DailyRate, 0) + COALESCE(o.Deposit, 0)
+                 ELSE (SELECT COALESCE(SUM(Quantity * UnitPrice), 0) FROM dbo.OrderItems WHERE OrderID = o.OrderID)
+               END AS TotalAmount
         FROM dbo.Orders o
         JOIN dbo.Users ub ON ub.UserID = o.BuyerID
         JOIN dbo.Users us ON us.UserID = o.SellerID

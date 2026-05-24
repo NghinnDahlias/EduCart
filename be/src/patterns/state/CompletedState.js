@@ -15,6 +15,10 @@ class CompletedState extends OrderState {
     }
     return 'DepositRefunded';
   }
+
+  onReturn() {
+    return 'Returned';
+  }
 }
 
 module.exports = CompletedState;
