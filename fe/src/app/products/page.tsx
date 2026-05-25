@@ -5,7 +5,7 @@ import HomeNavbar from "@/components/HomeNavbar";
 import { api, getImageUrl } from "@/lib/api";
 import { ChevronLeft, ChevronRight, Heart, ShoppingCart } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface ApiProduct {
@@ -18,7 +18,7 @@ interface ApiProduct {
 interface ApiUniversity { UniversityID: number; UName: string; }
 interface ApiFaculty { FacultyID: number; FacultyName: string; }
 interface ApiSubject { SubjectID: number; SubjectCode: string; SubjectName: string; }
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 9;
 
 function fmtVND(n: number | null | undefined): string {
   if (n == null) return "";
@@ -28,6 +28,7 @@ function fmtVND(n: number | null | undefined): string {
 export default function ProductsPage() {
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // API data
@@ -48,13 +49,23 @@ export default function ProductsPage() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [favorites, setFavorites] = useState(new Set<number>());
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(["Bán", "Thuê"]);
+  
+  const initialType = searchParams.get("type");
+  const initialCategory = searchParams.get("category");
+  
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(
+    initialType === "buy" ? ["Bán"] : initialType === "rent" ? ["Thuê"] : ["Bán", "Thuê"]
+  );
+  
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    initialCategory ? [initialCategory] : []
+  );
+  
   const [minPriceInput, setMinPriceInput] = useState("");
   const [maxPriceInput, setMaxPriceInput] = useState("");
   // Mặc định không áp dụng filter giá để chắc chắn sản phẩm mới hiển thị
   const [priceRange, setPriceRange] = useState({ min: 0, max: Infinity });
   const [condition, setCondition] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // Load universities on mount
   useEffect(() => {
@@ -87,8 +98,8 @@ export default function ProductsPage() {
   useEffect(() => {
     setIsLoading(true);
     const params = new URLSearchParams();
-    params.set("page", String(currentPage));
-    params.set("limit", String(ITEMS_PER_PAGE));
+    params.set("page", "1");
+    params.set("limit", "1000");
     if (appliedUniversityId) params.set("universityId", String(appliedUniversityId));
     if (appliedFacultyId) params.set("facultyId", String(appliedFacultyId));
     if (appliedSubjectId) params.set("subjectId", String(appliedSubjectId));
@@ -99,7 +110,7 @@ export default function ProductsPage() {
       .then(d => { setApiProducts(d.products); setTotal(d.total); })
       .catch(() => setApiProducts([]))
       .finally(() => setIsLoading(false));
-  }, [currentPage, appliedUniversityId, appliedFacultyId, appliedSubjectId, selectedTypes]);
+  }, [appliedUniversityId, appliedFacultyId, appliedSubjectId, selectedTypes]);
 
   const toggleFavorite = (productId: number) => {
     setFavorites(prev => {
@@ -109,7 +120,10 @@ export default function ProductsPage() {
     });
   };
 
-  // Client-side secondary filters (price, condition, category)
+  const initialSearch = searchParams.get("search") || "";
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
+
+  // Client-side secondary filters (price, condition, category, search)
   const filteredProducts = apiProducts.filter((p) => {
     const price = p.IsForRent ? (p.RentalPrice ?? p.Price ?? 0) : (p.Price ?? 0);
     const matchPrice = price >= priceRange.min && price <= priceRange.max;
@@ -119,12 +133,21 @@ export default function ProductsPage() {
     if (condition === "Tốt") matchCondition = cond >= 80 && cond < 95;
     if (condition === "Khá") matchCondition = cond >= 60 && cond < 80;
     const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, "").replace(/-/g, "");
-    const matchCategory = selectedCategories.length === 0 ||
-      selectedCategories.some(cat => normalize(cat) === normalize(p.Format ?? ""));
-    return matchPrice && matchCondition && matchCategory;
+    const matchCategory = selectedCategories.length === 0 || 
+      selectedCategories.some(cat => normalize(p.Format ?? "").includes(normalize(cat)));
+      
+    let matchSearch = true;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      matchSearch = (p.Title || "").toLowerCase().includes(q) || 
+                    (p.Category || "").toLowerCase().includes(q) || 
+                    (p.Format || "").toLowerCase().includes(q);
+    }
+    
+    return matchPrice && matchCondition && matchCategory && matchSearch;
   });
 
-  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedProducts = filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   return (
@@ -196,13 +219,29 @@ export default function ProductsPage() {
           {/* SIDEBAR */}
           <div className="bg-white p-5 rounded-xl shadow-sm h-fit">
 
+            {/* SEARCH */}
+            <h3 className="font-bold mb-3">Tìm kiếm</h3>
+            <div className="mb-6">
+              <input
+                type="text"
+                placeholder="Nhập từ khóa..."
+                className="w-full border p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+
             {/* CATEGORY */}
             <h3 className="font-bold mb-3">Danh mục sản phẩm</h3>
             <div className="space-y-2">
-              {["SÁCH CHUYÊN NGÀNH", "E-BOOK", "SÁCH CỨNG", "CHEATSHEET", "ĐỀ THI", "DỤNG CỤ VẼ KỸ THUẬT", "BỘ KIT / BOARD MẠCH", "DỤNG CỤ CHUYÊN DỤNG"].map(i => (
+              {["SÁCH CHUYÊN NGÀNH", "E-BOOK", "SÁCH CỨNG", "CHEATSHEET", "ĐỀ THI", "DỤNG CỤ VẼ KỸ THUẬT", "BỘ KIT / BOARD MẠCH", "DỤNG CỤ CHUYÊN DỤNG", "CÔNG NGHỆ THÔNG TIN", "KỸ THUẬT", "KINH TẾ"].map(i => (
                 <label key={i} className="flex gap-2">
                   <input
                     type="checkbox"
+                    checked={selectedCategories.includes(i)}
                     onChange={() => {
                       setSelectedCategories(prev =>
                         prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i]
