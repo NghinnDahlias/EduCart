@@ -127,7 +127,7 @@ CREATE TABLE dbo.Users (
     StudentYear       TINYINT       NULL,   -- UG: 1–6 | Pupils: 1–12 | Admin: NULL
     -- ────────────────────────────────────────────────────────
 
-    CONSTRAINT CK_U_Role        CHECK (Role IN ('Student','Admin')),
+    CONSTRAINT CK_U_Role        CHECK (Role IN ('Student','Admin','Buyer','Seller')),
     CONSTRAINT CK_U_Status      CHECK (Status IN ('Active','Suspended','Banned')),
     CONSTRAINT CK_U_EduLevel    CHECK (EducationLevel IS NULL
                                    OR EducationLevel IN ('Undergraduate','Pupils')),
@@ -171,16 +171,16 @@ CREATE TABLE dbo.Products (
     Title       NVARCHAR(255)  NOT NULL,
     Author      NVARCHAR(255)  NULL,
     Category    NVARCHAR(100)  NULL,
-    Format      NVARCHAR(50)   NULL,    -- Sách cứng, E-book, ...
+    Format      NVARCHAR(255)   NULL,    -- Sách cứng, E-book, ...
     TermLabel   NVARCHAR(50)   NULL,    -- Theo kỳ, Dài hạn, ...
     Description NVARCHAR(MAX)  NULL,
     Price       DECIMAL(18,2)  NULL     CHECK (Price >= 0),
     OriginalPrice DECIMAL(18,2) NULL    CHECK (OriginalPrice >= 0),
-    DiscountLabel NVARCHAR(20) NULL,
+    DiscountLabel NVARCHAR(50) NULL,
     RentalPrice DECIMAL(18,2)  NULL     CHECK (RentalPrice >= 0),
     Language    NVARCHAR(50)   NULL,
-    Pages       NVARCHAR(50)   NULL,
-    Publisher   NVARCHAR(100)  NULL,
+    Pages       INT            NULL,
+    Publisher   NVARCHAR(255)  NULL,
     PublishYear INT            NULL,
     ISBN        NVARCHAR(50)   NULL,
     Condition   INT            NULL,    -- tình trạng 0–100 (%)

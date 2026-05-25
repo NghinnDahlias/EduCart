@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Download, Shield, Users, Calendar } from "lucide-react";
+import { Download, Shield, Users, Calendar, ShoppingCart } from "lucide-react";
+import Link from "next/link";
 
 export default function HomeHeroSection() {
     return (
@@ -42,14 +43,14 @@ export default function HomeHeroSection() {
 
                             {/* CTA Buttons */}
                             <div className="mt-8 flex flex-wrap gap-4">
-                                <button className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700 transition">
-                                    <Download className="h-5 w-5" />
+                                <Link href="/products?type=buy" className="flex items-center gap-2.5 px-6 py-3.5 bg-[#1c55e9] hover:bg-[#1542c2] text-white font-semibold text-sm rounded-lg transition-colors shadow-sm uppercase tracking-wide">
+                                    <ShoppingCart className="w-5 h-5" />
                                     MUA SÁCH NGAY
-                                </button>
-                                <button className="inline-flex items-center gap-2 rounded-lg border-2 border-gray-300 px-6 py-3 font-semibold text-gray-700 hover:border-gray-400 transition">
-                                    <Calendar className="h-5 w-5" />
+                                </Link>
+                                <Link href="/products?type=rent" className="flex items-center gap-2.5 px-6 py-3.5 bg-transparent border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold text-sm rounded-lg transition-colors shadow-sm uppercase tracking-wide">
+                                    <Calendar className="w-5 h-5 text-gray-500" />
                                     THUÊ SÁCH NGAY
-                                </button>
+                                </Link>
                             </div>
                         </motion.div>
 

@@ -52,6 +52,7 @@ class AuthService {
     }
 
     const ok = await this.bcrypt.compare(password, user.Password);
+    // const ok = password === user.Password;
     if (!ok) throw new AppError("Invalid credentials", 401);
 
     const token = this.jwt.sign({

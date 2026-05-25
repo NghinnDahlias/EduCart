@@ -47,6 +47,7 @@ export default function PostBookPage() {
     const [showAddSlotInput, setShowAddSlotInput] = useState(false);
     const [newSlotInput, setNewSlotInput] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [documentCategories, setDocumentCategories] = useState<string[]>([]);
 
     // Load universities on mount
     useEffect(() => {
@@ -130,6 +131,7 @@ export default function PostBookPage() {
             formData.append("facultyId", String(facultyId));
             formData.append("subjectId", String(subjectId));
             formData.append("condition", String(conditionMap[condition] ?? 80));
+            formData.append("format", documentCategories.join(", "));
             if (saleType === "rent") {
                 formData.append("rentalPrice", yourPrice);
             }
@@ -275,6 +277,29 @@ export default function PostBookPage() {
                                             </div>
                                         </div>
 
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">LOẠI TÀI LIỆU (Có thể chọn nhiều)</label>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                {["CÔNG NGHỆ THÔNG TIN", "KỸ THUẬT", "KINH TẾ", "SÁCH CHUYÊN NGÀNH", "E-BOOK", "SÁCH CỨNG", "CHEATSHEET", "ĐỀ THI", "DỤNG CỤ VẼ KỸ THUẬT", "BỘ KIT / BOARD MẠCH", "DỤNG CỤ CHUYÊN DỤNG"].map(cat => (
+                                                    <label key={cat} className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="w-4 h-4 text-blue-600"
+                                                            checked={documentCategories.includes(cat)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setDocumentCategories(prev => [...prev, cat]);
+                                                                } else {
+                                                                    setDocumentCategories(prev => prev.filter(c => c !== cat));
+                                                                }
+                                                            }}
+                                                        />
+                                                        <span className="text-sm font-medium text-gray-700">{cat}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+
                                         <button
                                             onClick={() => isStep1Valid && setStep(2)}
                                             disabled={!isStep1Valid}
@@ -383,10 +408,13 @@ export default function PostBookPage() {
                                             <div>
                                                 <label className="block text-sm font-semibold text-gray-700 mb-2">GIÁ CỦA BẠN (VNĐ)</label>
                                                 <input
-                                                    type="number"
-                                                    value={yourPrice}
-                                                    onChange={e => setYourPrice(e.target.value)}
-                                                    placeholder="150000"
+                                                    type="text"
+                                                    value={yourPrice ? Number(yourPrice).toLocaleString('vi-VN') : ''}
+                                                    onChange={e => {
+                                                        const rawValue = e.target.value.replace(/\D/g, "");
+                                                        setYourPrice(rawValue.slice(0, 10));
+                                                    }}
+                                                    placeholder="150.000"
                                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600"
                                                 />
                                             </div>
