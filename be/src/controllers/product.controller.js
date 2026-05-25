@@ -38,6 +38,7 @@ const list = asyncHandler(async (req, res) => {
     facultyId,
     subjectId,
     forRent,
+    sellerId,
   } = req.query;
   const result = await services.productService.list({
     search,
@@ -48,6 +49,7 @@ const list = asyncHandler(async (req, res) => {
     facultyId: facultyId ? Number(facultyId) : undefined,
     subjectId: subjectId ? Number(subjectId) : undefined,
     forRent: forRent !== undefined ? forRent === "true" : undefined,
+    sellerId: sellerId ? Number(sellerId) : undefined,
   });
   res.json({ ok: true, ...result });
 });

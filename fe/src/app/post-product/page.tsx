@@ -21,6 +21,42 @@ const conditionMap: Record<string, number> = { new: 100, good: 80, old: 60 };
 
 export default function PostBookPage() {
     const [step, setStep] = useState(1);
+    const [editId, setEditId] = useState<string | null>(null);
+
+    // On mount, check editId
+    useEffect(() => {
+        const searchParams = new URLSearchParams(window.location.search);
+        const id = searchParams.get("editId");
+        if (id) {
+            setEditId(id);
+            // Fetch product details
+            api.get<{ ok: boolean; product: any }>(`/products/${id}`)
+                .then(res => {
+                    if (res.ok && res.product) {
+                        const p = res.product;
+                        setProductName(p.Title);
+                        setYourPrice(p.Price?.toString() || "");
+                        setSaleType(p.IsForRent ? "rent" : "sell");
+                        setUniversityId(p.UniversityID || "");
+                        setFacultyId(p.FacultyID || "");
+                        setSubjectId(p.SubjectID || "");
+                        
+                        // Reverse map condition
+                        const mappedCondition = Object.keys(conditionMap).find(k => conditionMap[k] === p.Condition) || "good";
+                        setCondition(mappedCondition);
+                        
+                        if (p.Format) {
+                            setDocumentCategories(p.Format.split(",").map((s: string) => s.trim()));
+                        }
+                        
+                        if (p.images && p.images.length > 0) {
+                            setUploadedPreviews(p.images.map((img: any) => img.ImageURL));
+                        }
+                    }
+                })
+                .catch(() => alert("Không thể tải thông tin sản phẩm"));
+        }
+    }, []);
 
     // Lookup data
     const [universities, setUniversities] = useState<University[]>([]);
@@ -137,9 +173,13 @@ export default function PostBookPage() {
             }
             uploadedFiles.forEach(file => formData.append("images", file));
 
-            await api.postForm("/products", formData, true);
+            if (editId) {
+                await api.putForm(`/products/${editId}`, formData, true);
+            } else {
+                await api.postForm("/products", formData, true);
+            }
             // Hiển thị sản phẩm mới sau khi đăng bán
-            window.location.href = "/products";
+            window.location.href = "/orders";
         } catch (err: any) {
             alert(err?.message ?? "Có lỗi xảy ra. Vui lòng thử lại.");
         } finally {
@@ -169,8 +209,8 @@ export default function PostBookPage() {
 
                     {/* Header */}
                     <div className="mb-12">
-                        <h1 className="text-4xl font-bold text-gray-900 mb-2">Đăng bán sản phẩm của bạn</h1>
-                        <p className="text-gray-600">Biến các sách giáo khoa đã sử dụng của bạn thành tài sản học tập cho những người khác.</p>
+                        <h1 className="text-4xl font-bold text-gray-900 mb-2">{editId ? "Sửa sản phẩm" : "Đăng bán sản phẩm của bạn"}</h1>
+                        <p className="text-gray-600">{editId ? "Cập nhật thông tin chi tiết cho sản phẩm của bạn." : "Biến các sách giáo khoa đã sử dụng của bạn thành tài sản học tập cho những người khác."}</p>
                     </div>
 
                     <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
@@ -352,6 +392,11 @@ export default function PostBookPage() {
                                                     </label>
                                                 )}
                                             </div>
+                                            {editId && (
+                                                <p className="text-xs font-semibold text-amber-600 mt-2 bg-amber-50 p-3 rounded-lg border border-amber-200">
+                                                    Lưu ý: Nếu bạn muốn thay đổi hình ảnh, bạn phải tải lên lại TẤT CẢ các hình ảnh cho sản phẩm này. Nếu không tải lên ảnh mới nào, hình ảnh cũ sẽ được giữ nguyên.
+                                                </p>
+                                            )}
                                         </div>
 
                                         <div>
@@ -557,7 +602,7 @@ export default function PostBookPage() {
                                                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                                                     }`}
                                             >
-                                                {isSubmitting ? "Đang đăng..." : "CÔNG BỐ BÀI ĐĂNG"}
+                                                {isSubmitting ? "Đang xử lý..." : (editId ? "LƯU THAY ĐỔI" : "CÔNG BỐ BÀI ĐĂNG")}
                                             </button>
                                         </div>
                                     </div>

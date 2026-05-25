@@ -292,7 +292,8 @@ CREATE TABLE dbo.Orders (
     CONSTRAINT CK_Ord_NotSelf  CHECK (BuyerID <> SellerID),
     CONSTRAINT CK_Ord_Lifecycle CHECK (LifecycleState IN (
         'PendingPayment','Paid','Delivering',
-        'ActiveRental','Completed','DepositRefunded','Cancelled'
+        'ActiveRental','Completed','DepositRefunded','Cancelled',
+        'ReturnRequested','Returned'
     )),
     CONSTRAINT CK_Ord_Type CHECK (OrderType IN ('Buy','Rent'))
 );

@@ -39,16 +39,13 @@ class ReviewService {
       throw new AppError("Product was not part of this order", 400);
     }
 
-    // Rule 4 — no duplicate
+    // Rule 4 — check duplicate, if exists update it instead
     const existing = await this.reviews.findByOrderAndProduct(
       orderId,
       productId,
     );
     if (existing) {
-      throw new AppError(
-        "You have already reviewed this product for this order",
-        409,
-      );
+      return this.reviews.update(existing.ReviewID, { rating, comment });
     }
 
     return this.reviews.create({

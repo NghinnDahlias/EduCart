@@ -12,6 +12,10 @@ class DeliveringState extends OrderState {
   onDeliver(ctx) {
     return ctx.orderType === 'Rent' ? 'ActiveRental' : 'Completed';
   }
+
+  onRequestReturn() {
+    return 'ReturnRequested';
+  }
 }
 
 module.exports = DeliveringState;

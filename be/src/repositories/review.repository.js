@@ -62,6 +62,24 @@ const ReviewRepository = {
       `);
     return r.recordset[0] || null;
   },
+
+  /**
+   * Update an existing review.
+   */
+  async update(reviewId, { rating, comment }) {
+    const pool = await getPool();
+    const r = await pool
+      .request()
+      .input("ReviewID", sql.Int, reviewId)
+      .input("Rating", sql.TinyInt, rating)
+      .input("Comment", sql.NVarChar(sql.MAX), comment || null).query(`
+        UPDATE dbo.Reviews
+        SET Rating = @Rating, Comment = @Comment, CreatedAt = GETDATE()
+        WHERE ReviewID = @ReviewID;
+        SELECT TOP 1 * FROM dbo.Reviews WHERE ReviewID = @ReviewID;
+      `);
+    return r.recordset[0];
+  },
 };
 
 module.exports = ReviewRepository;
