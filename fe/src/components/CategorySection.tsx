@@ -52,18 +52,18 @@ export default function CategorySection() {
                         <p className="text-sm font-semibold text-blue-600 uppercase">GỢI Ý TỪ CHÚNG TÔI</p>
                         <h2 className="mt-2 text-3xl font-bold text-gray-900">Dành riêng cho các ngành học</h2>
                     </div>
-                    <div className="hidden items-center gap-2 sm:flex">
+                    <div className="hidden items-center gap-3 sm:flex">
                         <button
                             onClick={handlePrev}
-                            className="rounded-lg border border-gray-300 p-2 hover:bg-gray-100 transition"
+                            className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm text-gray-600 hover:text-gray-900"
                         >
-                            <ChevronLeft className="h-5 w-5" />
+                            <ChevronLeft className="w-5 h-5" />
                         </button>
                         <button
                             onClick={handleNext}
-                            className="rounded-lg border border-gray-300 p-2 hover:bg-gray-100 transition"
+                            className="flex items-center justify-center w-10 h-10 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm text-gray-600 hover:text-gray-900"
                         >
-                            <ChevronRight className="h-5 w-5" />
+                            <ChevronRight className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
