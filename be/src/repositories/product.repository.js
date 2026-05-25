@@ -53,6 +53,7 @@ const ProductRepository = {
     facultyId,
     subjectId,
     forRent,
+    sellerId,
   } = {}) {
     const pool = await getPool();
     const req = pool.request();
@@ -82,6 +83,10 @@ const ProductRepository = {
     if (forRent !== undefined) {
       req.input("IsForRent", sql.Bit, forRent ? 1 : 0);
       conditions.push("p.IsForRent = @IsForRent");
+    }
+    if (sellerId !== undefined) {
+      req.input("SellerID", sql.Int, sellerId);
+      conditions.push("p.SellerID = @SellerID");
     }
 
     req.input("Offset", sql.Int, offset);

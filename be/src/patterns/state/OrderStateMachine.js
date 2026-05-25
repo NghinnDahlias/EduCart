@@ -7,6 +7,7 @@ const CompletedState = require('./CompletedState');
 const DepositRefundedState = require('./DepositRefundedState');
 const CancelledState = require('./CancelledState');
 const ReturnedState = require('./ReturnedState');
+const ReturnRequestedState = require('./ReturnRequestedState');
 
 const STATE_REGISTRY = {
   PendingPayment: new PendingPaymentState(),
@@ -17,6 +18,7 @@ const STATE_REGISTRY = {
   DepositRefunded: new DepositRefundedState(),
   Cancelled: new CancelledState(),
   Returned: new ReturnedState(),
+  ReturnRequested: new ReturnRequestedState(),
 };
 
 /**

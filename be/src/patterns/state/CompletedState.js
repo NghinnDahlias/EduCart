@@ -19,6 +19,10 @@ class CompletedState extends OrderState {
   onReturn() {
     return 'Returned';
   }
+
+  onRequestReturn() {
+    return 'ReturnRequested';
+  }
 }
 
 module.exports = CompletedState;

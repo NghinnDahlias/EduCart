@@ -43,6 +43,7 @@ function lifecycleToUI(state: string, orderType: "Buy" | "Rent"): UIOrderStatus 
     Delivering: "shipping",
     ActiveRental: "renting",
     Completed: orderType === "Rent" ? "renting" : "completed",
+    ReturnRequested: orderType === "Rent" ? "renting" : "completed",
     DepositRefunded: "returned",
     Cancelled: "cancelled",
   };
@@ -212,6 +213,18 @@ function OrderCard({ order }: { order: Order }) {
                 Xác nhận đã nhận
               </button>
             )}
+            {(order.LifecycleState === "Completed" || order.LifecycleState === "ActiveRental" || order.LifecycleState === "Delivering") && (
+              <button
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push(`/review?orderId=${order.OrderID}`);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
+              >
+                <RotateCcw className="h-3.5 w-3.5" /> Trả hàng / Đánh giá
+              </button>
+            )}
             {isRent && (
               <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors">
                 <RefreshCw className="h-3.5 w-3.5" /> Gia hạn
@@ -252,8 +265,16 @@ export default function OrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [sellerOrders, setSellerOrders] = useState<ApiSellerOrder[]>([]);
-  const [activeTab, setActiveTab] = useState<"orders" | "sales">("orders");
+  const [myProducts, setMyProducts] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<"orders" | "sales" | "products">("orders");
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    api.get<{ ok: boolean; user: any }>("/users/me", true)
+      .then(res => { if (res.ok && res.user) setUser(res.user); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (activeTab === "orders") {
@@ -285,7 +306,16 @@ export default function OrdersPage() {
         .catch(() => setSellerOrders([]))
         .finally(() => setIsLoading(false));
     }
-  }, [activeTab]);
+
+    if (activeTab === "products" && user) {
+      setIsLoading(true);
+      api
+        .get<{ ok: boolean; products: any[] }>(`/products?sellerId=${user.UserID}`)
+        .then((d) => setMyProducts(d.products ?? []))
+        .catch(() => setMyProducts([]))
+        .finally(() => setIsLoading(false));
+    }
+  }, [activeTab, user]);
 
   return (
     <main className="min-h-screen bg-[#F8FAFC]">
@@ -301,10 +331,11 @@ export default function OrdersPage() {
             {[
               { key: "orders", label: "Đơn hàng của tôi", icon: ShoppingBag },
               { key: "sales", label: "Quản lý bán hàng", icon: BarChart3 },
+              { key: "products", label: "Sản phẩm của tôi", icon: BookOpen },
             ].map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key as "orders" | "sales")}
+                onClick={() => setActiveTab(tab.key as "orders" | "sales" | "products")}
                 className={`flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
                   activeTab === tab.key ? "bg-blue-600 text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
                 }`}
@@ -416,7 +447,7 @@ export default function OrdersPage() {
                         </span>
                       </div>
                       <div className="flex justify-center gap-1">
-                        {isPending && (
+                        {order.LifecycleState === "Paid" && (
                           <button
                             onClick={async () => {
                               try {
@@ -454,6 +485,38 @@ export default function OrdersPage() {
                             <CheckCircle className="h-3.5 w-3.5" /> Đã nhận lại sách
                           </button>
                         )}
+                        {order.LifecycleState === "ReturnRequested" && (
+                          <div className="flex gap-1 flex-col sm:flex-row">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await api.post(`/orders/${order.OrderID}/transitions`, { event: "onApproveReturn" }, true);
+                                  window.location.reload();
+                                } catch (err: unknown) {
+                                  alert(err instanceof Error ? err.message : "Có lỗi xảy ra");
+                                }
+                              }}
+                              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
+                              style={{ color: "#059669", background: "#d1fae5" }}
+                            >
+                              <CheckCircle className="h-3.5 w-3.5" /> Phê duyệt trả hàng
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await api.post(`/orders/${order.OrderID}/transitions`, { event: "onRejectReturn" }, true);
+                                  window.location.reload();
+                                } catch (err: unknown) {
+                                  alert(err instanceof Error ? err.message : "Có lỗi xảy ra");
+                                }
+                              }}
+                              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
+                              style={{ color: "#dc2626", background: "#fee2e2" }}
+                            >
+                              Từ chối
+                            </button>
+                          </div>
+                        )}
                         {order.LifecycleState === "Completed" && order.OrderType === "Rent" && (
                           <button
                             onClick={async () => {
@@ -470,7 +533,7 @@ export default function OrdersPage() {
                             <RotateCcw className="h-3.5 w-3.5" /> Hoàn cọc
                           </button>
                         )}
-                        {(!isPending && order.LifecycleState !== "ActiveRental" && !(order.LifecycleState === "Completed" && order.OrderType === "Rent")) && (
+                        {(order.LifecycleState !== "Paid" && order.LifecycleState !== "ActiveRental" && !(order.LifecycleState === "Completed" && order.OrderType === "Rent")) && (
                           <button
                             onClick={() => router.push(`/review?orderId=${order.OrderID}`)}
                             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
@@ -483,6 +546,97 @@ export default function OrdersPage() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Products tab */}
+        {activeTab === "products" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-[#193967]">Sản phẩm của tôi</h2>
+              <Link
+                href="/post-product"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all"
+              >
+                <Plus className="h-4 w-4" /> Đăng bán sách
+              </Link>
+            </div>
+            {isLoading ? (
+              <div className="text-center py-16 text-gray-400">Đang tải...</div>
+            ) : myProducts.length === 0 ? (
+              <div className="bg-white rounded-2xl p-12 text-center border border-gray-200 shadow-sm text-gray-400">
+                Bạn chưa đăng bán sản phẩm nào.{" "}
+                <Link href="/post-product" className="text-blue-600 font-semibold">
+                  Đăng sản phẩm ngay!
+                </Link>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                <div
+                  className="grid px-6 py-3.5 text-[10px] font-bold tracking-widest uppercase text-white bg-blue-600"
+                  style={{ gridTemplateColumns: "1fr 120px 100px 180px" }}
+                >
+                  <span>Sản phẩm</span>
+                  <span className="text-center">Giá</span>
+                  <span className="text-center">Kho</span>
+                  <span className="text-center">Thao tác</span>
+                </div>
+                {myProducts.map((p, i) => (
+                  <div
+                    key={p.ProductID}
+                    className="grid px-6 py-4 items-center hover:bg-blue-50/30 transition-colors group"
+                    style={{
+                      gridTemplateColumns: "1fr 120px 100px 180px",
+                      borderTop: i > 0 ? "1px solid #f1f5f9" : undefined,
+                    }}
+                  >
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      {p.ThumbnailURL && (
+                        <img src={p.ThumbnailURL} alt={p.Title} className="w-12 h-12 object-cover rounded-lg border border-gray-200" />
+                      )}
+                      <div>
+                        <p className="font-bold text-sm text-[#193967] group-hover:text-blue-600 transition-colors truncate">
+                          {p.Title}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          #{p.ProductID} · {p.IsForRent ? "Cho Thuê" : "Bán"}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-center font-bold text-[#193967] text-sm">
+                      {p.Price != null ? `${p.Price.toLocaleString("vi-VN")}₫` : "—"}
+                    </p>
+                    <div className="flex justify-center">
+                      <span className="text-xs font-bold text-gray-600">{p.Stock}</span>
+                    </div>
+                    <div className="flex justify-center gap-1">
+                      <button
+                        onClick={() => router.push(`/post-product?editId=${p.ProductID}`)}
+                        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
+                        style={{ color: "#d97706", background: "#fef3c7" }}
+                      >
+                        Sửa
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) return;
+                          try {
+                            await api.delete(`/products/${p.ProductID}`, true);
+                            setMyProducts(prev => prev.filter(prod => prod.ProductID !== p.ProductID));
+                          } catch (err: unknown) {
+                            alert(err instanceof Error ? err.message : "Có lỗi xảy ra");
+                          }
+                        }}
+                        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
+                        style={{ color: "#dc2626", background: "#fee2e2" }}
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

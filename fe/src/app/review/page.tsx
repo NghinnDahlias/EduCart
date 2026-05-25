@@ -53,12 +53,40 @@ function ReviewPageInner() {
   const [returnReason, setReturnReason] = useState("");
   const [returnSuccess, setReturnSuccess] = useState(false);
 
+  const [hasExistingReview, setHasExistingReview] = useState(false);
+
   useEffect(() => {
     if (!orderId) { setIsLoading(false); return; }
-    api.get<{ ok: boolean; order: ApiOrder }>(`/orders/${orderId}`, true)
-      .then(d => setOrder(d.order))
-      .catch(() => { })
-      .finally(() => setIsLoading(false));
+    const fetchData = async () => {
+      try {
+        const d = await api.get<{ ok: boolean; order: ApiOrder }>(`/orders/${orderId}`, true);
+        setOrder(d.order);
+        
+        if (d.order.items && d.order.items.length > 0) {
+          try {
+            const [userRes, reviewsRes] = await Promise.all([
+              api.get<{ ok: boolean; user: any }>('/users/me', true),
+              api.get<{ ok: boolean; reviews: any[] }>(`/products/${d.order.items[0].ProductID}/reviews`)
+            ]);
+            if (userRes.ok && reviewsRes.ok) {
+              const myReview = reviewsRes.reviews.find((r) => r.ReviewerID === userRes.user.id);
+              if (myReview) {
+                setHasExistingReview(true);
+                setRating(myReview.Rating);
+                setComment(myReview.Comment || "");
+              }
+            }
+          } catch (e) {
+            // ignore inner error
+          }
+        }
+      } catch (err) {
+        // error loading order
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
   }, [orderId]);
 
   const handleSubmit = async () => {
@@ -109,7 +137,7 @@ function ReviewPageInner() {
     setIsSubmitting(true);
     setSubmitMsg("");
     try {
-      await api.post(`/orders/${order.OrderID}/transitions`, { event: "onReturn" }, true);
+      await api.post(`/orders/${order.OrderID}/transitions`, { event: "onRequestReturn" }, true);
 
       // Gửi tin nhắn tự động cho người bán
       try {
@@ -426,11 +454,19 @@ function ReviewPageInner() {
 
                     <button
                       onClick={handleSubmit}
-                      disabled={isSubmitting || !orderId || !order}
-                      className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition text-white font-bold px-12 py-4 rounded-xl text-lg shadow-md flex items-center gap-2"
+                      disabled={isSubmitting}
+                      className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-all shadow-md disabled:bg-blue-300 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                     >
-                      {isSubmitting && <Loader2 className="h-5 w-5 animate-spin" />}
-                      {isSubmitting ? "ĐANG GỬI..." : "GỬI ĐÁNH GIÁ"}
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Đang xử lý...
+                        </>
+                      ) : hasExistingReview ? (
+                        "Cập nhật đánh giá"
+                      ) : (
+                        "Gửi đánh giá"
+                      )}
                     </button>
                   </div>
                 </div>
@@ -465,14 +501,19 @@ function ReviewPageInner() {
                       <span>Yêu cầu sẽ được gửi cho người bán phê duyệt</span>
                     </div>
 
-                    <button
-                      onClick={handleReturn}
-                      disabled={!returnReason || isSubmitting}
-                      className="bg-red-600 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition text-white font-bold px-12 py-4 rounded-xl text-lg shadow-md flex items-center gap-2"
-                    >
-                      {isSubmitting && <Loader2 className="h-5 w-5 animate-spin" />}
-                      {isSubmitting ? "ĐANG GỬI..." : "GỬI YÊU CẦU"}
-                    </button>
+                    <div className="flex flex-col gap-2 items-end">
+                      {submitMsg && (
+                        <p className="text-red-500 text-sm font-medium">{submitMsg}</p>
+                      )}
+                      <button
+                        onClick={handleReturn}
+                        disabled={!returnReason || isSubmitting}
+                        className="bg-red-600 hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition text-white font-bold px-12 py-4 rounded-xl text-lg shadow-md flex items-center gap-2"
+                      >
+                        {isSubmitting && <Loader2 className="h-5 w-5 animate-spin" />}
+                        {isSubmitting ? "ĐANG GỬI..." : "GỬI YÊU CẦU"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
