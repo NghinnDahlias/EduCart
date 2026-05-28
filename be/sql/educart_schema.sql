@@ -30,6 +30,9 @@ IF OBJECT_ID('dbo.CommissionConfigs',   'U') IS NOT NULL DROP TABLE dbo.Commissi
 IF OBJECT_ID('dbo.PaymentTransactions', 'U') IS NOT NULL DROP TABLE dbo.PaymentTransactions;
 IF OBJECT_ID('dbo.CoinTransactions',    'U') IS NOT NULL DROP TABLE dbo.CoinTransactions;
 IF OBJECT_ID('dbo.CoinWallets',         'U') IS NOT NULL DROP TABLE dbo.CoinWallets;
+IF OBJECT_ID('dbo.PostVotes',           'U') IS NOT NULL DROP TABLE dbo.PostVotes;
+IF OBJECT_ID('dbo.Comments',            'U') IS NOT NULL DROP TABLE dbo.Comments;
+IF OBJECT_ID('dbo.Posts',               'U') IS NOT NULL DROP TABLE dbo.Posts;
 IF OBJECT_ID('dbo.AdImpressions',       'U') IS NOT NULL DROP TABLE dbo.AdImpressions;
 IF OBJECT_ID('dbo.Reports',             'U') IS NOT NULL DROP TABLE dbo.Reports;
 IF OBJECT_ID('dbo.Reviews',             'U') IS NOT NULL DROP TABLE dbo.Reviews;
@@ -416,7 +419,80 @@ GO
 
 
 -- ============================================================
--- 16. ADIMPRESSIONS  (tracking quảng cáo xem)
+-- 16. POSTS  (Bài viết trong diễn đàn — tạo bởi bất kỳ người dùng nào)
+--     SubjectID: ngữ cảnh môn học (tùy chọn, NULL = diễn đàn chung)
+--     VotesCount: số vote tích cộng (>=0=up, <0=down) — dẫn xuất từ PostVotes
+-- ============================================================
+CREATE TABLE dbo.Posts (
+    PostID      INT           IDENTITY(1,1) PRIMARY KEY,
+    AuthorID    INT           NOT NULL,
+    SubjectID   INT           NULL,       -- liên quan đến môn học nào (NULL = chung)
+    Title       NVARCHAR(255) NOT NULL,
+    Content     NVARCHAR(MAX) NOT NULL,
+    Tags        NVARCHAR(500) NULL,       -- comma-separated tags (vd: 'homework,urgent,help')
+    VotesCount  INT           NOT NULL DEFAULT 0,
+    CommentsCount INT         NOT NULL DEFAULT 0,
+    ViewCount   INT           NOT NULL DEFAULT 0,
+    IsActive    BIT           NOT NULL DEFAULT 1,    -- 0=bị ẩn/xóa, 1=hiện
+    IsPinned    BIT           NOT NULL DEFAULT 0,    -- 0=thường, 1=ghim lên đầu
+    CreatedAt   DATETIME      NOT NULL DEFAULT GETDATE(),
+    UpdatedAt   DATETIME      NULL,
+    CONSTRAINT FK_Post_Author  FOREIGN KEY (AuthorID) REFERENCES dbo.Users(UserID),
+    CONSTRAINT FK_Post_Subject FOREIGN KEY (SubjectID) REFERENCES dbo.Subjects(SubjectID),
+    CONSTRAINT CK_Post_Votes    CHECK (VotesCount >= -999999 AND VotesCount <= 999999),
+    CONSTRAINT CK_Post_Comments CHECK (CommentsCount >= 0),
+    CONSTRAINT CK_Post_Views    CHECK (ViewCount >= 0)
+);
+GO
+
+
+-- ============================================================
+-- 17. COMMENTS  (Bình luận trên bài viết — theo cấp bậc)
+--     ParentCommentID: NULL = bình luận gốc, NOT NULL = trả lời cho bình luận khác
+--     VotesCount: số vote của bình luận (tương tự Posts)
+-- ============================================================
+CREATE TABLE dbo.Comments (
+    CommentID       INT           IDENTITY(1,1) PRIMARY KEY,
+    PostID          INT           NOT NULL,
+    AuthorID        INT           NOT NULL,
+    ParentCommentID INT           NULL,       -- NULL=top-level, NOT NULL=reply to another comment
+    Content         NVARCHAR(MAX) NOT NULL,
+    VotesCount      INT           NOT NULL DEFAULT 0,
+    IsActive        BIT           NOT NULL DEFAULT 1,  -- 0=bị ẩn/xóa, 1=hiện
+    CreatedAt       DATETIME      NOT NULL DEFAULT GETDATE(),
+    UpdatedAt       DATETIME      NULL,
+    CONSTRAINT FK_Com_Post         FOREIGN KEY (PostID)          REFERENCES dbo.Posts(PostID),
+    CONSTRAINT FK_Com_Author       FOREIGN KEY (AuthorID)        REFERENCES dbo.Users(UserID),
+    CONSTRAINT FK_Com_ParentCom    FOREIGN KEY (ParentCommentID) REFERENCES dbo.Comments(CommentID),
+    CONSTRAINT CK_Com_Votes        CHECK (VotesCount >= -999999 AND VotesCount <= 999999)
+);
+GO
+
+
+-- ============================================================
+-- 18. POSTVOTES  (Vote up/down bài viết — M:N: Users ↔ Posts)
+--     VoteValue: +1 (upvote) | -1 (downvote) | 0 (neutral/unvote)
+--     Một user chỉ có 1 vote record cho 1 post
+-- ============================================================
+CREATE TABLE dbo.PostVotes (
+    VoteID      INT IDENTITY(1,1) PRIMARY KEY,
+    PostID      INT NOT NULL,
+    UserID      INT NOT NULL,
+    VoteValue   TINYINT NOT NULL DEFAULT 1,      -- 1=up, -1=down
+    VotedAt     DATETIME NOT NULL DEFAULT GETDATE(),
+    UpdatedAt   DATETIME NULL,
+    CONSTRAINT FK_PV_Post    FOREIGN KEY (PostID) REFERENCES dbo.Posts(PostID)
+        ON DELETE CASCADE,
+    CONSTRAINT FK_PV_User    FOREIGN KEY (UserID) REFERENCES dbo.Users(UserID)
+        ON DELETE CASCADE,
+    CONSTRAINT UQ_PV         UNIQUE (PostID, UserID),
+    CONSTRAINT CK_PV_Value   CHECK (VoteValue IN (-1, 1))
+);
+GO
+
+
+-- ============================================================
+-- 19. ADIMPRESSIONS  (tracking quảng cáo xem)
 -- ============================================================
 CREATE TABLE dbo.AdImpressions (
     ImpressionID INT      IDENTITY(1,1) PRIMARY KEY,
@@ -555,6 +631,17 @@ CREATE INDEX IX_Rev_ProdID       ON dbo.Reviews(ProductID);
 CREATE INDEX IX_Rev_ReviewerID   ON dbo.Reviews(ReviewerID);
 CREATE INDEX IX_Rep_ReportedID   ON dbo.Reports(ReportedID);
 CREATE INDEX IX_Rep_Status       ON dbo.Reports(Status);
+CREATE INDEX IX_Post_AuthorID    ON dbo.Posts(AuthorID);
+CREATE INDEX IX_Post_SubjectID   ON dbo.Posts(SubjectID);
+CREATE INDEX IX_Post_IsActive    ON dbo.Posts(IsActive);
+CREATE INDEX IX_Post_IsPinned    ON dbo.Posts(IsPinned, CreatedAt DESC);
+CREATE INDEX IX_Post_CreatedAt   ON dbo.Posts(CreatedAt DESC);
+CREATE INDEX IX_Com_PostID       ON dbo.Comments(PostID);
+CREATE INDEX IX_Com_AuthorID     ON dbo.Comments(AuthorID);
+CREATE INDEX IX_Com_ParentID     ON dbo.Comments(ParentCommentID);
+CREATE INDEX IX_Com_IsActive     ON dbo.Comments(IsActive);
+CREATE INDEX IX_PV_PostID        ON dbo.PostVotes(PostID);
+CREATE INDEX IX_PV_UserID        ON dbo.PostVotes(UserID);
 CREATE INDEX IX_CT_WalletID      ON dbo.CoinTransactions(WalletID);
 CREATE INDEX IX_CT_Type          ON dbo.CoinTransactions(TxType);
 CREATE INDEX IX_PT_UserID        ON dbo.PaymentTransactions(UserID);

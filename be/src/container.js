@@ -9,6 +9,7 @@ const paymentRepository = require("./repositories/payment.repository");
 const cartRepository = require("./repositories/cart.repository");
 const messageRepository = require("./repositories/message.repository");
 const reviewRepository = require("./repositories/review.repository");
+const forumRepository = require("./repositories/forum.repository");
 
 const AuthService = require("./services/auth.service");
 const ProductService = require("./services/product.service");
@@ -34,6 +35,7 @@ module.exports = {
     cartRepository,
     messageRepository,
     reviewRepository,
+    forumRepository,
   },
   services: {
     authService,

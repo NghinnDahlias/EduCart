@@ -96,7 +96,6 @@ GO
     SELECT N'Đại Học Công Nghệ' UNION ALL
     SELECT N'Đại Học Sài Gòn' UNION ALL
     SELECT N'Đại Học Bách Khoa TP.HCM' UNION ALL
-    
     SELECT N'ĐH Kinh tế TP.HCM' UNION ALL
     SELECT N'ĐH Khoa học Tự nhiên' UNION ALL
     SELECT N'ĐH Quốc gia TP.HCM' UNION ALL
@@ -114,7 +113,7 @@ WHERE NOT EXISTS (
 GO
 
 -- ============================================================================
--- Seed faculties (Đã sửa đổi sang tên trường chuẩn)
+-- Seed faculties
 -- ============================================================================
 ;WITH FacultySeeds AS (
     SELECT N'Đại Học Bách Khoa TP.HCM' AS UniversityName, N'Khoa Khoa học Ứng dụng' AS FacultyName UNION ALL
@@ -152,7 +151,7 @@ WHERE NOT EXISTS (
 GO
 
 -- ============================================================================
--- Seed subjects (Đã sửa đổi sang tên trường chuẩn)
+-- Seed subjects
 -- ============================================================================
 ;WITH SubjectSeeds AS (
     SELECT N'Đại Học Bách Khoa TP.HCM' AS UniversityName, N'Khoa Khoa học Ứng dụng' AS FacultyName, NULL AS SubjectCode, N'All' AS SubjectName UNION ALL
@@ -178,7 +177,6 @@ GO
     SELECT N'ĐH Công nghệ Thông tin', N'Khoa Khoa học Dữ liệu', NULL, N'Nhập môn Khoa học Dữ liệu' UNION ALL
     SELECT N'ĐH Công nghệ Thông tin', N'Khoa Kỹ thuật Phần mềm', NULL, N'Phát triển ứng dụng Web' UNION ALL
 
-    -- Register majors mapped to a generic faculty
     SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Tổng hợp', NULL, N'Khoa học Máy tính' UNION ALL
     SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Tổng hợp', NULL, N'Kỹ thuật Máy tính' UNION ALL
     SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Tổng hợp', NULL, N'Kỹ Thuật Phần Mềm' UNION ALL
@@ -201,7 +199,7 @@ WHERE NOT EXISTS (
 GO
 
 -- ============================================================================
--- Seed products (Đã sửa đổi sang tên trường chuẩn)
+-- Seed products
 -- ============================================================================
 ;WITH ProductSeeds AS (
     SELECT 1 AS ProductId, N'Calculus: Early Transcendentals' AS Title, N'James Stewart' AS Author,
@@ -251,7 +249,7 @@ GO
         2022, N'978-0262046305',
         4.9, 256,
         100, 0,
-        N'Đại Học Bách Khoa TP.HCM' AS UniversityName, N'Khoa Khoa học & Kỹ thuật Máy tính' AS FacultyName, N'Cấu trúc dữ liệu và Giải thuật' AS SubjectName,
+        N'Đại Học Bách Khoa TP.HCM', N'Khoa Khoa học & Kỹ thuật Máy tính', N'Cấu trúc dữ liệu và Giải thuật',
         N'https://covers.openlibrary.org/b/isbn/9780262033848-L.jpg'
     UNION ALL
     SELECT 6, N'Vật lý đại cương A1', N'TS. Lê Công C',
@@ -261,7 +259,7 @@ GO
         2022, N'978-8016548392',
         4.4, 89,
         90, 0,
-        N'Đại Học Bách Khoa TP.HCM' AS UniversityName, N'Khoa Khoa học Ứng dụng' AS FacultyName, N'Vật lý 1' AS SubjectName,
+        N'Đại Học Bách Khoa TP.HCM', N'Khoa Khoa học Ứng dụng', N'Vật lý 1',
         N'https://covers.openlibrary.org/b/isbn/9781305952195-L.jpg'
     UNION ALL
     SELECT 7, N'Linear Algebra and Its Applications', N'David C. Lay',
@@ -331,7 +329,7 @@ GO
         2021, N'978-0199270293',
         4.5, 70,
         100, 0,
-        N'Đại Học Bách Khoa TP.HCM' AS UniversityName, N'Khoa Kỹ thuật Hóa học' AS FacultyName, N'Hóa hữu cơ' AS SubjectName,
+        N'Đại Học Bách Khoa TP.HCM', N'Khoa Kỹ thuật Hóa học', N'Hóa hữu cơ',
         N'https://covers.openlibrary.org/b/isbn/9780199270293-L.jpg'
     UNION ALL
     SELECT 14, N'Tâm lý học nhân cách', N'Carl Rogers',
@@ -351,7 +349,7 @@ GO
         2016, N'978-0073398273',
         4.2, 60,
         93, 0,
-        N'Đại Học Bách Khoa TP.HCM' AS UniversityName, N'Khoa Kỹ thuật Giao thông' AS FacultyName, N'Cơ học chất lỏng' AS SubjectName,
+        N'Đại Học Bách Khoa TP.HCM', N'Khoa Kỹ thuật Giao thông', N'Cơ học chất lỏng',
         N'https://covers.openlibrary.org/b/isbn/9780073398273-L.jpg'
     UNION ALL
     SELECT 16, N'Lập trình Web với React', N'Kyle Simpson',
@@ -592,7 +590,7 @@ BEGIN
         INSERT INTO dbo.Messages (SenderID, ReceiverID, Content, SentAt) VALUES (@LinhId, @BuyerId, N'Mình đã nhận được sách, cảm ơn bạn!', DATEADD(day, -1, GETDATE()));
 END
 
--- 4. Reviews (Đã tối ưu hóa luồng biến chạy mượt mà)
+-- 4. Reviews
 IF @BuyerId IS NOT NULL AND @AlgoId IS NOT NULL
 BEGIN
     DECLARE @RevOrderId INT = (SELECT TOP 1 OrderID FROM dbo.Orders WHERE Note = N'seed-order-buy-1');
@@ -602,11 +600,11 @@ BEGIN
         BEGIN
             INSERT INTO dbo.Reviews (ReviewerID, ProductID, OrderID, Rating, Comment, CreatedAt)
             VALUES (
-                @BuyerId, 
-                @AlgoId, 
-                @RevOrderId, 
-                5, 
-                N'Sách Calculus và Thuật toán chất lượng cực kỳ tốt, chủ shop bọc lót cẩn thận, rất đáng tiền nha mọi người!', 
+                @BuyerId,
+                @AlgoId,
+                @RevOrderId,
+                5,
+                N'Sách Calculus và Thuật toán chất lượng cực kỳ tốt, chủ shop bọc lót cẩn thận, rất đáng tiền nha mọi người!',
                 GETDATE()
             );
         END
