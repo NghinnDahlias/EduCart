@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { ChevronLeft, MapPin, CreditCard, Truck, ShieldCheck, CheckCircle2, Phone, User, Handshake } from "lucide-react";
-import HomeNavbar from "../../components/HomeNavbar";
 import { api, getImageUrl } from "@/lib/api";
+import { CheckCircle2, ChevronLeft, CreditCard, Handshake, MapPin, Phone, ShieldCheck, Truck, User } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import HomeNavbar from "../../components/HomeNavbar";
 
 interface CartItem {
     id: number;
@@ -40,7 +40,7 @@ export default function CheckoutPage() {
                     }));
                 setCartItems(mapped);
             })
-            .catch(() => {})
+            .catch(() => { })
             .finally(() => setIsLoading(false));
     }, []);
 
@@ -74,6 +74,11 @@ export default function CheckoutPage() {
                     dailyRate: rentItems[0].rentalPrice ?? rentItems[0].price,
                 }, true);
             }
+
+            // Xóa các sản phẩm đã thanh toán khỏi giỏ hàng
+            await Promise.all(
+                cartItems.map(i => api.delete(`/cart/${i.productId}`, true).catch(() => { }))
+            );
 
             window.location.href = "/orders";
         } catch (err: any) {
