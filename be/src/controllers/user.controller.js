@@ -94,9 +94,26 @@ const uploadAvatar = asyncHandler(async (req, res) => {
   res.json({ ok: true, avatarUrl, user: safe });
 });
 
+const getUserPublic = asyncHandler(async (req, res) => {
+  const userId = parseInt(req.params.id);
+  if (isNaN(userId)) {
+    return res.status(400).json({ ok: false, message: "Invalid user ID" });
+  }
+
+  const user = await repositories.userRepository.findById(userId);
+  if (!user) {
+    return res.status(404).json({ ok: false, message: "User not found" });
+  }
+
+  // Return public profile info only (exclude Password)
+  const { Password, ...publicProfile } = user;
+  res.json({ ok: true, user: publicProfile });
+});
+
 module.exports = {
   getMe,
   updateMe,
   updateMeValidator: validate(updateMeSchema),
   uploadAvatar,
+  getUserPublic,
 };

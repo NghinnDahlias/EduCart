@@ -2,7 +2,7 @@
 
 import HomeFooter from "@/components/HomeFooter";
 import HomeNavbar from "@/components/HomeNavbar";
-import { ChevronLeft, ChevronRight, Heart, Star, MessageSquare } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, Star, MessageSquare, AlertCircle, Check, X } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -64,6 +64,26 @@ export default function ProductPage() {
     const [isFavorite, setIsFavorite] = useState(false);
     const [selectedImage, setSelectedImage] = useState(0);
     const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
+
+    // Report modal state
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportForm, setReportForm] = useState({ reason: "", description: "" });
+    const [reporting, setReporting] = useState(false);
+    const [notification, setNotification] = useState<{
+        show: boolean;
+        message: string;
+        type: "success" | "error" | "warning";
+    }>({ show: false, message: "", type: "success" });
+
+    const showNotification = (
+        message: string,
+        type: "success" | "error" | "warning" = "success"
+    ) => {
+        setNotification({ show: true, message, type });
+        setTimeout(() => {
+            setNotification({ show: false, message: "", type: "success" });
+        }, 3000);
+    };
 
     // Rental form state (used only for UI pricing, checkout flow is still handled elsewhere)
     const [rentalStartDate, setRentalStartDate] = useState("");
@@ -134,6 +154,36 @@ export default function ProductPage() {
         const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         setRentalDays(days > 0 ? days : 1);
     }, [rentalStartDate, rentalEndDate]);
+
+    const handleReportSeller = async () => {
+        if (!reportForm.reason.trim()) {
+            showNotification("Vui lòng chọn lý do báo cáo", "warning");
+            return;
+        }
+
+        setReporting(true);
+        try {
+            const response = await api.post(
+                "/reports",
+                {
+                    reportedUserId: product?.SellerID,
+                    reason: reportForm.reason,
+                    description: reportForm.description,
+                },
+                true
+            );
+
+            if (response.ok) {
+                showNotification("Báo cáo đã được gửi. Cảm ơn bạn đã giúp cải thiện nền tảng!", "success");
+                setShowReportModal(false);
+                setReportForm({ reason: "", description: "" });
+            }
+        } catch (err: any) {
+            showNotification(err.message || "Có lỗi xảy ra khi gửi báo cáo", "error");
+        } finally {
+            setReporting(false);
+        }
+    };
 
     if (!rawId || typeof rawId !== "string" || !productId) {
         return (
@@ -268,7 +318,7 @@ export default function ProductPage() {
 
                             <div className="rounded-2xl bg-gray-50 p-6">
                                 <div className="flex items-start justify-between mb-4">
-                                    <div className="flex items-center gap-3 flex-1">
+                                    <Link href={`/seller/${product.SellerID}`} className="flex items-center gap-3 flex-1 hover:opacity-80 transition">
                                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center font-bold text-lg">
                                             {product.SellerName?.charAt(0) || "E"}
                                         </div>
@@ -276,15 +326,15 @@ export default function ProductPage() {
                                             <h3 className="font-bold text-gray-900 text-sm">{product.SellerName}</h3>
                                             <p className="text-xs text-gray-600">TRUSTED SELLER</p>
                                         </div>
-                                    </div>
+                                    </Link>
                                     <div className="text-right">
                                         <div className="text-2xl font-bold text-blue-600">{product.Rating ?? ""}</div>
                                         <p className="text-xs font-semibold text-gray-600">RATING</p>
                                     </div>
                                 </div>
 
-                                <div className="mb-4">
-                                    <button 
+                                <div className="flex gap-3 mb-4">
+                                    <button
                                         onClick={async () => {
                                             if (!product.SellerID) return;
                                             try {
@@ -295,13 +345,21 @@ export default function ProductPage() {
                                                 }, true);
                                                 router.push("/chat");
                                             } catch (err) {
-                                                alert("Vui lòng đăng nhập để nhắn tin");
+                                                showNotification("Vui lòng đăng nhập để nhắn tin", "error");
                                             }
                                         }}
-                                        className="w-full flex justify-center items-center gap-2 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-3 rounded-xl transition"
+                                        className="flex-1 flex justify-center items-center gap-2 border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-3 rounded-xl transition"
                                     >
                                         <MessageSquare className="h-5 w-5" />
                                         Nhắn tin cho người bán
+                                    </button>
+
+                                    <button
+                                        onClick={() => setShowReportModal(true)}
+                                        className="flex-1 flex justify-center items-center gap-2 border-2 border-red-600 text-red-600 hover:bg-red-50 font-bold py-3 rounded-xl transition"
+                                    >
+                                        <AlertCircle className="h-5 w-5" />
+                                        Báo cáo người bán
                                     </button>
                                 </div>
 
@@ -447,14 +505,14 @@ export default function ProductPage() {
                                                 🛒 {product.Stock === 0 ? "Hết hàng" : "Thêm vào giỏ hàng"}
                                             </button>
                                             <button
-                                                    onClick={async () => {
-                                                        try {
-                                                            await api.post("/cart", { productId: product.ProductID }, true);
-                                                            router.push(`/checkout`);
-                                                        } catch (err: unknown) {
-                                                            alert(err instanceof Error ? err.message : "Vui lòng đăng nhập để mua hàng");
-                                                        }
-                                                    }}
+                                                onClick={async () => {
+                                                    try {
+                                                        await api.post("/cart", { productId: product.ProductID }, true);
+                                                        router.push(`/checkout`);
+                                                    } catch (err: unknown) {
+                                                        alert(err instanceof Error ? err.message : "Vui lòng đăng nhập để mua hàng");
+                                                    }
+                                                }}
                                                 disabled={product.Stock === 0}
                                                 className="w-full bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 disabled:border-gray-300 disabled:text-gray-400 disabled:cursor-not-allowed font-bold py-4 rounded-xl transition text-lg"
                                             >
@@ -534,6 +592,93 @@ export default function ProductPage() {
                     </div>
                 </div>
             </section>
+
+            {/* Report Modal */}
+            {showReportModal && (
+                <div className="fixed inset-0 bg-black/75 bg-opacity-20 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+                        <h2 className="text-xl font-bold text-[#193967] mb-4">
+                            Báo cáo người bán
+                        </h2>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Lý do báo cáo <span className="text-red-600">*</span>
+                            </label>
+                            <select
+                                value={reportForm.reason}
+                                onChange={(e) =>
+                                    setReportForm({ ...reportForm, reason: e.target.value })
+                                }
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-600"
+                            >
+                                <option value="">-- Chọn lý do --</option>
+                                <option value="Scam">Lừa đảo</option>
+                                <option value="Fake Product">Sản phẩm giả</option>
+                                <option value="Rude/Disrespectful">Thiếu tôn trọng</option>
+                                <option value="Not Responding">Không phản hồi</option>
+                                <option value="Other">Khác</option>
+                            </select>
+                        </div>
+
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Chi tiết (tùy chọn)
+                            </label>
+                            <textarea
+                                value={reportForm.description}
+                                onChange={(e) =>
+                                    setReportForm({ ...reportForm, description: e.target.value })
+                                }
+                                placeholder="Mô tả chi tiết vấn đề..."
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-600 resize-none"
+                                rows={4}
+                            />
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowReportModal(false)}
+                                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleReportSeller}
+                                disabled={reporting}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                            >
+                                {reporting ? "Đang gửi..." : "Gửi báo cáo"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Toast Notification */}
+            {notification.show && (
+                <div className="fixed top-4 right-4 z-[9999] animate-in fade-in slide-in-from-right-4 duration-300">
+                    <div
+                        className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white ${notification.type === "success"
+                                ? "bg-green-500"
+                                : notification.type === "error"
+                                    ? "bg-red-500"
+                                    : "bg-yellow-500"
+                            }`}
+                    >
+                        {notification.type === "success" && (
+                            <Check className="h-5 w-5 flex-shrink-0" />
+                        )}
+                        {notification.type === "error" && (
+                            <X className="h-5 w-5 flex-shrink-0" />
+                        )}
+                        {notification.type === "warning" && (
+                            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                        )}
+                        <span className="text-sm font-medium">{notification.message}</span>
+                    </div>
+                </div>
+            )}
 
             <HomeFooter />
         </main>
