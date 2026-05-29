@@ -6,6 +6,7 @@ const ctrl = require("../controllers/user.controller");
 const router = express.Router();
 
 router.get("/me", requireAuth, ctrl.getMe);
+router.get("/:id", ctrl.getUserPublic);
 router.put("/me", requireAuth, ctrl.updateMe);
 
 // Upload avatar — multipart/form-data, field name: "avatar"

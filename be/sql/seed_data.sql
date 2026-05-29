@@ -3,6 +3,7 @@ GO
 
 -- ============================================================================
 -- Seed users (sellers/chat demo)
+-- Password: password123 (plain for demo, use bcrypt in production)
 -- ============================================================================
 IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE UserEmail = 'seller@educart.local')
 BEGIN
