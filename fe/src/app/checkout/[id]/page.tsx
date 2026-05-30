@@ -106,7 +106,8 @@ export default function CheckoutPage() {
 
   const numericPrice = product.IsForRent ? (product.RentalPrice ?? product.Price ?? 0) : (product.Price ?? 0);
   const subtotal = numericPrice * quantity;
-  const total = subtotal;
+  const deposit = product.IsForRent ? 100000 * quantity : 0;
+  const total = subtotal + deposit;
 
   const handlePlaceOrder = async () => {
     setIsProcessing(true);
@@ -405,16 +406,17 @@ export default function CheckoutPage() {
                     {subtotal.toLocaleString("vi-VN")}₫
                   </span>
                 </div>
+                {product.IsForRent && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">
+                      Tiền cọc (Hoàn trả sau)
+                    </span>
 
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">
-                    Phí dịch vụ
-                  </span>
-
-                  <span className="font-bold text-[#193967]">
-                    Miễn phí
-                  </span>
-                </div>
+                    <span className="font-bold text-[#193967]">
+                      {deposit.toLocaleString("vi-VN")}₫
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Total */}
