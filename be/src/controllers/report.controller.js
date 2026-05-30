@@ -31,6 +31,11 @@ const createReport = asyncHandler(async (req, res) => {
 
     const { reportedUserId, reason, description } = value;
 
+    // Check if trying to report self
+    if (reportedUserId === req.user.id) {
+        throw new AppError("You cannot report yourself", 400);
+    }
+
     // Check if user exists
     const pool = await getPool();
     const userCheck = await pool
