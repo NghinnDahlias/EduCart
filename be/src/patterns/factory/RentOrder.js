@@ -34,17 +34,9 @@ class RentOrder extends BaseOrder {
     this.dailyRate = Number(dailyRate);
     this.rentDays = Math.ceil((end - start) / MS_PER_DAY);
 
-    // Deposit defaults to 50% of the gross rental fee, capped at the
-    // sum of item unit prices (we should never hold more than the item is worth).
-    const grossRent = this.dailyRate; // Flat rental rate, not multiplied by days
-    const itemsValue = this.items.reduce(
-      (s, it) => s + Number(it.unitPrice) * Number(it.quantity),
-      0,
-    );
-    this.deposit = Math.min(
-      Math.round(grossRent * Number(depositRate)),
-      itemsValue,
-    );
+    // Fixed deposit of 100000 per rented item quantity
+    const totalItems = this.items.reduce((s, it) => s + Number(it.quantity), 0);
+    this.deposit = totalItems * 100000;
   }
 
   /**

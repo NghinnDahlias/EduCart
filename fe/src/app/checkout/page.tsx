@@ -45,8 +45,8 @@ export default function CheckoutPage() {
     }, []);
 
     const subtotal = cartItems.reduce((sum, item) => sum + item.price, 0);
-    const serviceFee = cartItems.length > 0 ? 15000 : 0;
-    const total = subtotal + serviceFee;
+    const depositTotal = cartItems.reduce((sum, item) => sum + (item.type === "rent" ? 100000 : 0), 0);
+    const total = subtotal + depositTotal;
 
     const handlePlaceOrder = async () => {
         if (cartItems.length === 0) return;
@@ -220,10 +220,16 @@ export default function CheckoutPage() {
                                             <span className="text-gray-500 font-medium">Tạm tính</span>
                                             <span className="font-bold text-[#193967]">{subtotal.toLocaleString("vi-VN")} VNĐ</span>
                                         </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-gray-500 font-medium">Phí dịch vụ</span>
-                                            <span className="font-bold text-[#193967]">{serviceFee.toLocaleString("vi-VN")} VNĐ</span>
-                                        </div>
+                                        {depositTotal > 0 && (
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-gray-500 font-medium">Tiền cọc (Hoàn trả sau)</span>
+                                                <span className="font-bold text-[#193967]">{depositTotal.toLocaleString("vi-VN")} VNĐ</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex justify-between items-center mb-6 pt-4 border-t border-gray-200">
+                                        <span className="font-bold text-[#193967]">TỔNG CỘNG</span>
+                                        <span className="text-2xl font-bold text-blue-600">{total.toLocaleString("vi-VN")} VNĐ</span>
                                     </div>
 
                                     <button onClick={handlePlaceOrder} disabled={isProcessing || cartItems.length === 0}

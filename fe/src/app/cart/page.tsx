@@ -67,9 +67,9 @@ export default function CartPage() {
 
   const selectedItemsData = cartItems.filter(item => selectedItems.has(item.id));
   const subtotal = selectedItemsData.reduce((sum, item) => sum + item.price, 0);
-  const serviceFee = selectedItemsData.length > 0 ? 15000 : 0;
+  const depositTotal = selectedItemsData.reduce((sum, item) => sum + (item.type === "rent" ? 100000 : 0), 0);
   const discount = 0;
-  const total = subtotal + serviceFee - discount;
+  const total = subtotal + depositTotal - discount;
 
   return (
     <main className="min-h-screen bg-[#F8FAFC]">
@@ -172,10 +172,12 @@ export default function CartPage() {
                   <span className="text-gray-500 font-medium">Tạm tính ({selectedItems.size} sản phẩm)</span>
                   <span className="font-bold text-[#193967]">{subtotal.toLocaleString("vi-VN")} VNĐ</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500 font-medium">Phí dịch vụ</span>
-                  <span className="font-bold text-[#193967]">{serviceFee.toLocaleString("vi-VN")} VNĐ</span>
-                </div>
+                {depositTotal > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500 font-medium">Tiền cọc (Hoàn trả sau)</span>
+                    <span className="font-bold text-[#193967]">{depositTotal.toLocaleString("vi-VN")} VNĐ</span>
+                  </div>
+                )}
                 {discount > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500 font-medium">Khuyến mãi</span>
