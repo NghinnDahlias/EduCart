@@ -6,7 +6,11 @@ class ProductService {
   }
 
   async list(filters) {
-    return this.products.list(filters);
+    const normalizedFilters = { ...filters };
+    if (normalizedFilters.sellerId === undefined && !normalizedFilters.status) {
+      normalizedFilters.status = 'Available';
+    }
+    return this.products.list(normalizedFilters);
   }
 
   async createProduct({ sellerId, dto, imageUrls }) {
@@ -45,6 +49,7 @@ class ProductService {
   async getById(id) {
     const p = await this.products.findById(id);
     if (!p) throw new AppError("Product not found", 404);
+    await this.products.incrementViewCount(id);
     return p;
   }
 

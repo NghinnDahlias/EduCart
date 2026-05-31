@@ -51,8 +51,7 @@ class AuthService {
       throw new AppError(`Account is ${user.Status}`, 403);
     }
 
-    // const ok = await this.bcrypt.compare(password, user.Password);
-    const ok = password === user.Password;
+    const ok = await this._verifyPassword(password, user);
     if (!ok) throw new AppError("Invalid credentials", 401);
 
     const token = this.jwt.sign({
@@ -67,6 +66,28 @@ class AuthService {
     if (!user) return null;
     const { Password, ...safe } = user;
     return safe;
+  }
+
+  async _verifyPassword(password, user) {
+    const storedPassword = user.Password || "";
+    const isBcryptHash =
+      typeof storedPassword === "string" &&
+      /^\$2[aby]\$\d{2}\$/.test(storedPassword);
+
+    if (isBcryptHash) {
+      return this.bcrypt.compare(password, storedPassword);
+    }
+
+    const plaintextMatch = password === storedPassword;
+    if (!plaintextMatch) return false;
+
+    if (typeof this.users.updatePasswordHash === "function") {
+      const passwordHash = await this.bcrypt.hash(password, BCRYPT_ROUNDS);
+      await this.users.updatePasswordHash(user.UserID, passwordHash);
+      user.Password = passwordHash;
+    }
+
+    return true;
   }
 }
 

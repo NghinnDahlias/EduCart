@@ -16,6 +16,11 @@ class PaymentStrategy {
     throw new AppError('verifyWebhookSignature() must be implemented', 500);
   }
 
+  // eslint-disable-next-line no-unused-vars
+  buildMockWebhook({ orderId, amount, success }) {
+    throw new AppError('buildMockWebhook() must be implemented', 500);
+  }
+
   get name() {
     return this.constructor.name;
   }

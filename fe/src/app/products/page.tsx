@@ -6,7 +6,7 @@ import { api, getImageUrl } from "@/lib/api";
 import { ChevronLeft, ChevronRight, Heart, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 interface ApiProduct {
   ProductID: number; Title: string; Author: string; Price: number;
@@ -25,7 +25,7 @@ function fmtVND(n: number | null | undefined): string {
   return n.toLocaleString("vi-VN") + "₫";
 }
 
-export default function ProductsPage() {
+function ProductsPageInner() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -237,7 +237,7 @@ export default function ProductsPage() {
             {/* CATEGORY */}
             <h3 className="font-bold mb-3">Danh mục sản phẩm</h3>
             <div className="space-y-2">
-              {["SÁCH CHUYÊN NGÀNH", "E-BOOK", "SÁCH CỨNG", "CHEATSHEET", "ĐỀ THI", "DỤNG CỤ VẼ KỸ THUẬT", "BỘ KIT / BOARD MẠCH", "DỤNG CỤ CHUYÊN DỤNG", "CÔNG NGHỆ THÔNG TIN", "KỸ THUẬT", "KINH TẾ"].map(i => (
+              {["SÁCH CHUYÊN NGÀNH", "E-BOOK", "SÁCH CỨNG", "PDF / TÀI LIỆU SỐ", "PPT / PDF", "PDF / SCAN", "FLASHCARD HỌC TẬP", "CHEATSHEET", "ĐỀ THI", "DỤNG CỤ VẼ KỸ THUẬT", "BỘ KIT / BOARD MẠCH", "DỤNG CỤ CHUYÊN DỤNG", "HỌA CỤ MỸ THUẬT", "THIẾT BỊ MEDIA", "TÀI KHOẢN HỌC ONLINE", "CÔNG NGHỆ THÔNG TIN", "KỸ THUẬT", "KINH TẾ", "DƯỢC", "MỸ THUẬT"].map(i => (
                 <label key={i} className="flex gap-2">
                   <input
                     type="checkbox"
@@ -521,5 +521,13 @@ export default function ProductsPage() {
 
       <HomeFooter />
     </main>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProductsPageInner />
+    </Suspense>
   );
 }

@@ -1,646 +1,681 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  Package, CheckCircle, Truck, ShoppingBag, Plus, Eye,
-  MessageSquare, Clock, RefreshCw, BookOpen, BarChart3, RotateCcw,
-} from "lucide-react";
-import HomeNavbar from "../../components/HomeNavbar";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "../../lib/api";
+import {
+  BookOpen,
+  CheckCircle2,
+  ChevronRight,
+  CreditCard,
+  Package,
+  Plus,
+  ShoppingBag,
+  Store,
+  Truck,
+  XCircle,
+} from "lucide-react";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+import HomeNavbar from "@/components/HomeNavbar";
+import { useLocale } from "@/components/locale-provider";
+import { api } from "@/lib/api";
 
-type UIOrderStatus = "ordered" | "shipping" | "renting" | "completed" | "returned" | "cancelled";
-type OrderType = "rent" | "buy";
+type OrderTab = "orders" | "sales" | "products";
 
 interface ApiOrder {
   OrderID: number;
+  BuyerID: number;
+  SellerID: number;
   OrderType: "Buy" | "Rent";
   LifecycleState: string;
   TotalAmount: number | null;
   CreatedAt: string;
+  PaymentDueAt?: string;
   BuyerName: string;
   SellerName: string;
+  PrimaryTitle?: string | null;
+  CanRetryPayment?: boolean;
 }
 
-interface ApiSellerOrder extends ApiOrder {
-  status: UIOrderStatus;
+interface ApiProduct {
+  ProductID: number;
+  Title: string;
+  Price: number | null;
+  Stock: number;
+  IsForRent: boolean;
+  Status: string;
 }
 
-// Order shape used in the UI (derived from ApiOrder)
-interface Order extends ApiOrder {
-  status: UIOrderStatus;
+interface ApiUser {
+  UserID: number;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+const ordersDictionary = {
+  vi: {
+    center: "Trung tâm đơn hàng",
+    postNew: "Đăng sản phẩm mới",
+    buyerTab: "Đơn mua của tôi",
+    sellerTab: "Đơn bán của tôi",
+    productTab: "Sản phẩm của tôi",
+    orderPrefix: "Đơn hàng",
+    buyOrder: "Đơn mua",
+    sellOrder: "Đơn bán",
+    seller: "Người bán",
+    buyer: "Người mua",
+    createdAt: "Tạo lúc",
+    viewDetail: "Xem chi tiết",
+    repay: "Thanh toán lại",
+    cancel: "Hủy đơn hàng",
+    returnOrder: "Trả hàng",
+    confirmOrder: "Xác nhận đơn hàng",
+    review: "Đánh giá",
+    shipConfirm: "Xác nhận đã chuyển cho chuyển phát",
+    receiveBack: "Đã nhận lại sách",
+    refundDeposit: "Hoàn cọc",
+    editProduct: "Sửa sản phẩm",
+    inventory: "Tồn kho",
+    status: "Trạng thái",
+    noBuy: "Bạn chưa có đơn mua nào",
+    noSell: "Bạn chưa có đơn bán nào",
+    noProduct: "Bạn chưa đăng sản phẩm nào",
+    browseBooks: "Xem danh mục sách",
+    loading: "Đang tải dữ liệu...",
+  },
+  en: {
+    center: "Orders Center",
+    postNew: "Post new listing",
+    buyerTab: "My purchases",
+    sellerTab: "My sales",
+    productTab: "My listings",
+    orderPrefix: "Order",
+    buyOrder: "Purchase order",
+    sellOrder: "Sales order",
+    seller: "Seller",
+    buyer: "Buyer",
+    createdAt: "Created at",
+    viewDetail: "View detail",
+    repay: "Pay again",
+    cancel: "Cancel order",
+    returnOrder: "Return order",
+    confirmOrder: "Confirm delivery",
+    review: "Review",
+    shipConfirm: "Confirm handed to carrier",
+    receiveBack: "Book received back",
+    refundDeposit: "Refund deposit",
+    editProduct: "Edit listing",
+    inventory: "Stock",
+    status: "Status",
+    noBuy: "You have no purchase orders yet",
+    noSell: "You have no sales orders yet",
+    noProduct: "You have not posted any listing yet",
+    browseBooks: "Browse books",
+    loading: "Loading data...",
+  },
+} as const;
 
-function lifecycleToUI(state: string, orderType: "Buy" | "Rent"): UIOrderStatus {
-  const map: Record<string, UIOrderStatus> = {
-    PendingPayment: "ordered",
-    Paid: "ordered",
-    Delivering: "shipping",
-    ActiveRental: "renting",
-    Completed: orderType === "Rent" ? "renting" : "completed",
-    ReturnRequested: orderType === "Rent" ? "renting" : "completed",
-    DepositRefunded: "returned",
-    Cancelled: "cancelled",
+function formatMoney(value: number | null | undefined) {
+  if (value == null) return "--";
+  return `${value.toLocaleString("vi-VN")} đ`;
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleString("vi-VN");
+}
+
+function getPaymentCountdown(order: ApiOrder) {
+  if (order.LifecycleState !== "PendingPayment" || !order.PaymentDueAt) return null;
+  const dueAt = new Date(order.PaymentDueAt).getTime();
+  const remaining = dueAt - Date.now();
+  if (remaining <= 0) return "Đơn đã hết thời hạn thanh toán.";
+  const totalMinutes = Math.floor(remaining / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `Còn ${hours} giờ ${minutes} phút để thanh toán lại`;
+}
+
+function badgeClass(tone: string) {
+  switch (tone) {
+    case "blue":
+      return "bg-blue-50 text-blue-700 border-blue-200";
+    case "green":
+      return "bg-emerald-50 text-emerald-700 border-emerald-200";
+    case "amber":
+      return "bg-amber-50 text-amber-700 border-amber-200";
+    case "orange":
+      return "bg-orange-50 text-orange-700 border-orange-200";
+    case "red":
+      return "bg-red-50 text-red-700 border-red-200";
+    default:
+      return "bg-gray-50 text-gray-700 border-gray-200";
+  }
+}
+
+function getBuyerStatus(order: ApiOrder) {
+  switch (order.LifecycleState) {
+    case "PendingPayment":
+      return { label: "Chờ thanh toán", tone: "amber" };
+    case "Paid":
+      return { label: "Người bán đang chuẩn bị hàng", tone: "blue" };
+    case "Delivering":
+      return { label: "Đã gửi cho chuyển phát", tone: "blue" };
+    case "ActiveRental":
+      return { label: "Đang trong thời gian thuê", tone: "orange" };
+    case "Completed":
+      return { label: "Đã giao, đã nhận", tone: "green" };
+    case "ReturnRequested":
+      return { label: "Đang chờ xử lý trả hàng", tone: "amber" };
+    case "Returned":
+      return { label: "Đã trả hàng", tone: "gray" };
+    case "DepositRefunded":
+      return { label: "Đã hoàn cọc", tone: "green" };
+    case "Cancelled":
+      return { label: "Đã hủy", tone: "red" };
+    default:
+      return { label: order.LifecycleState, tone: "gray" };
+  }
+}
+
+function getSellerStatus(order: ApiOrder) {
+  switch (order.LifecycleState) {
+    case "PendingPayment":
+      return { label: "Chờ người mua thanh toán", tone: "amber" };
+    case "Paid":
+      return { label: "Đã nhận đơn", tone: "blue" };
+    case "Delivering":
+      return { label: "Đã chuyển cho chuyển phát", tone: "blue" };
+    case "ActiveRental":
+      return { label: "Người thuê đang giữ sách", tone: "orange" };
+    case "Completed":
+      return { label: "Đã giao xong", tone: "green" };
+    case "ReturnRequested":
+      return { label: "Người mua đang yêu cầu trả hàng", tone: "amber" };
+    case "Returned":
+      return { label: "Đã nhận lại hàng", tone: "gray" };
+    case "DepositRefunded":
+      return { label: "Đã hoàn cọc", tone: "green" };
+    case "Cancelled":
+      return { label: "Đã hủy", tone: "red" };
+    default:
+      return { label: order.LifecycleState, tone: "gray" };
+  }
+}
+
+function getProgressSteps(order: ApiOrder, role: "buyer" | "seller") {
+  const labels = [
+    "Chờ thanh toán",
+    role === "seller" ? "Đã nhận đơn" : "Đã thanh toán",
+    role === "seller" ? "Đã chuyển cho chuyển phát" : "Đã gửi cho chuyển phát",
+    role === "seller" ? "Xác nhận đã giao hàng" : "Đã giao / đã nhận",
+  ];
+
+  const stateToIndex: Record<string, number> = {
+    PendingPayment: 0,
+    Paid: 1,
+    Delivering: 2,
+    Completed: 3,
+    ActiveRental: 3,
+    ReturnRequested: 3,
+    Returned: 3,
+    DepositRefunded: 3,
   };
-  return map[state] ?? "ordered";
+
+  const activeIndex = stateToIndex[order.LifecycleState] ?? -1;
+
+  return labels.map((label, index) => ({
+    label,
+    done: activeIndex >= index,
+    current: activeIndex === index,
+  }));
 }
 
-// ─── Timeline config ──────────────────────────────────────────────────────────
+function ProgressBar({ order, role }: { order: ApiOrder; role: "buyer" | "seller" }) {
+  const steps = getProgressSteps(order, role);
 
-const buyStages = [
-  { label: "ĐÃ ĐẶT", key: "ordered", icon: Package },
-  { label: "ĐANG GIAO", key: "shipping", icon: Truck },
-  { label: "HOÀN TẤT", key: "completed", icon: CheckCircle },
-];
-const rentStages = [
-  { label: "ĐÃ ĐẶT", key: "ordered", icon: Package },
-  { label: "ĐANG GIAO", key: "shipping", icon: Truck },
-  { label: "ĐANG THUÊ", key: "renting", icon: BookOpen },
-  { label: "ĐÃ HOÀN TRẢ", key: "returned", icon: RotateCcw },
-];
-const buyStageIndex: Record<string, number> = { ordered: 0, shipping: 1, completed: 2 };
-const rentStageIndex: Record<string, number> = { ordered: 0, shipping: 1, renting: 2, returned: 3 };
-
-// ─── OrderTimeline ────────────────────────────────────────────────────────────
-
-function OrderTimeline({
-  status,
-  orderType,
-  trackingNumber,
-}: {
-  status: UIOrderStatus;
-  orderType: OrderType;
-  trackingNumber: string;
-}) {
-  const isRent = orderType === "rent";
-  const stages = isRent ? rentStages : buyStages;
-  const indexMap = isRent ? rentStageIndex : buyStageIndex;
-  const currentIdx = indexMap[status] ?? 0;
-  const HeaderIcon = isRent ? BookOpen : Truck;
-  const activeColor = isRent ? "#d97706" : "#2563eb";
+  if (order.LifecycleState === "Cancelled") {
+    return (
+      <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+        Đơn hàng đã bị hủy.
+      </div>
+    );
+  }
 
   return (
-    <div className={`px-6 py-5 rounded-t-2xl border-b ${isRent ? "bg-orange-50 border-orange-100" : "bg-blue-50 border-blue-100"}`}>
-      <div className="flex items-center gap-2 mb-5">
-        <div className={`p-1.5 rounded-lg ${isRent ? "bg-orange-100" : "bg-blue-100"}`}>
-          <HeaderIcon className="h-3.5 w-3.5" style={{ color: activeColor }} />
-        </div>
-        <p className="text-sm font-bold text-[#193967] tracking-wide">Đơn hàng #{trackingNumber}</p>
-        <span
-          className="ml-auto text-[10px] font-bold px-2.5 py-0.5 rounded-full"
-          style={isRent ? { background: "#fed7aa", color: "#92400e" } : { background: "#bfdbfe", color: "#0c4a6e" }}
+    <div className="mt-5 grid gap-3 md:grid-cols-4">
+      {steps.map((step, index) => (
+        <div
+          key={step.label}
+          className={`rounded-2xl border px-4 py-3 ${
+            step.done
+              ? "border-blue-200 bg-blue-50"
+              : "border-gray-200 bg-gray-50"
+          }`}
         >
-          {isRent ? "THUÊ" : "MUA"}
-        </span>
-      </div>
-      <div className="flex items-start relative px-2">
-        {stages.map((stage, idx) => {
-          const isCompleted = idx < currentIdx;
-          const isCurrent = idx === currentIdx;
-          const isUpcoming = idx > currentIdx;
-          const StageIcon = stage.icon;
-          return (
-            <div key={stage.key} className="flex-1 flex flex-col items-center relative">
-              {idx < stages.length - 1 && (
-                <div
-                  className="absolute h-0.5 transition-all"
-                  style={{ top: "18px", left: "50%", width: "100%", background: isCompleted ? activeColor : "#e5e7eb", zIndex: 0 }}
-                />
-              )}
-              <div
-                className={`relative z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all ${isCurrent ? "ring-4 scale-110" : ""}`}
-                style={{
-                  background: isUpcoming ? "#f3f4f6" : `linear-gradient(135deg, ${activeColor}, ${activeColor}bb)`,
-                  boxShadow: !isUpcoming ? `0 2px 8px ${activeColor}40` : "none",
-                }}
-              >
-                {isCompleted
-                  ? <CheckCircle className="h-4 w-4 text-white" />
-                  : <StageIcon className={`h-3.5 w-3.5 ${isUpcoming ? "text-gray-300" : "text-white"}`} />}
-              </div>
-              <p
-                className={`text-[10px] mt-2 text-center font-bold tracking-wide ${isUpcoming ? "text-gray-300" : ""}`}
-                style={!isUpcoming ? { color: activeColor } : {}}
-              >
-                {stage.label}
-              </p>
-            </div>
-          );
-        })}
-      </div>
+          <div className="flex items-center gap-3">
+            <span
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                step.done ? "bg-blue-600 text-white" : "bg-white text-gray-500"
+              }`}
+            >
+              {index + 1}
+            </span>
+            <p
+              className={`text-sm font-semibold ${
+                step.done ? "text-blue-700" : "text-gray-500"
+              }`}
+            >
+              {step.label}
+            </p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
 
-// ─── OrderCard ────────────────────────────────────────────────────────────────
-
-function OrderCard({ order }: { order: Order }) {
+function BuyerOrderCard({
+  order,
+  onRefresh,
+  locale,
+}: {
+  order: ApiOrder;
+  onRefresh: () => Promise<void>;
+  locale: "vi" | "en";
+}) {
+  const t = ordersDictionary[locale];
   const router = useRouter();
-  const isRent = order.OrderType === "Rent";
-  const orderType: OrderType = isRent ? "rent" : "buy";
+  const status = getBuyerStatus(order);
+  const countdown = getPaymentCountdown(order);
+  const titleSuffix = order.PrimaryTitle ? ` - ${order.PrimaryTitle}` : "";
+  const canCancel = order.LifecycleState === "PendingPayment" || order.LifecycleState === "Paid";
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-all">
-      <OrderTimeline
-        status={order.status}
-        orderType={orderType}
-        trackingNumber={String(order.OrderID)}
-      />
-      <div className="px-6 py-5 space-y-4">
-        {/* Seller / Buyer info */}
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-500">
-            {isRent ? "Người cho thuê:" : "Người bán:"}{" "}
-            <span className="text-blue-600 font-semibold">{order.SellerName}</span>
-          </span>
-          <span
-            className="text-[10px] font-bold px-2 py-0.5 rounded-md"
-            style={isRent ? { background: "#fed7aa", color: "#92400e" } : { background: "#dcfce7", color: "#166534" }}
-          >
-            {isRent ? "ĐANG THUÊ" : "MUA HÀNG"}
-          </span>
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-gray-500">{t.buyOrder}</p>
+          <h3 className="mt-1 text-xl font-bold text-slate-900">
+            {t.orderPrefix} #{order.OrderID}
+            {titleSuffix}
+          </h3>
+          <p className="mt-2 text-sm text-gray-600">
+            {t.seller}: <span className="font-semibold text-slate-900">{order.SellerName}</span>
+          </p>
+          <p className="mt-1 text-sm text-gray-500">{t.createdAt} {formatDate(order.CreatedAt)}</p>
+          {countdown ? <p className="mt-2 text-sm font-semibold text-amber-700">{countdown}</p> : null}
         </div>
-
-        {/* Actions + Total */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100">
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                e.preventDefault();
-                e.stopPropagation();
-                router.push("/chat");
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
-            >
-              <MessageSquare className="h-3.5 w-3.5" /> Nhắn tin
-            </button>
-            {(order.LifecycleState === "PendingPayment" || order.LifecycleState === "Paid") && (
-              <button
-                onClick={async (e) => {
-                  e.preventDefault(); e.stopPropagation();
-                  if (!confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) return;
-                  try {
-                    await api.post(`/orders/${order.OrderID}/transitions`, { event: "onCancel" }, true);
-                    window.location.reload();
-                  } catch (err: unknown) {
-                    alert(err instanceof Error ? err.message : "Có lỗi xảy ra");
-                  }
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors"
-              >
-                Hủy đơn
-              </button>
-            )}
-            {(order.status === "shipping" || order.status === "ordered") && (
-              <button
-                onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  try {
-                    await api.post(`/orders/${order.OrderID}/transitions`, { event: "onDeliver" }, true);
-                  } catch {
-                    // ignore, may already be in delivered state
-                  }
-                  router.push(`/review?orderId=${order.OrderID}`);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-              >
-                Xác nhận đã nhận
-              </button>
-            )}
-            {(order.LifecycleState === "Completed" || order.LifecycleState === "ActiveRental" || order.LifecycleState === "Delivering") && (
-              <button
-                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  router.push(`/review?orderId=${order.OrderID}`);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
-              >
-                <RotateCcw className="h-3.5 w-3.5" /> Trả hàng / Đánh giá
-              </button>
-            )}
-            {isRent && (
-              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors">
-                <RefreshCw className="h-3.5 w-3.5" /> Gia hạn
-              </button>
-            )}
-          </div>
-          <div className="text-right">
-            <p className="text-lg font-bold text-[#193967]">
-              {order.TotalAmount != null
-                ? `${order.TotalAmount.toLocaleString("vi-VN")} VNĐ`
-                : "—"}
-            </p>
-            <span className="text-[10px] text-gray-400 font-semibold">Tổng đơn</span>
-          </div>
+        <div className="text-right">
+          <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${badgeClass(status.tone)}`}>
+            {status.label}
+          </span>
+          <p className="mt-3 text-2xl font-bold text-slate-900">{formatMoney(order.TotalAmount)}</p>
         </div>
       </div>
 
-      <div className="mx-6 border-t border-gray-100" />
-      <div className="px-6 py-4 flex items-center justify-between bg-gray-50/50">
-        <div className="flex items-center gap-1.5 text-sm text-gray-500">
-          <Clock className="h-3.5 w-3.5 text-gray-400" />
-          <span>Ngày đặt:</span>
-          <span className="font-bold text-[#193967]">
-            {new Date(order.CreatedAt).toLocaleDateString("vi-VN")}
-          </span>
-        </div>
-        <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
-          {order.LifecycleState}
-        </span>
+      <ProgressBar order={order} role="buyer" />
+
+      <div className="mt-5 flex flex-wrap gap-3">
+        <Link
+          href={`/orders/${order.OrderID}`}
+          className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-50"
+        >
+          {t.viewDetail}
+          <ChevronRight className="h-4 w-4" />
+        </Link>
+
+        {order.LifecycleState === "PendingPayment" ? (
+          <Link
+            href={`/orders/${order.OrderID}`}
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            <CreditCard className="h-4 w-4" />
+            {t.repay}
+          </Link>
+        ) : null}
+
+        {canCancel ? (
+          <button
+            onClick={async () => {
+              if (!window.confirm("Hủy đơn hàng này?")) return;
+              await api.post(`/orders/${order.OrderID}/transitions`, { event: "onCancel" }, true);
+              await onRefresh();
+            }}
+            className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+          >
+            <XCircle className="h-4 w-4" />
+            {t.cancel}
+          </button>
+        ) : null}
+
+        {order.LifecycleState === "Delivering" ? (
+          <>
+            <button
+              onClick={() => router.push(`/review?orderId=${order.OrderID}`)}
+              className="inline-flex items-center gap-2 rounded-xl border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50"
+            >
+                      {t.returnOrder}
+            </button>
+            <button
+              onClick={async () => {
+                await api.post(`/orders/${order.OrderID}/transitions`, { event: "onDeliver" }, true);
+                await onRefresh();
+                router.push(`/review?orderId=${order.OrderID}`);
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              {t.confirmOrder}
+            </button>
+          </>
+        ) : null}
+
+        {(order.LifecycleState === "Completed" || order.LifecycleState === "ActiveRental") ? (
+          <button
+            onClick={() => router.push(`/review?orderId=${order.OrderID}`)}
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-50"
+          >
+            {t.review}
+          </button>
+        ) : null}
       </div>
     </div>
   );
 }
 
-// ─── OrdersPage ───────────────────────────────────────────────────────────────
+function SellerOrderCard({
+  order,
+  onRefresh,
+  locale,
+}: {
+  order: ApiOrder;
+  onRefresh: () => Promise<void>;
+  locale: "vi" | "en";
+}) {
+  const t = ordersDictionary[locale];
+  const status = getSellerStatus(order);
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-gray-500">{t.sellOrder}</p>
+          <h3 className="mt-1 text-xl font-bold text-slate-900">
+            {t.orderPrefix} #{order.OrderID}
+            {order.PrimaryTitle ? ` - ${order.PrimaryTitle}` : ""}
+          </h3>
+          <p className="mt-2 text-sm text-gray-600">
+            {t.buyer}: <span className="font-semibold text-slate-900">{order.BuyerName}</span>
+          </p>
+          <p className="mt-1 text-sm text-gray-500">{t.createdAt} {formatDate(order.CreatedAt)}</p>
+        </div>
+        <div className="text-right">
+          <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${badgeClass(status.tone)}`}>
+            {status.label}
+          </span>
+          <p className="mt-3 text-2xl font-bold text-slate-900">{formatMoney(order.TotalAmount)}</p>
+        </div>
+      </div>
+
+      <ProgressBar order={order} role="seller" />
+
+      <div className="mt-5 flex flex-wrap gap-3">
+        <Link
+          href={`/orders/${order.OrderID}`}
+          className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-50"
+        >
+          {t.viewDetail}
+          <ChevronRight className="h-4 w-4" />
+        </Link>
+
+        {order.LifecycleState === "Paid" ? (
+          <button
+            onClick={async () => {
+              await api.post(`/orders/${order.OrderID}/transitions`, { event: "onShip" }, true);
+              await onRefresh();
+            }}
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            <Truck className="h-4 w-4" />
+            {t.shipConfirm}
+          </button>
+        ) : null}
+
+        {order.LifecycleState === "ActiveRental" ? (
+          <button
+            onClick={async () => {
+              await api.post(`/orders/${order.OrderID}/transitions`, { event: "onComplete" }, true);
+              await onRefresh();
+            }}
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            {t.receiveBack}
+          </button>
+        ) : null}
+
+        {order.LifecycleState === "ReturnRequested" ? (
+          <>
+            <button
+              onClick={async () => {
+                await api.post(`/orders/${order.OrderID}/transitions`, { event: "onApproveReturn" }, true);
+                await onRefresh();
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+            >
+              Đồng ý trả hàng
+            </button>
+            <button
+              onClick={async () => {
+                await api.post(`/orders/${order.OrderID}/transitions`, { event: "onRejectReturn" }, true);
+                await onRefresh();
+              }}
+              className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+            >
+              Từ chối
+            </button>
+          </>
+        ) : null}
+
+        {order.LifecycleState === "Completed" && order.OrderType === "Rent" ? (
+          <button
+            onClick={async () => {
+              await api.post(`/orders/${order.OrderID}/transitions`, { event: "onRefundDeposit" }, true);
+              await onRefresh();
+            }}
+            className="inline-flex items-center gap-2 rounded-xl border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50"
+          >
+            {t.refundDeposit}
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function ProductCard({ product }: { product: ApiProduct }) {
+  const { locale } = useLocale();
+  const t = ordersDictionary[locale];
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-lg font-bold text-slate-900">{product.Title}</p>
+          <p className="mt-2 text-sm text-gray-500">
+            #{product.ProductID} · {product.IsForRent ? "Cho thuê" : "Bán đứt"}
+          </p>
+          <p className="mt-1 text-sm text-gray-500">{t.status}: {product.Status}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-xl font-bold text-slate-900">{formatMoney(product.Price)}</p>
+          <p className="mt-2 text-sm text-gray-500">{t.inventory}: {product.Stock}</p>
+        </div>
+      </div>
+      <div className="mt-4 flex gap-3">
+        <Link
+          href={`/post-product?editId=${product.ProductID}`}
+          className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-50"
+        >
+          {t.editProduct}
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 export default function OrdersPage() {
-  const router = useRouter();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [sellerOrders, setSellerOrders] = useState<ApiSellerOrder[]>([]);
-  const [myProducts, setMyProducts] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"orders" | "sales" | "products">("orders");
-  const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const { locale } = useLocale();
+  const t = ordersDictionary[locale];
+  const [activeTab, setActiveTab] = useState<OrderTab>("orders");
+  const [orders, setOrders] = useState<ApiOrder[]>([]);
+  const [sales, setSales] = useState<ApiOrder[]>([]);
+  const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [user, setUser] = useState<ApiUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const tabs = useMemo(
+    () => [
+      { key: "orders" as const, label: t.buyerTab, icon: ShoppingBag },
+      { key: "sales" as const, label: t.sellerTab, icon: Store },
+      { key: "products" as const, label: t.productTab, icon: BookOpen },
+    ],
+    [t],
+  );
+
+  const loadOrders = async () => {
+    const data = await api.get<{ ok: boolean; orders: ApiOrder[] }>("/orders", true);
+    setOrders(data.orders ?? []);
+  };
+
+  const loadSales = async () => {
+    const data = await api.get<{ ok: boolean; orders: ApiOrder[] }>("/orders?role=seller", true);
+    setSales(data.orders ?? []);
+  };
+
+  const loadProducts = async (nextUser?: ApiUser | null) => {
+    const currentUser = nextUser ?? user;
+    if (!currentUser?.UserID) {
+      setProducts([]);
+      return;
+    }
+    const data = await api.get<{ ok: boolean; products: ApiProduct[] }>(`/products?sellerId=${currentUser.UserID}`);
+    setProducts(data.products ?? []);
+  };
 
   useEffect(() => {
-    api.get<{ ok: boolean; user: any }>("/users/me", true)
-      .then(res => { if (res.ok && res.user) setUser(res.user); })
-      .catch(() => {});
+    const bootstrap = async () => {
+      setIsLoading(true);
+      try {
+        const me = await api.get<{ ok: boolean; user: ApiUser }>("/users/me", true);
+        setUser(me.user);
+        await Promise.all([loadOrders(), loadSales(), loadProducts(me.user)]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    bootstrap().catch(() => setIsLoading(false));
   }, []);
 
-  useEffect(() => {
-    if (activeTab === "orders") {
-      setIsLoading(true);
-      api
-        .get<{ ok: boolean; orders: ApiOrder[] }>("/orders", true)
-        .then((d) => {
-          const mapped: Order[] = (d.orders ?? []).map((o) => ({
-            ...o,
-            status: lifecycleToUI(o.LifecycleState, o.OrderType),
-          }));
-          setOrders(mapped);
-        })
-        .catch(() => setOrders([]))
-        .finally(() => setIsLoading(false));
+  const refreshAll = async () => {
+    setIsLoading(true);
+    try {
+      await Promise.all([loadOrders(), loadSales(), loadProducts()]);
+    } finally {
+      setIsLoading(false);
     }
-
-    if (activeTab === "sales") {
-      setIsLoading(true);
-      api
-        .get<{ ok: boolean; orders: ApiOrder[] }>("/orders?role=seller", true)
-        .then((d) => {
-          const mapped: ApiSellerOrder[] = (d.orders ?? []).map((o) => ({
-            ...o,
-            status: lifecycleToUI(o.LifecycleState, o.OrderType),
-          }));
-          setSellerOrders(mapped);
-        })
-        .catch(() => setSellerOrders([]))
-        .finally(() => setIsLoading(false));
-    }
-
-    if (activeTab === "products" && user) {
-      setIsLoading(true);
-      api
-        .get<{ ok: boolean; products: any[] }>(`/products?sellerId=${user.UserID}`)
-        .then((d) => setMyProducts(d.products ?? []))
-        .catch(() => setMyProducts([]))
-        .finally(() => setIsLoading(false));
-    }
-  }, [activeTab, user]);
+  };
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC]">
+    <main className="min-h-screen bg-slate-50">
       <HomeNavbar />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-8">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-[#193967] mb-2">Trung tâm Giao dịch</h1>
-            <p className="text-gray-500 font-medium">Quản lý các hoạt động mua bán và thuê sách của bạn.</p>
+            <h1 className="text-4xl font-bold text-slate-900">{t.center}</h1>
           </div>
-          <div className="flex items-center gap-2 bg-white rounded-xl p-1 border border-gray-200 shadow-sm">
-            {[
-              { key: "orders", label: "Đơn hàng của tôi", icon: ShoppingBag },
-              { key: "sales", label: "Quản lý bán hàng", icon: BarChart3 },
-              { key: "products", label: "Sản phẩm của tôi", icon: BookOpen },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key as "orders" | "sales" | "products")}
-                className={`flex items-center gap-1.5 px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  activeTab === tab.key ? "bg-blue-600 text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                <tab.icon className="h-3.5 w-3.5" />
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <Link
+            href="/post-product"
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4" />
+            {t.postNew}
+          </Link>
         </div>
 
-        {/* Orders tab */}
-        {activeTab === "orders" && (
-          <div className="space-y-4">
-            {isLoading ? (
-              <div className="text-center py-16 text-gray-400">Đang tải...</div>
-            ) : orders.length > 0 ? (
-              orders.map((order) => <OrderCard key={order.OrderID} order={order} />)
-            ) : (
-              <div className="bg-white rounded-2xl p-16 text-center border border-gray-200 shadow-sm">
-                <div className="w-16 h-16 rounded-xl mx-auto mb-5 flex items-center justify-center bg-blue-50">
-                  <Package className="h-8 w-8 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-bold text-[#193967] mb-2">Chưa có đơn hàng nào</h3>
-                <p className="text-gray-400 mb-6 text-sm">Hãy khám phá kho sách phong phú và đặt đơn hàng đầu tiên!</p>
-                <Link
-                  href="/products"
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-white font-semibold text-sm bg-blue-600 hover:bg-blue-700 transition-all"
-                >
-                  <ShoppingBag className="h-4 w-4" /> Khám phá sản phẩm
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
+        <div className="mt-8 flex flex-wrap gap-3">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                activeTab === tab.key
+                  ? "bg-blue-600 text-white"
+                  : "border border-gray-200 bg-white text-slate-700 hover:bg-gray-50"
+              }`}
+            >
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-        {/* Sales tab */}
-        {activeTab === "sales" && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-[#193967]">Đơn hàng bán của tôi</h2>
-              <Link
-                href="/post-product"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all"
-              >
-                <Plus className="h-4 w-4" /> Đăng bán sách
-              </Link>
-            </div>
-            {isLoading ? (
-              <div className="text-center py-16 text-gray-400">Đang tải...</div>
-            ) : sellerOrders.length === 0 ? (
-              <div className="bg-white rounded-2xl p-12 text-center border border-gray-200 shadow-sm text-gray-400">
-                Chưa có đơn hàng nào từ người mua.{" "}
-                <Link href="/post-product" className="text-blue-600 font-semibold">
-                  Đăng sản phẩm ngay!
-                </Link>
-              </div>
-            ) : (
-              <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
-                <div
-                  className="grid px-6 py-3.5 text-[10px] font-bold tracking-widest uppercase text-white bg-blue-600"
-                  style={{ gridTemplateColumns: "1fr 160px 150px 120px" }}
-                >
-                  <span>Người mua</span>
-                  <span className="text-center">Tổng tiền</span>
-                  <span className="text-center">Trạng thái</span>
-                  <span className="text-center">Thao tác</span>
-                </div>
-                {sellerOrders.map((order, i) => {
-                  const isPending =
-                    order.LifecycleState === "Pending" ||
-                    order.LifecycleState === "PendingPayment" ||
-                    order.LifecycleState === "Paid";
-                  const isCompleted = order.LifecycleState === "Completed" || order.LifecycleState === "Returned";
-                  return (
-                    <div
-                      key={order.OrderID}
-                      className="grid px-6 py-4 items-center hover:bg-blue-50/30 transition-colors group"
-                      style={{
-                        gridTemplateColumns: "1fr 160px 150px 120px",
-                        borderTop: i > 0 ? "1px solid #f1f5f9" : undefined,
-                      }}
-                    >
-                      <div>
-                        <p className="font-bold text-sm text-[#193967] group-hover:text-blue-600 transition-colors">
-                          {order.BuyerName}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          #{order.OrderID} · {new Date(order.CreatedAt).toLocaleDateString("vi-VN")}
-                        </p>
-                      </div>
-                      <p className="text-center font-bold text-[#193967] text-sm">
-                        {order.TotalAmount != null
-                          ? `${order.TotalAmount.toLocaleString("vi-VN")}₫`
-                          : "—"}
-                      </p>
-                      <div className="flex justify-center">
-                        <span
-                          className="text-xs font-bold px-2.5 py-1 rounded-full"
-                          style={
-                            isCompleted
-                              ? { background: "#f5efe6", color: "#A68F68" }
-                              : isPending
-                              ? { background: "#fef9c3", color: "#854d0e" }
-                              : { background: "#dcfce7", color: "#15803d" }
-                          }
-                        >
-                          {order.LifecycleState}
-                        </span>
-                      </div>
-                      <div className="flex justify-center gap-1">
-                        {order.LifecycleState === "Paid" && (
-                          <button
-                            onClick={async () => {
-                              try {
-                                await api.post(`/orders/${order.OrderID}/transitions`, { event: "onShip" }, true);
-                                setSellerOrders(prev =>
-                                  prev.map(o =>
-                                    o.OrderID === order.OrderID
-                                      ? { ...o, LifecycleState: "Shipped", status: "shipping" }
-                                      : o
-                                  )
-                                );
-                              } catch (err: unknown) {
-                                alert(err instanceof Error ? err.message : "Có lỗi xảy ra");
-                              }
-                            }}
-                            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
-                            style={{ color: "#1d4ed8", background: "#dbeafe" }}
-                          >
-                            <Truck className="h-3.5 w-3.5" /> Giao hàng
-                          </button>
-                        )}
-                        {order.LifecycleState === "ActiveRental" && (
-                          <button
-                            onClick={async () => {
-                              try {
-                                await api.post(`/orders/${order.OrderID}/transitions`, { event: "onComplete" }, true);
-                                window.location.reload();
-                              } catch (err: unknown) {
-                                alert(err instanceof Error ? err.message : "Có lỗi xảy ra");
-                              }
-                            }}
-                            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
-                            style={{ color: "#059669", background: "#d1fae5" }}
-                          >
-                            <CheckCircle className="h-3.5 w-3.5" /> Đã nhận lại sách
-                          </button>
-                        )}
-                        {order.LifecycleState === "ReturnRequested" && (
-                          <div className="flex gap-1 flex-col sm:flex-row">
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await api.post(`/orders/${order.OrderID}/transitions`, { event: "onApproveReturn" }, true);
-                                  window.location.reload();
-                                } catch (err: unknown) {
-                                  alert(err instanceof Error ? err.message : "Có lỗi xảy ra");
-                                }
-                              }}
-                              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
-                              style={{ color: "#059669", background: "#d1fae5" }}
-                            >
-                              <CheckCircle className="h-3.5 w-3.5" /> Phê duyệt trả hàng
-                            </button>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await api.post(`/orders/${order.OrderID}/transitions`, { event: "onRejectReturn" }, true);
-                                  window.location.reload();
-                                } catch (err: unknown) {
-                                  alert(err instanceof Error ? err.message : "Có lỗi xảy ra");
-                                }
-                              }}
-                              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
-                              style={{ color: "#dc2626", background: "#fee2e2" }}
-                            >
-                              Từ chối
-                            </button>
-                          </div>
-                        )}
-                        {order.LifecycleState === "Completed" && order.OrderType === "Rent" && (
-                          <button
-                            onClick={async () => {
-                              try {
-                                await api.post(`/orders/${order.OrderID}/transitions`, { event: "onRefundDeposit" }, true);
-                                window.location.reload();
-                              } catch (err: unknown) {
-                                alert(err instanceof Error ? err.message : "Có lỗi xảy ra");
-                              }
-                            }}
-                            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
-                            style={{ color: "#d97706", background: "#fef3c7" }}
-                          >
-                            <RotateCcw className="h-3.5 w-3.5" /> Hoàn cọc
-                          </button>
-                        )}
-                        {(order.LifecycleState !== "Paid" && order.LifecycleState !== "ActiveRental" && !(order.LifecycleState === "Completed" && order.OrderType === "Rent")) && (
-                          <button
-                            onClick={() => router.push(`/review?orderId=${order.OrderID}`)}
-                            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
-                            style={{ color: "#A68F68", background: "#f5efe6" }}
-                          >
-                            <Eye className="h-3.5 w-3.5" /> Chi tiết
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+        <div className="mt-8">
+          {isLoading ? <div className="text-center text-gray-500">{t.loading}</div> : null}
 
-        {/* Products tab */}
-        {activeTab === "products" && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-[#193967]">Sản phẩm của tôi</h2>
-              <Link
-                href="/post-product"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all"
-              >
-                <Plus className="h-4 w-4" /> Đăng bán sách
-              </Link>
-            </div>
-            {isLoading ? (
-              <div className="text-center py-16 text-gray-400">Đang tải...</div>
-            ) : myProducts.length === 0 ? (
-              <div className="bg-white rounded-2xl p-12 text-center border border-gray-200 shadow-sm text-gray-400">
-                Bạn chưa đăng bán sản phẩm nào.{" "}
-                <Link href="/post-product" className="text-blue-600 font-semibold">
-                  Đăng sản phẩm ngay!
-                </Link>
-              </div>
-            ) : (
-              <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
-                <div
-                  className="grid px-6 py-3.5 text-[10px] font-bold tracking-widest uppercase text-white bg-blue-600"
-                  style={{ gridTemplateColumns: "1fr 120px 100px 180px" }}
-                >
-                  <span>Sản phẩm</span>
-                  <span className="text-center">Giá</span>
-                  <span className="text-center">Kho</span>
-                  <span className="text-center">Thao tác</span>
-                </div>
-                {myProducts.map((p, i) => (
-                  <div
-                    key={p.ProductID}
-                    className="grid px-6 py-4 items-center hover:bg-blue-50/30 transition-colors group"
-                    style={{
-                      gridTemplateColumns: "1fr 120px 100px 180px",
-                      borderTop: i > 0 ? "1px solid #f1f5f9" : undefined,
-                    }}
-                  >
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      {p.ThumbnailURL && (
-                        <img src={p.ThumbnailURL} alt={p.Title} className="w-12 h-12 object-cover rounded-lg border border-gray-200" />
-                      )}
-                      <div>
-                        <p className="font-bold text-sm text-[#193967] group-hover:text-blue-600 transition-colors truncate">
-                          {p.Title}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          #{p.ProductID} · {p.IsForRent ? "Cho Thuê" : "Bán"}
-                        </p>
-                      </div>
-                    </div>
-                    <p className="text-center font-bold text-[#193967] text-sm">
-                      {p.Price != null ? `${p.Price.toLocaleString("vi-VN")}₫` : "—"}
-                    </p>
-                    <div className="flex justify-center">
-                      <span className="text-xs font-bold text-gray-600">{p.Stock}</span>
-                    </div>
-                    <div className="flex justify-center gap-1">
-                      <button
-                        onClick={() => router.push(`/post-product?editId=${p.ProductID}`)}
-                        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
-                        style={{ color: "#d97706", background: "#fef3c7" }}
-                      >
-                        Sửa
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (!confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) return;
-                          try {
-                            await api.delete(`/products/${p.ProductID}`, true);
-                            setMyProducts(prev => prev.filter(prod => prod.ProductID !== p.ProductID));
-                          } catch (err: unknown) {
-                            alert(err instanceof Error ? err.message : "Có lỗi xảy ra");
-                          }
-                        }}
-                        className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
-                        style={{ color: "#dc2626", background: "#fee2e2" }}
-                      >
-                        Xóa
-                      </button>
-                    </div>
-                  </div>
+          {!isLoading && activeTab === "orders" ? (
+            orders.length > 0 ? (
+              <div className="space-y-5">
+                {orders.map((order) => (
+                  <BuyerOrderCard key={order.OrderID} order={order} onRefresh={refreshAll} locale={locale} />
                 ))}
               </div>
-            )}
-          </div>
-        )}
+            ) : (
+              <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm">
+                <Package className="mx-auto h-12 w-12 text-blue-600" />
+                <h2 className="mt-4 text-2xl font-bold text-slate-900">{t.noBuy}</h2>
+                <p className="mt-2 text-gray-600">Khi tạo đơn, hệ thống sẽ giữ sách trong thời hạn thanh toán để bạn hoàn tất giao dịch.</p>
+                <Link
+                  href="/products"
+                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+                >
+                  <ShoppingBag className="h-4 w-4" />
+                  {t.browseBooks}
+                </Link>
+              </div>
+            )
+          ) : null}
+
+          {!isLoading && activeTab === "sales" ? (
+            sales.length > 0 ? (
+              <div className="space-y-5">
+                {sales.map((order) => (
+                  <SellerOrderCard key={order.OrderID} order={order} onRefresh={refreshAll} locale={locale} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm">
+                <Store className="mx-auto h-12 w-12 text-blue-600" />
+                <h2 className="mt-4 text-2xl font-bold text-slate-900">{t.noSell}</h2>
+                <p className="mt-2 text-gray-600">Khi người mua thanh toán xong, đơn sẽ xuất hiện ở đây để bạn xử lý giao hàng.</p>
+              </div>
+            )
+          ) : null}
+
+          {!isLoading && activeTab === "products" ? (
+            products.length > 0 ? (
+              <div className="space-y-5">
+                {products.map((product) => (
+                  <ProductCard key={product.ProductID} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm">
+                <BookOpen className="mx-auto h-12 w-12 text-blue-600" />
+                <h2 className="mt-4 text-2xl font-bold text-slate-900">{t.noProduct}</h2>
+                <p className="mt-2 text-gray-600">Bạn có thể bán hoặc cho thuê sách từ chính tài khoản này.</p>
+              </div>
+            )
+          ) : null}
+        </div>
       </div>
     </main>
   );

@@ -85,6 +85,9 @@ export default function PostBookPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [documentCategories, setDocumentCategories] = useState<string[]>([]);
 
+    const normalizedTitle = productName.trim();
+    const normalizedPrice = yourPrice.trim();
+
     // Load universities on mount
     useEffect(() => {
         api.get<{ ok: boolean; universities: University[] }>("/universities")
@@ -140,9 +143,15 @@ export default function PostBookPage() {
     };
 
     const handleAddCustomSlot = () => {
-        if (!newSlotInput.trim()) return;
-        setCustomSlots(prev => [...prev, newSlotInput]);
-        setAvailableSlots(prev => [...prev, newSlotInput]);
+        const normalizedSlot = newSlotInput.trim();
+        if (!normalizedSlot) return;
+        if (customSlots.includes(normalizedSlot) || availableSlots.includes(normalizedSlot)) {
+            setNewSlotInput("");
+            setShowAddSlotInput(false);
+            return;
+        }
+        setCustomSlots(prev => [...prev, normalizedSlot]);
+        setAvailableSlots(prev => [...prev, normalizedSlot]);
         setNewSlotInput("");
         setShowAddSlotInput(false);
     };
@@ -155,12 +164,27 @@ export default function PostBookPage() {
     };
 
     const handleSubmit = async () => {
+        if (normalizedTitle.length < 3) {
+            alert("Tên sản phẩm phải có ít nhất 3 ký tự.");
+            setStep(1);
+            return;
+        }
+        if (!normalizedPrice) {
+            alert("Vui lòng nhập giá sản phẩm.");
+            setStep(3);
+            return;
+        }
         if (!isStep4Valid) return;
         setIsSubmitting(true);
         try {
+            const deliveryMethodLabel =
+                deliveryMethod === "cod" ? "Giao đến địa chỉ (COD)" : "Giao hàng tại trường";
+            const deliverySlotsText = availableSlots.join(" | ");
+            const deliveryDescription = `Phương thức giao hàng: ${deliveryMethodLabel}. Khung thời gian khả dụng: ${deliverySlotsText}.`;
+
             const formData = new FormData();
-            formData.append("title", productName);
-            formData.append("price", yourPrice);
+            formData.append("title", normalizedTitle);
+            formData.append("price", normalizedPrice);
             formData.append("type", saleType === "rent" ? "Rent" : "Sell");
             formData.append("subjectCode", subjectCode || "N/A");
             formData.append("universityId", String(universityId));
@@ -168,8 +192,10 @@ export default function PostBookPage() {
             formData.append("subjectId", String(subjectId));
             formData.append("condition", String(conditionMap[condition] ?? 80));
             formData.append("format", documentCategories.join(", "));
+            formData.append("description", deliveryDescription);
+            formData.append("termLabel", deliveryMethod === "cod" ? "COD" : "OnCampus");
             if (saleType === "rent") {
-                formData.append("rentalPrice", yourPrice);
+                formData.append("rentalPrice", normalizedPrice);
             }
             uploadedFiles.forEach(file => formData.append("images", file));
 
@@ -187,9 +213,9 @@ export default function PostBookPage() {
         }
     };
 
-    const isStep1Valid = !!(productName && universityId && facultyId && subjectId);
-    const isStep2Valid = uploadedFiles.length > 0 && !!condition;
-    const isStep3Valid = !!yourPrice;
+    const isStep1Valid = !!(normalizedTitle.length >= 3 && universityId && facultyId && subjectId);
+    const isStep2Valid = (uploadedFiles.length > 0 || uploadedPreviews.length > 0) && !!condition;
+    const isStep3Valid = !!normalizedPrice;
     const isStep4Valid = !!(deliveryMethod && availableSlots.length > 0);
 
     return (
@@ -320,7 +346,7 @@ export default function PostBookPage() {
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 mb-2">LOẠI TÀI LIỆU (Có thể chọn nhiều)</label>
                                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                                {["CÔNG NGHỆ THÔNG TIN", "KỸ THUẬT", "KINH TẾ", "SÁCH CHUYÊN NGÀNH", "E-BOOK", "SÁCH CỨNG", "CHEATSHEET", "ĐỀ THI", "DỤNG CỤ VẼ KỸ THUẬT", "BỘ KIT / BOARD MẠCH", "DỤNG CỤ CHUYÊN DỤNG"].map(cat => (
+                                                {["CÔNG NGHỆ THÔNG TIN", "KỸ THUẬT", "KINH TẾ", "DƯỢC", "MỸ THUẬT", "TRUYỀN THÔNG", "SÁCH CHUYÊN NGÀNH", "E-BOOK", "SÁCH CỨNG", "PDF / TÀI LIỆU SỐ", "PPT / PDF", "PDF / SCAN", "FLASHCARD HỌC TẬP", "CHEATSHEET", "ĐỀ THI", "DỤNG CỤ VẼ KỸ THUẬT", "BỘ KIT / BOARD MẠCH", "DỤNG CỤ CHUYÊN DỤNG", "HỌA CỤ MỸ THUẬT", "THIẾT BỊ MEDIA", "TÀI KHOẢN HỌC ONLINE"].map(cat => (
                                                     <label key={cat} className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
                                                         <input
                                                             type="checkbox"

@@ -18,6 +18,609 @@ BEGIN
 END
 GO
 
+IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE UserEmail = 'admin@educart.local')
+BEGIN
+    INSERT INTO dbo.Users
+        (UserEmail, FName, LName, Password, Role, Status, IsStudentVerified, EducationLevel, StudentYear)
+    VALUES
+        ('admin@educart.local', N'EduCart', N'Admin', 'password123', 'Admin', 'Active', 0, NULL, NULL);
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE UserEmail = 'hoangnam@educart.local')
+BEGIN
+    INSERT INTO dbo.Users (
+        UserEmail, FName, LName, Password, Role, Status,
+        IsStudentVerified, EducationLevel, StudentYear
+    )
+    VALUES ('hoangnam@educart.local', N'Hoàng', N'Nam', 'password123', 'Student', 'Active', 1, 'Undergraduate', 3);
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE UserEmail = 'minhanh@educart.local')
+BEGIN
+    INSERT INTO dbo.Users (
+        UserEmail, FName, LName, Password, Role, Status,
+        IsStudentVerified, EducationLevel, StudentYear
+    )
+    VALUES ('minhanh@educart.local', N'Minh', N'Anh', 'password123', 'Student', 'Active', 1, 'Undergraduate', 2);
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE UserEmail = 'khoa@educart.local')
+BEGIN
+    INSERT INTO dbo.Users (
+        UserEmail, FName, LName, Password, Role, Status,
+        IsStudentVerified, EducationLevel, StudentYear
+    )
+    VALUES ('khoa@educart.local', N'Trần', N'Văn Khoa', 'password123', 'Student', 'Active', 1, 'Undergraduate', 4);
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE UserEmail = 'phuonglinh@educart.local')
+BEGIN
+    INSERT INTO dbo.Users (
+        UserEmail, FName, LName, Password, Role, Status,
+        IsStudentVerified, EducationLevel, StudentYear
+    )
+    VALUES ('phuonglinh@educart.local', N'Phương', N'Linh', 'password123', 'Student', 'Active', 1, 'Undergraduate', 3);
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE UserEmail = 'buyer@educart.local')
+BEGIN
+    INSERT INTO dbo.Users (
+        UserEmail, FName, LName, Password, Role, Status,
+        IsStudentVerified, EducationLevel, StudentYear
+    )
+    VALUES ('buyer@educart.local', N'Ngọc', N'Lan', 'password123', 'Student', 'Active', 1, 'Undergraduate', 2);
+END
+GO
+
+-- ============================================================================
+-- Additional seed data for richer demo scenarios
+--   - More rental-focused products
+--   - More digital materials
+--   - Forum posts for digital resources, homework help, and course Q&A
+-- ============================================================================
+DECLARE @DemoSellerId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'seller@educart.local');
+DECLARE @DemoBuyerId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'buyer@educart.local');
+DECLARE @DemoHoangId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'hoangnam@educart.local');
+DECLARE @DemoMinhId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'minhanh@educart.local');
+DECLARE @DemoKhoaId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'khoa@educart.local');
+DECLARE @DemoLinhId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'phuonglinh@educart.local');
+
+;WITH ExtraProductSeeds AS (
+    SELECT
+        N'Calculus: Early Transcendentals' AS BaseTitle,
+        N'Bộ note Giải tích 1 PDF có lời giải chi tiết' AS Title,
+        N'CLB Học thuật Bách Khoa' AS Author,
+        N'Digital Notes' AS Category,
+        N'PDF / Tài liệu số' AS Format,
+        N'Theo kỳ' AS TermLabel,
+        N'File PDF tổng hợp lý thuyết, công thức quan trọng và 50 bài tập có lời giải cho Giải tích 1. Phù hợp ôn giữa kỳ và cuối kỳ.' AS Description,
+        49000 AS Price,
+        99000 AS OriginalPrice,
+        N'-50%' AS DiscountLabel,
+        NULL AS RentalPrice,
+        N'Vietnamese' AS Language,
+        120 AS Pages,
+        N'EduCart Digital' AS Publisher,
+        2026 AS PublishYear,
+        N'DIGI-CAL1-2026' AS ISBN,
+        98 AS [Condition],
+        0 AS IsForRent,
+        15 AS Stock
+    UNION ALL
+    SELECT
+        N'Introduction to Algorithms',
+        N'Thuê giáo trình Thuật toán + sổ tay complexity theo tuần',
+        N'Thư viện học nhóm CNTT',
+        N'Computer Science',
+        N'Sách cứng',
+        N'Theo tuần',
+        N'Cho thuê combo giáo trình CLRS bản tiếng Anh và sổ tay complexity. Phù hợp cho môn Cấu trúc dữ liệu và Giải thuật.',
+        250000,
+        420000,
+        N'-40%',
+        35000,
+        N'English',
+        1312,
+        N'MIT Press',
+        2022,
+        N'RENT-ALGO-CLRS',
+        88,
+        1,
+        2
+    UNION ALL
+    SELECT
+        N'Vật lý đại cương A1',
+        N'Thuê máy tính Casio fx-580VN X kèm sổ công thức Vật lý 1',
+        N'Nhóm hỗ trợ Vật lý đại cương',
+        N'Learning Tools',
+        N'Dụng cụ học tập',
+        N'Theo tuần',
+        N'Cho thuê máy tính cầm tay dùng tốt, pin mới, tặng kèm sổ công thức Vật lý đại cương A1 để làm bài tập và thi giữa kỳ.',
+        180000,
+        320000,
+        N'-44%',
+        25000,
+        N'Vietnamese',
+        40,
+        N'Casio Việt Nam',
+        2025,
+        N'RENT-CASIO-PHY1',
+        93,
+        1,
+        3
+    UNION ALL
+    SELECT
+        N'Nguyên lý Kinh tế học',
+        N'Bộ slide Kinh tế vi mô file PPT + đề ôn tập',
+        N'UEH Sharing Hub',
+        N'Digital Slides',
+        N'PPT / PDF',
+        N'Theo kỳ',
+        N'Gói tài liệu số gồm slide tóm tắt 12 chương, mindmap và bộ đề ôn tập có đáp án cho Kinh tế vi mô.',
+        59000,
+        119000,
+        N'-50%',
+        NULL,
+        N'Vietnamese',
+        85,
+        N'EduCart Digital',
+        2026,
+        N'DIGI-ECON-2026',
+        100,
+        0,
+        20
+    UNION ALL
+    SELECT
+        N'Lập trình Web với React',
+        N'Thuê tài khoản khoá học React 30 ngày + source code mẫu',
+        N'Frontend Study Group',
+        N'Computer Science',
+        N'Tài khoản học online',
+        N'30 ngày',
+        N'Cho thuê quyền truy cập khoá học React trong 30 ngày, kèm source code mini project về cart, auth và dashboard.',
+        199000,
+        399000,
+        N'-50%',
+        45000,
+        N'English',
+        60,
+        N'EduCart Digital',
+        2026,
+        N'RENT-REACT-30D',
+        100,
+        1,
+        5
+    UNION ALL
+    SELECT
+        N'Linear Algebra and Its Applications',
+        N'Bộ đề giữa kỳ Đại số tuyến tính có lời giải scan rõ nét',
+        N'Cộng đồng Toán - Tin',
+        N'Exam Prep',
+        N'PDF / Scan',
+        N'Giữa kỳ',
+        N'Bộ đề tổng hợp 5 năm gần đây, có lời giải viết tay rõ ràng và phân loại theo dạng bài thường gặp.',
+        39000,
+        79000,
+        N'-51%',
+        NULL,
+        N'Vietnamese',
+        68,
+        N'EduCart Digital',
+        2026,
+        N'DIGI-LA-MIDTERM',
+        99,
+        0,
+        30
+    UNION ALL
+    SELECT
+        N'Cơ học chất lỏng',
+        N'Bộ dụng cụ vẽ kỹ thuật gồm compa, thước chữ T và êke',
+        N'Studio Cơ khí ứng dụng',
+        N'Dụng cụ vẽ kỹ thuật',
+        N'Dụng cụ vẽ kỹ thuật',
+        N'Dài hạn',
+        N'Bộ dụng cụ dùng cho các môn vẽ kỹ thuật và đồ án cơ khí, phù hợp sinh viên năm nhất và năm hai.',
+        145000,
+        260000,
+        N'-44%',
+        NULL,
+        N'Vietnamese',
+        12,
+        N'EduCart Supplies',
+        2026,
+        N'TOOL-DRAW-SET',
+        95,
+        0,
+        8
+    UNION ALL
+    SELECT
+        N'Kỹ thuật mạch điện',
+        N'Bộ kit Arduino Uno + breadboard + cảm biến cơ bản',
+        N'Maker Lab Campus',
+        N'Bộ kit / Board mạch',
+        N'Bộ kit / Board mạch',
+        N'Theo kỳ',
+        N'Bộ kit thực hành gồm Arduino Uno, breadboard, LED, điện trở và một số cảm biến cơ bản cho môn kỹ thuật mạch điện và vi điều khiển.',
+        289000,
+        420000,
+        N'-31%',
+        55000,
+        N'English',
+        24,
+        N'EduCart Supplies',
+        2026,
+        N'KIT-ARDUINO-UNO',
+        96,
+        1,
+        4
+    UNION ALL
+    SELECT
+        N'Bào chế dược phẩm',
+        N'Bộ flashcard Dược lý PDF + sơ đồ nhóm thuốc',
+        N'Pharmacy Notes Club',
+        N'Flashcard học tập',
+        N'PDF / Tài liệu số',
+        N'Theo kỳ',
+        N'Bộ flashcard phục vụ ôn tập dược lý, chia nhóm thuốc, cơ chế tác dụng, chỉ định và tác dụng phụ.',
+        69000,
+        129000,
+        N'-47%',
+        NULL,
+        N'Vietnamese',
+        96,
+        N'EduCart Digital',
+        2026,
+        N'DIGI-PHARMA-CARDS',
+        100,
+        0,
+        25
+    UNION ALL
+    SELECT
+        N'Hình họa căn bản',
+        N'Bộ họa cụ sketch cơ bản cho sinh viên mỹ thuật',
+        N'Art Corner Student',
+        N'Họa cụ mỹ thuật',
+        N'Họa cụ mỹ thuật',
+        N'Theo kỳ',
+        N'Gồm bút chì than, tẩy kneaded, giấy sketch A4 và bảng kê mini. Phù hợp cho môn hình họa và bố cục.',
+        175000,
+        290000,
+        N'-40%',
+        30000,
+        N'Vietnamese',
+        18,
+        N'Art Corner',
+        2026,
+        N'ART-SKETCH-KIT',
+        97,
+        1,
+        6
+    UNION ALL
+    SELECT
+        N'Kỹ năng truyền thông đa phương tiện',
+        N'Combo micro thu âm mini + tripod quay bài thuyết trình',
+        N'Media Lab Sharing',
+        N'Thiết bị media',
+        N'Thiết bị media',
+        N'Theo tuần',
+        N'Phù hợp cho sinh viên làm podcast, bài tập quay video, thuyết trình và sản xuất nội dung cơ bản.',
+        210000,
+        360000,
+        N'-42%',
+        40000,
+        N'Vietnamese',
+        10,
+        N'EduCart Supplies',
+        2026,
+        N'MEDIA-MIC-TRIPOD',
+        94,
+        1,
+        3
+)
+INSERT INTO dbo.Products (
+    SellerID, UniversityID, FacultyID, SubjectID,
+    Title, Author, Category, Format, TermLabel,
+    Description, Price, OriginalPrice, DiscountLabel, RentalPrice,
+    Language, Pages, Publisher, PublishYear, ISBN,
+    Condition, IsForRent, Stock, Status, ViewCount
+)
+SELECT
+    @DemoSellerId,
+    base.UniversityID,
+    base.FacultyID,
+    base.SubjectID,
+    s.Title,
+    s.Author,
+    s.Category,
+    s.Format,
+    s.TermLabel,
+    s.Description,
+    s.Price,
+    s.OriginalPrice,
+    s.DiscountLabel,
+    s.RentalPrice,
+    s.Language,
+    s.Pages,
+    s.Publisher,
+    s.PublishYear,
+    s.ISBN,
+    s.Condition,
+    s.IsForRent,
+    s.Stock,
+    N'Available',
+    0
+FROM ExtraProductSeeds s
+JOIN dbo.Products base ON base.Title = s.BaseTitle
+WHERE @DemoSellerId IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM dbo.Products p WHERE p.Title = s.Title);
+GO
+
+;WITH ExtraImageSeeds AS (
+    SELECT N'Bộ note Giải tích 1 PDF có lời giải chi tiết' AS Title, N'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80' AS ImageURL, 0 AS SortOrder UNION ALL
+    SELECT N'Thuê giáo trình Thuật toán + sổ tay complexity theo tuần', N'https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=900&q=80', 0 UNION ALL
+    SELECT N'Thuê máy tính Casio fx-580VN X kèm sổ công thức Vật lý 1', N'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=900&q=80', 0 UNION ALL
+    SELECT N'Bộ slide Kinh tế vi mô file PPT + đề ôn tập', N'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=900&q=80', 0 UNION ALL
+    SELECT N'Thuê tài khoản khoá học React 30 ngày + source code mẫu', N'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80', 0 UNION ALL
+    SELECT N'Bộ đề giữa kỳ Đại số tuyến tính có lời giải scan rõ nét', N'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=900&q=80', 0 UNION ALL
+    SELECT N'Bộ dụng cụ vẽ kỹ thuật gồm compa, thước chữ T và êke', N'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=900&q=80', 0 UNION ALL
+    SELECT N'Bộ kit Arduino Uno + breadboard + cảm biến cơ bản', N'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80', 0 UNION ALL
+    SELECT N'Bộ flashcard Dược lý PDF + sơ đồ nhóm thuốc', N'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=900&q=80', 0 UNION ALL
+    SELECT N'Bộ họa cụ sketch cơ bản cho sinh viên mỹ thuật', N'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=900&q=80', 0 UNION ALL
+    SELECT N'Combo micro thu âm mini + tripod quay bài thuyết trình', N'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=900&q=80', 0
+)
+INSERT INTO dbo.ProductImages (ProductID, ImageURL, SortOrder)
+SELECT p.ProductID, s.ImageURL, s.SortOrder
+FROM ExtraImageSeeds s
+JOIN dbo.Products p ON p.Title = s.Title
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM dbo.ProductImages pi
+    WHERE pi.ProductID = p.ProductID AND pi.ImageURL = s.ImageURL
+);
+GO
+
+DECLARE @ForumBuyerId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'buyer@educart.local');
+DECLARE @ForumHoangId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'hoangnam@educart.local');
+DECLARE @ForumMinhId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'minhanh@educart.local');
+DECLARE @ForumKhoaId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'khoa@educart.local');
+DECLARE @ForumLinhId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'phuonglinh@educart.local');
+
+;WITH ForumPostSeeds AS (
+    SELECT
+        N'Xin bộ tài liệu số Giải tích 1 để ôn thi giữa kỳ' AS Title,
+        N'Mọi người ai có file PDF note Giải tích 1, đặc biệt phần tích phân từng phần và ứng dụng của đạo hàm thì cho mình xin với. Nếu có luôn bộ bài tập mức cơ bản đến trung bình càng tốt.' AS Content,
+        N'digital-material,calculus,midterm' AS Tags,
+        1 AS IsPinned,
+        14 AS VotesCount,
+        120 AS ViewCount,
+        @ForumHoangId AS AuthorID,
+        (SELECT TOP 1 SubjectID FROM dbo.Products WHERE Title = N'Calculus: Early Transcendentals') AS SubjectID
+    UNION ALL
+    SELECT
+        N'Hỏi bài Cấu trúc dữ liệu: vì sao heap sort không stable?' ,
+        N'Mình đang làm slide thuyết trình về các thuật toán sắp xếp. Có thể giải thích ngắn gọn giúp mình vì sao heap sort không stable và có ví dụ trực quan nào dễ trình bày trên lớp không?' ,
+        N'homework,algorithms,data-structures' ,
+        0 ,
+        11 ,
+        86 ,
+        @ForumMinhId ,
+        (SELECT TOP 1 SubjectID FROM dbo.Products WHERE Title = N'Introduction to Algorithms')
+    UNION ALL
+    SELECT
+        N'Môn Kinh tế vi mô học thầy nào dễ theo và có tài liệu tốt?' ,
+        N'Mình sắp đăng ký môn Kinh tế vi mô. Bạn nào đã học rồi cho mình xin review giảng viên, cách tính điểm và tài liệu nào nên đọc trước để đỡ ngợp với đồ thị cung cầu.' ,
+        N'course-advice,economics,study-plan' ,
+        0 ,
+        9 ,
+        74 ,
+        @ForumLinhId ,
+        (SELECT TOP 1 SubjectID FROM dbo.Products WHERE Title = N'Nguyên lý Kinh tế học')
+    UNION ALL
+    SELECT
+        N'Có ai cần chia sẻ tài liệu số React cho môn Phát triển ứng dụng Web không?' ,
+        N'Mình đang có bộ source code React gồm login, cart, forum mini và dashboard. Nếu mọi người cần mình có thể up demo lên diễn đàn hoặc chia sẻ theo từng phần để cùng học.' ,
+        N'react,web-dev,digital-material' ,
+        0 ,
+        17 ,
+        98 ,
+        @ForumKhoaId ,
+        (SELECT TOP 1 SubjectID FROM dbo.Products WHERE Title = N'Lập trình Web với React')
+    UNION ALL
+    SELECT
+        N'Hỏi môn Vật lý 1: nên thuê máy tính hay mua luôn?' ,
+        N'Mình học Vật lý đại cương A1 trong 1 học kỳ thôi. Theo mọi người thì nên thuê máy tính Casio vài tuần trước kỳ thi hay mua luôn một chiếc mới để dùng lâu dài?' ,
+        N'physics,study-tools,rental' ,
+        0 ,
+        8 ,
+        65 ,
+        @ForumBuyerId ,
+        (SELECT TOP 1 SubjectID FROM dbo.Products WHERE Title = N'Vật lý đại cương A1')
+)
+INSERT INTO dbo.Posts (
+    AuthorID, SubjectID, Title, Content, Tags,
+    VotesCount, CommentsCount, ViewCount, IsActive, IsPinned, CreatedAt
+)
+SELECT
+    s.AuthorID,
+    s.SubjectID,
+    s.Title,
+    s.Content,
+    s.Tags,
+    s.VotesCount,
+    0,
+    s.ViewCount,
+    1,
+    s.IsPinned,
+    DATEADD(hour, -ROW_NUMBER() OVER (ORDER BY s.Title) * 9, GETDATE())
+FROM ForumPostSeeds s
+WHERE s.AuthorID IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM dbo.Posts p WHERE p.Title = s.Title);
+GO
+
+DECLARE @CommentSellerId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'seller@educart.local');
+DECLARE @CommentBuyerId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'buyer@educart.local');
+DECLARE @CommentHoangId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'hoangnam@educart.local');
+DECLARE @CommentMinhId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'minhanh@educart.local');
+DECLARE @CommentKhoaId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'khoa@educart.local');
+DECLARE @CommentLinhId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'phuonglinh@educart.local');
+
+DECLARE @PostCalc INT = (SELECT TOP 1 PostID FROM dbo.Posts WHERE Title = N'Xin bộ tài liệu số Giải tích 1 để ôn thi giữa kỳ');
+DECLARE @PostAlgo INT = (SELECT TOP 1 PostID FROM dbo.Posts WHERE Title = N'Hỏi bài Cấu trúc dữ liệu: vì sao heap sort không stable?');
+DECLARE @PostEcon INT = (SELECT TOP 1 PostID FROM dbo.Posts WHERE Title = N'Môn Kinh tế vi mô học thầy nào dễ theo và có tài liệu tốt?');
+DECLARE @PostReact INT = (SELECT TOP 1 PostID FROM dbo.Posts WHERE Title = N'Có ai cần chia sẻ tài liệu số React cho môn Phát triển ứng dụng Web không?');
+DECLARE @PostPhysics INT = (SELECT TOP 1 PostID FROM dbo.Posts WHERE Title = N'Hỏi môn Vật lý 1: nên thuê máy tính hay mua luôn?');
+
+IF @PostCalc IS NOT NULL
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM dbo.Comments WHERE PostID = @PostCalc AND Content = N'Mình vừa up một bộ PDF note khá ổn, bạn check phần sản phẩm tài liệu số mới trên chợ nhé.')
+        INSERT INTO dbo.Comments (PostID, AuthorID, Content, VotesCount, CreatedAt)
+        VALUES (@PostCalc, @CommentSellerId, N'Mình vừa up một bộ PDF note khá ổn, bạn check phần sản phẩm tài liệu số mới trên chợ nhé.', 4, DATEADD(hour, -3, GETDATE()));
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.Comments WHERE PostID = @PostCalc AND Content = N'Mình cần thêm phần bài tập ứng dụng đạo hàm, nếu ai có file scan đề cũ thì cho mình xin luôn với.')
+        INSERT INTO dbo.Comments (PostID, AuthorID, Content, VotesCount, CreatedAt)
+        VALUES (@PostCalc, @CommentBuyerId, N'Mình cần thêm phần bài tập ứng dụng đạo hàm, nếu ai có file scan đề cũ thì cho mình xin luôn với.', 2, DATEADD(hour, -2, GETDATE()));
+END
+
+IF @PostAlgo IS NOT NULL
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM dbo.Comments WHERE PostID = @PostAlgo AND Content = N'Vì heap sort có bước swap phần tử gốc với phần tử cuối nên thứ tự tương đối của các phần tử bằng nhau có thể bị đảo.')
+        INSERT INTO dbo.Comments (PostID, AuthorID, Content, VotesCount, CreatedAt)
+        VALUES (@PostAlgo, @CommentKhoaId, N'Vì heap sort có bước swap phần tử gốc với phần tử cuối nên thứ tự tương đối của các phần tử bằng nhau có thể bị đảo.', 6, DATEADD(hour, -4, GETDATE()));
+END
+
+IF @PostEcon IS NOT NULL
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM dbo.Comments WHERE PostID = @PostEcon AND Content = N'Nếu bạn mới học thì nên chọn lớp có slide rõ ràng và chịu khó làm bài tập đồ thị hằng tuần.')
+        INSERT INTO dbo.Comments (PostID, AuthorID, Content, VotesCount, CreatedAt)
+        VALUES (@PostEcon, @CommentMinhId, N'Nếu bạn mới học thì nên chọn lớp có slide rõ ràng và chịu khó làm bài tập đồ thị hằng tuần.', 3, DATEADD(hour, -5, GETDATE()));
+END
+
+IF @PostReact IS NOT NULL
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM dbo.Comments WHERE PostID = @PostReact AND Content = N'Bạn up giúp phần auth và quản lý state giỏ hàng trước đi, nhóm mình đang cần đúng 2 phần đó.')
+        INSERT INTO dbo.Comments (PostID, AuthorID, Content, VotesCount, CreatedAt)
+        VALUES (@PostReact, @CommentHoangId, N'Bạn up giúp phần auth và quản lý state giỏ hàng trước đi, nhóm mình đang cần đúng 2 phần đó.', 5, DATEADD(hour, -6, GETDATE()));
+END
+
+IF @PostPhysics IS NOT NULL
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM dbo.Comments WHERE PostID = @PostPhysics AND Content = N'Nếu bạn chỉ học 1 học kỳ thì thuê sẽ tiết kiệm hơn, nhất là giai đoạn cận thi mới dùng nhiều.')
+        INSERT INTO dbo.Comments (PostID, AuthorID, Content, VotesCount, CreatedAt)
+        VALUES (@PostPhysics, @CommentLinhId, N'Nếu bạn chỉ học 1 học kỳ thì thuê sẽ tiết kiệm hơn, nhất là giai đoạn cận thi mới dùng nhiều.', 4, DATEADD(hour, -1, GETDATE()));
+END
+
+UPDATE p
+SET CommentsCount = c.CommentCount
+FROM dbo.Posts p
+JOIN (
+    SELECT PostID, COUNT(*) AS CommentCount
+    FROM dbo.Comments
+    WHERE IsActive = 1
+    GROUP BY PostID
+) c ON c.PostID = p.PostID
+WHERE p.PostID IN (@PostCalc, @PostAlgo, @PostEcon, @PostReact, @PostPhysics);
+GO
+
+-- ============================================================================
+-- Fallback forum seeds for demo stability
+-- ============================================================================
+DECLARE @FsBuyerId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'buyer@educart.local');
+DECLARE @FsSellerId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'seller@educart.local');
+DECLARE @FsHoangId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'hoangnam@educart.local');
+DECLARE @FsMinhId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'minhanh@educart.local');
+DECLARE @FsKhoaId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'khoa@educart.local');
+DECLARE @FsLinhId INT = (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'phuonglinh@educart.local');
+
+DECLARE @FsCalcSubjectId INT = (SELECT TOP 1 SubjectID FROM dbo.Products WHERE Title = N'Calculus: Early Transcendentals');
+DECLARE @FsAlgoSubjectId INT = (SELECT TOP 1 SubjectID FROM dbo.Products WHERE Title = N'Introduction to Algorithms');
+DECLARE @FsEconSubjectId INT = (SELECT TOP 1 SubjectID FROM dbo.Products WHERE Title = N'Nguyên lý Kinh tế học');
+DECLARE @FsReactSubjectId INT = (SELECT TOP 1 SubjectID FROM dbo.Products WHERE Title = N'Lập trình Web với React');
+DECLARE @FsPhysicsSubjectId INT = (SELECT TOP 1 SubjectID FROM dbo.Products WHERE Title = N'Vật lý đại cương A1');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Posts WHERE Title = N'Xin bộ tài liệu số Giải tích 1 để ôn thi giữa kỳ')
+    INSERT INTO dbo.Posts (AuthorID, SubjectID, Title, Content, Tags, VotesCount, CommentsCount, ViewCount, IsActive, IsPinned, CreatedAt)
+    VALUES (@FsHoangId, @FsCalcSubjectId, N'Xin bộ tài liệu số Giải tích 1 để ôn thi giữa kỳ',
+        N'Mọi người ai có file PDF note Giải tích 1, đặc biệt phần tích phân từng phần và ứng dụng của đạo hàm thì cho mình xin với. Nếu có luôn bộ bài tập mức cơ bản đến trung bình càng tốt.',
+        N'digital-material,calculus,midterm', 14, 0, 120, 1, 1, DATEADD(hour, -45, GETDATE()));
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Posts WHERE Title = N'Hỏi bài Cấu trúc dữ liệu: vì sao heap sort không stable?')
+    INSERT INTO dbo.Posts (AuthorID, SubjectID, Title, Content, Tags, VotesCount, CommentsCount, ViewCount, IsActive, IsPinned, CreatedAt)
+    VALUES (@FsMinhId, @FsAlgoSubjectId, N'Hỏi bài Cấu trúc dữ liệu: vì sao heap sort không stable?',
+        N'Mình đang làm slide thuyết trình về các thuật toán sắp xếp. Có thể giải thích ngắn gọn giúp mình vì sao heap sort không stable và có ví dụ trực quan nào dễ trình bày trên lớp không?',
+        N'homework,algorithms,data-structures', 11, 0, 86, 1, 0, DATEADD(hour, -36, GETDATE()));
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Posts WHERE Title = N'Môn Kinh tế vi mô học thầy nào dễ theo và có tài liệu tốt?')
+    INSERT INTO dbo.Posts (AuthorID, SubjectID, Title, Content, Tags, VotesCount, CommentsCount, ViewCount, IsActive, IsPinned, CreatedAt)
+    VALUES (@FsLinhId, @FsEconSubjectId, N'Môn Kinh tế vi mô học thầy nào dễ theo và có tài liệu tốt?',
+        N'Mình sắp đăng ký môn Kinh tế vi mô. Bạn nào đã học rồi cho mình xin review giảng viên, cách tính điểm và tài liệu nào nên đọc trước để đỡ ngợp với đồ thị cung cầu.',
+        N'course-advice,economics,study-plan', 9, 0, 74, 1, 0, DATEADD(hour, -27, GETDATE()));
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Posts WHERE Title = N'Có ai cần chia sẻ tài liệu số React cho môn Phát triển ứng dụng Web không?')
+    INSERT INTO dbo.Posts (AuthorID, SubjectID, Title, Content, Tags, VotesCount, CommentsCount, ViewCount, IsActive, IsPinned, CreatedAt)
+    VALUES (@FsKhoaId, @FsReactSubjectId, N'Có ai cần chia sẻ tài liệu số React cho môn Phát triển ứng dụng Web không?',
+        N'Mình đang có bộ source code React gồm login, cart, forum mini và dashboard. Nếu mọi người cần mình có thể up demo lên diễn đàn hoặc chia sẻ theo từng phần để cùng học.',
+        N'react,web-dev,digital-material', 17, 0, 98, 1, 0, DATEADD(hour, -18, GETDATE()));
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Posts WHERE Title = N'Hỏi môn Vật lý 1: nên thuê máy tính hay mua luôn?')
+    INSERT INTO dbo.Posts (AuthorID, SubjectID, Title, Content, Tags, VotesCount, CommentsCount, ViewCount, IsActive, IsPinned, CreatedAt)
+    VALUES (@FsBuyerId, @FsPhysicsSubjectId, N'Hỏi môn Vật lý 1: nên thuê máy tính hay mua luôn?',
+        N'Mình học Vật lý đại cương A1 trong 1 học kỳ thôi. Theo mọi người thì nên thuê máy tính Casio vài tuần trước kỳ thi hay mua luôn một chiếc mới để dùng lâu dài?',
+        N'physics,study-tools,rental', 8, 0, 65, 1, 0, DATEADD(hour, -9, GETDATE()));
+GO
+
+DECLARE @FPostCalc INT = (SELECT TOP 1 PostID FROM dbo.Posts WHERE Title = N'Xin bộ tài liệu số Giải tích 1 để ôn thi giữa kỳ');
+DECLARE @FPostAlgo INT = (SELECT TOP 1 PostID FROM dbo.Posts WHERE Title = N'Hỏi bài Cấu trúc dữ liệu: vì sao heap sort không stable?');
+DECLARE @FPostEcon INT = (SELECT TOP 1 PostID FROM dbo.Posts WHERE Title = N'Môn Kinh tế vi mô học thầy nào dễ theo và có tài liệu tốt?');
+DECLARE @FPostReact INT = (SELECT TOP 1 PostID FROM dbo.Posts WHERE Title = N'Có ai cần chia sẻ tài liệu số React cho môn Phát triển ứng dụng Web không?');
+DECLARE @FPostPhysics INT = (SELECT TOP 1 PostID FROM dbo.Posts WHERE Title = N'Hỏi môn Vật lý 1: nên thuê máy tính hay mua luôn?');
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Comments WHERE PostID = @FPostCalc AND Content = N'Mình vừa up một bộ PDF note khá ổn, bạn check phần sản phẩm tài liệu số mới trên chợ nhé.')
+    INSERT INTO dbo.Comments (PostID, AuthorID, Content, VotesCount, CreatedAt)
+    VALUES (@FPostCalc, (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'seller@educart.local'),
+        N'Mình vừa up một bộ PDF note khá ổn, bạn check phần sản phẩm tài liệu số mới trên chợ nhé.', 4, DATEADD(hour, -3, GETDATE()));
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Comments WHERE PostID = @FPostCalc AND Content = N'Mình cần thêm phần bài tập ứng dụng đạo hàm, nếu ai có file scan đề cũ thì cho mình xin luôn với.')
+    INSERT INTO dbo.Comments (PostID, AuthorID, Content, VotesCount, CreatedAt)
+    VALUES (@FPostCalc, (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'buyer@educart.local'),
+        N'Mình cần thêm phần bài tập ứng dụng đạo hàm, nếu ai có file scan đề cũ thì cho mình xin luôn với.', 2, DATEADD(hour, -2, GETDATE()));
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Comments WHERE PostID = @FPostAlgo AND Content = N'Vì heap sort có bước swap phần tử gốc với phần tử cuối nên thứ tự tương đối của các phần tử bằng nhau có thể bị đảo.')
+    INSERT INTO dbo.Comments (PostID, AuthorID, Content, VotesCount, CreatedAt)
+    VALUES (@FPostAlgo, (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'khoa@educart.local'),
+        N'Vì heap sort có bước swap phần tử gốc với phần tử cuối nên thứ tự tương đối của các phần tử bằng nhau có thể bị đảo.', 6, DATEADD(hour, -4, GETDATE()));
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Comments WHERE PostID = @FPostEcon AND Content = N'Nếu bạn mới học thì nên chọn lớp có slide rõ ràng và chịu khó làm bài tập đồ thị hằng tuần.')
+    INSERT INTO dbo.Comments (PostID, AuthorID, Content, VotesCount, CreatedAt)
+    VALUES (@FPostEcon, (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'minhanh@educart.local'),
+        N'Nếu bạn mới học thì nên chọn lớp có slide rõ ràng và chịu khó làm bài tập đồ thị hằng tuần.', 3, DATEADD(hour, -5, GETDATE()));
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Comments WHERE PostID = @FPostReact AND Content = N'Bạn up giúp phần auth và quản lý state giỏ hàng trước đi, nhóm mình đang cần đúng 2 phần đó.')
+    INSERT INTO dbo.Comments (PostID, AuthorID, Content, VotesCount, CreatedAt)
+    VALUES (@FPostReact, (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'hoangnam@educart.local'),
+        N'Bạn up giúp phần auth và quản lý state giỏ hàng trước đi, nhóm mình đang cần đúng 2 phần đó.', 5, DATEADD(hour, -6, GETDATE()));
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Comments WHERE PostID = @FPostPhysics AND Content = N'Nếu bạn chỉ học 1 học kỳ thì thuê sẽ tiết kiệm hơn, nhất là giai đoạn cận thi mới dùng nhiều.')
+    INSERT INTO dbo.Comments (PostID, AuthorID, Content, VotesCount, CreatedAt)
+    VALUES (@FPostPhysics, (SELECT TOP 1 UserID FROM dbo.Users WHERE UserEmail = 'phuonglinh@educart.local'),
+        N'Nếu bạn chỉ học 1 học kỳ thì thuê sẽ tiết kiệm hơn, nhất là giai đoạn cận thi mới dùng nhiều.', 4, DATEADD(hour, -1, GETDATE()));
+
+UPDATE p
+SET CommentsCount = ISNULL(c.CommentCount, 0)
+FROM dbo.Posts p
+LEFT JOIN (
+    SELECT PostID, COUNT(*) AS CommentCount
+    FROM dbo.Comments
+    WHERE IsActive = 1
+    GROUP BY PostID
+) c ON c.PostID = p.PostID
+WHERE p.PostID IN (@FPostCalc, @FPostAlgo, @FPostEcon, @FPostReact, @FPostPhysics);
+GO
+
 IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE UserEmail = 'hoangnam@educart.local')
 BEGIN
     INSERT INTO dbo.Users (
@@ -121,20 +724,30 @@ GO
     SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Khoa học & Kỹ thuật Máy tính' UNION ALL
     SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Kỹ thuật Hóa học' UNION ALL
     SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Kỹ thuật Giao thông' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Cơ khí' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Điện - Điện tử' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Kiến trúc & Thiết kế' UNION ALL
 
     SELECT N'ĐH Kinh tế TP.HCM', N'Khoa Kinh tế' UNION ALL
     SELECT N'ĐH Kinh tế TP.HCM', N'Khoa Quản trị' UNION ALL
+    SELECT N'ĐH Kinh tế TP.HCM', N'Khoa Marketing' UNION ALL
+    SELECT N'ĐH Kinh tế TP.HCM', N'Khoa Tài chính' UNION ALL
 
     SELECT N'ĐH Khoa học Tự nhiên', N'Khoa Hóa học' UNION ALL
     SELECT N'ĐH Khoa học Tự nhiên', N'Khoa Toán - Tin học' UNION ALL
+    SELECT N'ĐH Khoa học Tự nhiên', N'Khoa Sinh học' UNION ALL
+    SELECT N'ĐH Khoa học Tự nhiên', N'Khoa Vật lý - Vật lý kỹ thuật' UNION ALL
 
     SELECT N'ĐH Quốc gia TP.HCM', N'Khoa Lý luận Chính trị' UNION ALL
 
     SELECT N'ĐH Y Dược TP.HCM', N'Khoa Y' UNION ALL
+    SELECT N'ĐH Y Dược TP.HCM', N'Khoa Dược' UNION ALL
     SELECT N'ĐH Sư phạm TP.HCM', N'Khoa Tiếng Anh' UNION ALL
+    SELECT N'ĐH Sư phạm TP.HCM', N'Khoa Mỹ thuật' UNION ALL
 
     SELECT N'ĐH KHXH & Nhân văn', N'Khoa Lịch sử' UNION ALL
     SELECT N'ĐH KHXH & Nhân văn', N'Khoa Tâm lý học' UNION ALL
+    SELECT N'ĐH KHXH & Nhân văn', N'Khoa Truyền thông' UNION ALL
 
     SELECT N'ĐH Công nghệ Thông tin', N'Khoa Khoa học Dữ liệu' UNION ALL
     SELECT N'ĐH Công nghệ Thông tin', N'Khoa Kỹ thuật Phần mềm' UNION ALL
@@ -157,26 +770,46 @@ GO
 ;WITH SubjectSeeds AS (
     SELECT N'Đại Học Bách Khoa TP.HCM' AS UniversityName, N'Khoa Khoa học Ứng dụng' AS FacultyName, NULL AS SubjectCode, N'All' AS SubjectName UNION ALL
     SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Khoa học Ứng dụng', NULL, N'Vật lý 1' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Khoa học Ứng dụng', NULL, N'Xác suất thống kê' UNION ALL
     SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Khoa học & Kỹ thuật Máy tính', NULL, N'Cấu trúc dữ liệu và Giải thuật' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Khoa học & Kỹ thuật Máy tính', NULL, N'Nhập môn Trí tuệ nhân tạo' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Khoa học & Kỹ thuật Máy tính', NULL, N'Mạng máy tính' UNION ALL
     SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Kỹ thuật Hóa học', NULL, N'Hóa hữu cơ' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Kỹ thuật Hóa học', NULL, N'Thí nghiệm hóa phân tích' UNION ALL
     SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Kỹ thuật Giao thông', NULL, N'Cơ học chất lỏng' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Cơ khí', NULL, N'Vẽ kỹ thuật cơ khí' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Cơ khí', NULL, N'Thực hành CAD/CAM' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Điện - Điện tử', NULL, N'Kỹ thuật mạch điện' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Điện - Điện tử', NULL, N'Vi điều khiển cơ bản' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Kiến trúc & Thiết kế', NULL, N'Cơ sở tạo hình' UNION ALL
+    SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Kiến trúc & Thiết kế', NULL, N'Đồ án thiết kế kỹ thuật' UNION ALL
 
     SELECT N'ĐH Kinh tế TP.HCM', N'Khoa Kinh tế', NULL, N'Kinh tế vi mô' UNION ALL
     SELECT N'ĐH Kinh tế TP.HCM', N'Khoa Quản trị', NULL, N'Quản trị kinh doanh' UNION ALL
+    SELECT N'ĐH Kinh tế TP.HCM', N'Khoa Marketing', NULL, N'Nguyên lý Marketing' UNION ALL
+    SELECT N'ĐH Kinh tế TP.HCM', N'Khoa Tài chính', NULL, N'Tài chính doanh nghiệp' UNION ALL
 
     SELECT N'ĐH Khoa học Tự nhiên', N'Khoa Hóa học', NULL, N'Hóa học đại cương' UNION ALL
     SELECT N'ĐH Khoa học Tự nhiên', N'Khoa Toán - Tin học', NULL, N'Đại số tuyến tính' UNION ALL
+    SELECT N'ĐH Khoa học Tự nhiên', N'Khoa Toán - Tin học', NULL, N'Giải tích số' UNION ALL
+    SELECT N'ĐH Khoa học Tự nhiên', N'Khoa Sinh học', NULL, N'Sinh học phân tử' UNION ALL
+    SELECT N'ĐH Khoa học Tự nhiên', N'Khoa Vật lý - Vật lý kỹ thuật', NULL, N'Quang học ứng dụng' UNION ALL
 
     SELECT N'ĐH Quốc gia TP.HCM', N'Khoa Lý luận Chính trị', NULL, N'Triết học Mác - Lênin' UNION ALL
 
     SELECT N'ĐH Y Dược TP.HCM', N'Khoa Y', NULL, N'Sinh học đại cương' UNION ALL
+    SELECT N'ĐH Y Dược TP.HCM', N'Khoa Dược', NULL, N'Bào chế dược phẩm' UNION ALL
     SELECT N'ĐH Sư phạm TP.HCM', N'Khoa Tiếng Anh', NULL, N'Anh văn cơ bản' UNION ALL
+    SELECT N'ĐH Sư phạm TP.HCM', N'Khoa Mỹ thuật', NULL, N'Hình họa căn bản' UNION ALL
+    SELECT N'ĐH Sư phạm TP.HCM', N'Khoa Mỹ thuật', NULL, N'Màu sắc và bố cục' UNION ALL
 
     SELECT N'ĐH KHXH & Nhân văn', N'Khoa Lịch sử', NULL, N'Lịch sử Việt Nam' UNION ALL
     SELECT N'ĐH KHXH & Nhân văn', N'Khoa Tâm lý học', NULL, N'Tâm lý học đại cương' UNION ALL
+    SELECT N'ĐH KHXH & Nhân văn', N'Khoa Truyền thông', NULL, N'Kỹ năng truyền thông đa phương tiện' UNION ALL
 
     SELECT N'ĐH Công nghệ Thông tin', N'Khoa Khoa học Dữ liệu', NULL, N'Nhập môn Khoa học Dữ liệu' UNION ALL
     SELECT N'ĐH Công nghệ Thông tin', N'Khoa Kỹ thuật Phần mềm', NULL, N'Phát triển ứng dụng Web' UNION ALL
+    SELECT N'ĐH Công nghệ Thông tin', N'Khoa Kỹ thuật Phần mềm', NULL, N'Kiểm thử phần mềm' UNION ALL
 
     SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Tổng hợp', NULL, N'Khoa học Máy tính' UNION ALL
     SELECT N'Đại Học Bách Khoa TP.HCM', N'Khoa Tổng hợp', NULL, N'Kỹ thuật Máy tính' UNION ALL

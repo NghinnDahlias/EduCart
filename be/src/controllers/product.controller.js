@@ -2,6 +2,7 @@ const Joi = require("joi");
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
 const { services } = require("../container");
+const analyticsRepository = require("../repositories/analytics.repository");
 
 const createSchema = Joi.object({
   title: Joi.string().min(3).max(255).required(),
@@ -84,7 +85,15 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const getById = asyncHandler(async (req, res) => {
-  const product = await services.productService.getById(Number(req.params.id));
+  const productId = Number(req.params.id);
+  const product = await services.productService.getById(productId);
+  await analyticsRepository.track({
+    eventType: "ProductView",
+    entityType: "Product",
+    entityId: productId,
+    userId: null,
+    sessionKey: req.ip,
+  });
   res.json({ ok: true, product });
 });
 

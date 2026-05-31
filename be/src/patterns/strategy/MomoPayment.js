@@ -42,6 +42,20 @@ class MomoPayment extends PaymentStrategy {
       .digest('hex');
     return expected === signature;
   }
+
+  buildMockWebhook({ orderId, amount, success }) {
+    const payload = {
+      orderId: String(orderId),
+      amount: String(amount),
+      resultCode: success ? '0' : '1006',
+    };
+    const raw = `orderId=${payload.orderId}&amount=${payload.amount}&resultCode=${payload.resultCode}`;
+    const signature = crypto
+      .createHmac('sha256', this.secret || 'dev')
+      .update(raw)
+      .digest('hex');
+    return { payload, signature };
+  }
 }
 
 module.exports = MomoPayment;

@@ -231,6 +231,47 @@ const ProductRepository = {
       `);
   },
 
+  async incrementViewCount(productId) {
+    const pool = await getPool();
+    await pool.request().input("ProductID", sql.Int, productId).query(`
+      UPDATE dbo.Products
+      SET ViewCount = ViewCount + 1
+      WHERE ProductID = @ProductID
+    `);
+  },
+
+  async reserveForOrder(productId, qty) {
+    const pool = await getPool();
+    const r = await pool
+      .request()
+      .input("ProductID", sql.Int, productId)
+      .input("Qty", sql.Int, qty)
+      .query(`
+        UPDATE dbo.Products
+        SET Status = 'Pending',
+            UpdatedAt = GETDATE()
+        OUTPUT INSERTED.ProductID, INSERTED.Status, INSERTED.Stock
+        WHERE ProductID = @ProductID
+          AND Status = 'Available'
+          AND Stock >= @Qty;
+      `);
+    return r.recordset[0] || null;
+  },
+
+  async releaseReservation(productId) {
+    const pool = await getPool();
+    await pool
+      .request()
+      .input("ProductID", sql.Int, productId)
+      .query(`
+        UPDATE dbo.Products
+        SET Status = CASE WHEN Stock > 0 THEN 'Available' ELSE Status END,
+            UpdatedAt = GETDATE()
+        WHERE ProductID = @ProductID
+          AND Status = 'Pending';
+      `);
+  },
+
   /**
    * Update product fields. Only seller can update their own product.
    */

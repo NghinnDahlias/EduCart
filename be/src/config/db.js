@@ -19,12 +19,14 @@ const sql = require('mssql');
 // DB_SERVER honours both forms:
 //   - "db" (Docker service name / hostname)
 //   - "localhost\\SQLEXPRESS" (Windows named instance for local dev)
+const rawServer = process.env.DB_SERVER || 'localhost';
+const [serverHost, instanceName] = rawServer.split('\\');
+
 const sqlConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  server: process.env.DB_SERVER || 'localhost',
+  server: serverHost,
   database: process.env.DB_NAME,
-  port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 1433,
   pool: {
     max: 10,
     min: 0,
@@ -34,8 +36,13 @@ const sqlConfig = {
     encrypt: false,
     trustServerCertificate: true,
     useUTC: false,
+    instanceName,
   },
 };
+
+if (!instanceName) {
+  sqlConfig.port = process.env.DB_PORT ? Number(process.env.DB_PORT) : 1433;
+}
 
 let pool;
 

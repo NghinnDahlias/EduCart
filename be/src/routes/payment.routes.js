@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.get("/", requireAuth, ctrl.list);
 router.post("/initiate", requireAuth, ctrl.initiateValidator, ctrl.initiate);
+router.post("/simulate", requireAuth, ctrl.simulateValidator, ctrl.simulate);
 // Public endpoint — verified by gateway signature.
 router.post("/webhook", ctrl.webhookValidator, ctrl.webhook);
 

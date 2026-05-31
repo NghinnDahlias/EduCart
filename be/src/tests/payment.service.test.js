@@ -99,7 +99,7 @@ describe('PaymentService', () => {
     );
   });
 
-  it('emits PAYMENT_FAILED on non-zero result codes', async () => {
+  it('marks the payment failed without releasing the order on non-zero result codes', async () => {
     const bus = makeBus();
     const svc = new PaymentService({
       paymentRepository: payments, orderRepository: orders,
@@ -112,6 +112,6 @@ describe('PaymentService', () => {
     });
     expect(out.ok).toBe(false);
     expect(payments.markFailed).toHaveBeenCalledWith(1);
-    expect(bus.emit).toHaveBeenCalledWith('PAYMENT_FAILED', expect.any(Object));
+    expect(bus.emit).not.toHaveBeenCalled();
   });
 });

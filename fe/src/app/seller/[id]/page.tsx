@@ -18,6 +18,15 @@ interface SellerInfo {
     Address: string | null;
     Rating: number | null;
     Bio: string | null;
+    WarningCount?: number;
+    TrustScore?: number;
+    RiskBadge?: string;
+    ResolvedReportsCount?: number;
+    PendingReportsCount?: number;
+    CompletedOrdersAsSeller?: number;
+    DeliverySuccessRate?: number | null;
+    TrustHeadline?: string | null;
+    TrustWarningMessage?: string | null;
 }
 
 interface Product {
@@ -36,6 +45,11 @@ interface Product {
     DiscountLabel: string | null;
 }
 
+function safeMetric(value: unknown, fallback: number) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+}
+
 export default function SellerProfilePage() {
     const params = useParams();
     const router = useRouter();
@@ -45,7 +59,7 @@ export default function SellerProfilePage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [showReportModal, setShowReportModal] = useState(false);
-    const [reportForm, setReportForm] = useState({ reason: "", description: "" });
+    const [reportForm, setReportForm] = useState({ reason: "", description: "", evidenceSummary: "" });
     const [reporting, setReporting] = useState(false);
     const [notification, setNotification] = useState<{
         show: boolean;
@@ -102,12 +116,13 @@ export default function SellerProfilePage() {
 
         setReporting(true);
         try {
-            const response = await api.post(
+            const response = await api.post<{ ok: boolean }>(
                 "/reports",
                 {
                     reportedUserId: sellerId,
                     reason: reportForm.reason,
                     description: reportForm.description,
+                    evidenceSummary: reportForm.evidenceSummary,
                 },
                 true
             );
@@ -115,7 +130,7 @@ export default function SellerProfilePage() {
             if (response.ok) {
                 showNotification("Báo cáo đã được gửi. Cảm ơn bạn đã giúp cải thiện nền tảng!", "success");
                 setShowReportModal(false);
-                setReportForm({ reason: "", description: "" });
+                setReportForm({ reason: "", description: "", evidenceSummary: "" });
             }
         } catch (err: any) {
             showNotification(err.message || "Có lỗi xảy ra khi gửi báo cáo", "error");
@@ -166,6 +181,23 @@ export default function SellerProfilePage() {
     }
 
     const fullName = `${seller.LName ?? ""} ${seller.FName ?? ""}`.trim();
+    const trustScore = safeMetric(seller.TrustScore, 100);
+    const warningCount = safeMetric(seller.WarningCount, 0);
+    const riskBadge = seller.RiskBadge || "Verified";
+    const badgeTone =
+        riskBadge === "Verified"
+            ? "bg-emerald-50 text-emerald-700"
+            : riskBadge === "Warned"
+                ? "bg-amber-50 text-amber-700"
+                : "bg-rose-50 text-rose-700";
+    const badgeLabel =
+        riskBadge === "Verified"
+            ? "Đã xác minh"
+            : riskBadge === "Warned"
+                ? `${warningCount} cảnh báo`
+                : riskBadge === "Restricted"
+                    ? "Đang bị hạn chế"
+                    : "Không uy tín";
 
     return (
         <main className="min-h-screen bg-[#F8FAFC]">
@@ -224,6 +256,43 @@ export default function SellerProfilePage() {
                             </div>
                         </div>
                     </div>
+
+                    <div className="mt-6 grid gap-4 md:grid-cols-3">
+                        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Trust Score</p>
+                            <p className="mt-2 text-3xl font-bold text-[#193967]">{trustScore.toFixed(0)}/100</p>
+                            <p className="mt-2 text-sm text-gray-600">
+                                {seller.TrustHeadline || "Điểm này phản ánh lịch sử đánh giá, giao hàng và report đã được xử lý."}
+                            </p>
+                        </div>
+                        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Lịch sử giao dịch</p>
+                            <p className="mt-2 text-3xl font-bold text-[#193967]">
+                                {seller.DeliverySuccessRate != null ? `${seller.DeliverySuccessRate}%` : "Chưa đủ dữ liệu"}
+                            </p>
+                            <p className="mt-2 text-sm text-gray-600">
+                                {seller.CompletedOrdersAsSeller || 0} đơn hoàn tất • {seller.ResolvedReportsCount || 0} report đã xử lý
+                            </p>
+                        </div>
+                        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Cần lưu ý</p>
+                            <p className="mt-2 text-sm font-semibold text-[#193967]">
+                                {warningCount > 0 ? `${warningCount} cảnh báo đã được ghi nhận` : "Chưa có cảnh báo nào"}
+                            </p>
+                            <p className="mt-2 text-sm text-gray-600">
+                                {seller.TrustWarningMessage || "Chỉ thanh toán trong hệ thống và kiểm tra kỹ ảnh thật trước khi giao dịch."}
+                            </p>
+                        </div>
+                    </div>
+
+                    {riskBadge !== "Verified" ? (
+                        <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                            <p className="font-bold">Cảnh báo giao dịch</p>
+                            <p className="mt-2">
+                                {seller.TrustWarningMessage || "Người bán này đã từng bị cảnh báo vi phạm. Hãy kiểm tra kỹ trước khi giao dịch."}
+                            </p>
+                        </div>
+                    ) : null}
 
                     {/* Action Buttons */}
                     <div className="flex gap-3 mt-8 flex-wrap">
@@ -351,6 +420,21 @@ export default function SellerProfilePage() {
                                 placeholder="Mô tả chi tiết vấn đề..."
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-600 resize-none"
                                 rows={4}
+                            />
+                        </div>
+
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Bằng chứng / link ảnh chụp (nếu có)
+                            </label>
+                            <textarea
+                                value={reportForm.evidenceSummary}
+                                onChange={(e) =>
+                                    setReportForm({ ...reportForm, evidenceSummary: e.target.value })
+                                }
+                                placeholder="Ví dụ: link Drive, ảnh chụp chat, tóm tắt bằng chứng..."
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-600 resize-none"
+                                rows={3}
                             />
                         </div>
 

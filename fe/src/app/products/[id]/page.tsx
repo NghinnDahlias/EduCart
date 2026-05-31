@@ -46,9 +46,24 @@ type ApiProductDetail = {
     images?: Array<{ ImageID: number; ImageURL: string; SortOrder: number }>;
 };
 
+type SellerTrust = {
+    UserID: number;
+    WarningCount?: number;
+    TrustScore?: number;
+    RiskBadge?: string;
+    DeliverySuccessRate?: number | null;
+    TrustHeadline?: string | null;
+    TrustWarningMessage?: string | null;
+};
+
 function fmtVND(n: number | null | undefined): string {
     if (n == null || Number.isNaN(n)) return "";
     return n.toLocaleString("vi-VN") + "₫";
+}
+
+function safeMetric(value: unknown, fallback: number) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
 }
 
 export default function ProductPage() {
@@ -57,6 +72,7 @@ export default function ProductPage() {
     const router = useRouter();
 
     const [product, setProduct] = useState<ApiProductDetail | null>(null);
+    const [sellerTrust, setSellerTrust] = useState<SellerTrust | null>(null);
     const [reviews, setReviews] = useState<ApiReview[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -67,7 +83,7 @@ export default function ProductPage() {
 
     // Report modal state
     const [showReportModal, setShowReportModal] = useState(false);
-    const [reportForm, setReportForm] = useState({ reason: "", description: "" });
+    const [reportForm, setReportForm] = useState({ reason: "", description: "", evidenceSummary: "" });
     const [reporting, setReporting] = useState(false);
     const [notification, setNotification] = useState<{
         show: boolean;
@@ -121,10 +137,22 @@ export default function ProductPage() {
             api.get<{ ok: boolean; product: ApiProductDetail }>(`/products/${productId}`),
             api.get<{ ok: boolean; reviews: ApiReview[] }>(`/products/${productId}/reviews`),
         ])
-            .then(([p, r]) => {
+            .then(async ([p, r]) => {
                 if (!alive) return;
                 setProduct(p.product);
                 setReviews(r.reviews || []);
+                if (p.product?.SellerID) {
+                    try {
+                        const sellerRes = await api.get<{ ok: boolean; user: SellerTrust }>(`/users/${p.product.SellerID}`);
+                        if (alive) {
+                            setSellerTrust(sellerRes.user);
+                        }
+                    } catch {
+                        if (alive) {
+                            setSellerTrust(null);
+                        }
+                    }
+                }
             })
             .catch((e: any) => {
                 if (!alive) return;
@@ -163,12 +191,13 @@ export default function ProductPage() {
 
         setReporting(true);
         try {
-            const response = await api.post(
+            const response = await api.post<{ ok: boolean }>(
                 "/reports",
                 {
                     reportedUserId: product?.SellerID,
                     reason: reportForm.reason,
                     description: reportForm.description,
+                    evidenceSummary: reportForm.evidenceSummary,
                 },
                 true
             );
@@ -176,7 +205,7 @@ export default function ProductPage() {
             if (response.ok) {
                 showNotification("Báo cáo đã được gửi. Cảm ơn bạn đã giúp cải thiện nền tảng!", "success");
                 setShowReportModal(false);
-                setReportForm({ reason: "", description: "" });
+                setReportForm({ reason: "", description: "", evidenceSummary: "" });
             }
         } catch (err: any) {
             showNotification(err.message || "Có lỗi xảy ra khi gửi báo cáo", "error");
@@ -324,7 +353,17 @@ export default function ProductPage() {
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-gray-900 text-sm">{product.SellerName}</h3>
-                                            <p className="text-xs text-gray-600">TRUSTED SELLER</p>
+                                            <p className="text-xs text-gray-600">
+                                                {sellerTrust?.RiskBadge === "Verified"
+                                                    ? "Đã xác minh"
+                                                    : sellerTrust?.RiskBadge === "Warned"
+                                                        ? `${sellerTrust?.WarningCount || 0} cảnh báo`
+                                                        : sellerTrust?.RiskBadge === "Restricted"
+                                                            ? "Đang bị hạn chế"
+                                                            : sellerTrust?.RiskBadge === "Untrusted"
+                                                                ? "Không uy tín"
+                                                                : "Thông tin người bán"}
+                                            </p>
                                         </div>
                                     </Link>
                                     <div className="text-right">
@@ -332,6 +371,28 @@ export default function ProductPage() {
                                         <p className="text-xs font-semibold text-gray-600">RATING</p>
                                     </div>
                                 </div>
+
+                                {sellerTrust ? (
+                                    <div
+                                        className={`mb-4 rounded-2xl border p-4 text-sm ${
+                                            sellerTrust.RiskBadge && sellerTrust.RiskBadge !== "Verified"
+                                                ? "border-amber-200 bg-amber-50 text-amber-900"
+                                                : "border-emerald-200 bg-emerald-50 text-emerald-900"
+                                        }`}
+                                    >
+                                        <p className="font-bold">
+                                            Trust score: {safeMetric(sellerTrust.TrustScore, 100).toFixed(0)}/100
+                                        </p>
+                                        <p className="mt-1">
+                                            {sellerTrust.TrustHeadline || "Người bán đang ở trạng thái bình thường."}
+                                        </p>
+                                        {sellerTrust.TrustWarningMessage ? (
+                                            <p className="mt-2 text-xs">
+                                                {sellerTrust.TrustWarningMessage}
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                ) : null}
 
                                 <div className="flex gap-3 mb-4">
                                     <button
@@ -633,6 +694,21 @@ export default function ProductPage() {
                                 placeholder="Mô tả chi tiết vấn đề..."
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-600 resize-none"
                                 rows={4}
+                            />
+                        </div>
+
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Bằng chứng / link ảnh chụp (nếu có)
+                            </label>
+                            <textarea
+                                value={reportForm.evidenceSummary}
+                                onChange={(e) =>
+                                    setReportForm({ ...reportForm, evidenceSummary: e.target.value })
+                                }
+                                placeholder="Ví dụ: ảnh chụp chat, biên nhận, link Drive..."
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-600 resize-none"
+                                rows={3}
                             />
                         </div>
 

@@ -9,11 +9,16 @@ if [[ -z "${DB_PASSWORD:-}" ]]; then
   exit 1
 fi
 db_exists="$($SQLCMD -S "$DB_HOST" -U "$DB_USER" -P "$DB_PASSWORD" -C -h -1 -W -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM sys.databases WHERE name='${DB_NAME}';")"
-if [[ "$db_exists" == "0" ]]; then
+users_table_exists="0"
+if [[ "$db_exists" != "0" ]]; then
+  users_table_exists="$($SQLCMD -S "$DB_HOST" -U "$DB_USER" -P "$DB_PASSWORD" -C -d "$DB_NAME" -h -1 -W -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='dbo' AND TABLE_NAME='Users';")"
+fi
+
+if [[ "$db_exists" == "0" || "$users_table_exists" == "0" ]]; then
   echo "Creating database and schema..."
   $SQLCMD -S "$DB_HOST" -U "$DB_USER" -P "$DB_PASSWORD" -C -i /docker-entrypoint-initdb.d/educart_schema.sql
 else
-  echo "Database ${DB_NAME} already exists; skipping schema creation."
+  echo "Database ${DB_NAME} already has schema; skipping schema creation."
 fi
 echo "Applying stored procedures..."
 $SQLCMD -S "$DB_HOST" -U "$DB_USER" -P "$DB_PASSWORD" -C -d "$DB_NAME" -i /docker-entrypoint-initdb.d/stored_procedures.sql

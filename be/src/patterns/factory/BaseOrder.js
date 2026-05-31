@@ -21,7 +21,8 @@ class BaseOrder {
     this.items = items; // [{ productId, quantity, unitPrice }]
     this.note = note;
     this.orderType = 'Buy';
-    this.lifecycleState = 'Paid';
+    // New orders start pending payment; delivery starts only after payment success.
+    this.lifecycleState = 'PendingPayment';
   }
 
   /**

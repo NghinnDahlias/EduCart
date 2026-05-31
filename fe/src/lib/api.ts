@@ -77,4 +77,16 @@ export const api = {
       auth: false,
     });
   },
+  putForm: <T>(path: string, body: FormData, auth = false) => {
+    const token = auth ? getToken() : null;
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    return apiFetch<T>(path, {
+      method: "PUT",
+      body,
+      headers,
+      auth: false,
+    });
+  },
 };

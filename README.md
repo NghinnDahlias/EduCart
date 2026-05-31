@@ -5,6 +5,11 @@
 - Node.js 18+
 - Docker Desktop
 
+## Project Docs
+
+- Technical report draft: [docs/bao-cao-ky-thuat.md](/c:/Users/user/Desktop/EduCart/docs/bao-cao-ky-thuat.md:1)
+- UAT + automation checklist: [docs/uat-automation-testcases.md](/c:/Users/user/Desktop/EduCart/docs/uat-automation-testcases.md:1)
+
 ---
 
 ## Frontend

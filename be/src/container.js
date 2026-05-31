@@ -19,10 +19,14 @@ const ReviewService = require("./services/review.service");
 
 const authService = new AuthService({ userRepository });
 const productService = new ProductService({ productRepository });
-const orderService = new OrderService({ orderRepository, productRepository });
 const paymentService = new PaymentService({
   paymentRepository,
   orderRepository,
+});
+const orderService = new OrderService({
+  orderRepository,
+  productRepository,
+  paymentRepository,
 });
 const reviewService = new ReviewService({ reviewRepository, orderRepository });
 

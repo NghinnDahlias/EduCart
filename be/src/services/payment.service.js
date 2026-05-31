@@ -58,6 +58,16 @@ class PaymentService {
         409,
       );
     }
+    const createdAt = new Date(order.CreatedAt).getTime();
+    const paymentWindowMs = 2 * 60 * 60 * 1000;
+    if (Number.isFinite(createdAt) && Date.now() - createdAt > paymentWindowMs) {
+      await this.orders.updateLifecycleState(orderId, "Cancelled");
+      await this.bus.emit("ORDER_CANCELLED", {
+        orderId,
+        reason: "payment_expired",
+      });
+      throw new AppError("The payment window has expired for this order", 409);
+    }
 
     // FinalAmount lives in code (subtotal + deposit for rentals). Recompute.
     const items = await this.orders.findItemsByOrderId(orderId);
@@ -107,7 +117,6 @@ class PaymentService {
 
     if (!succeeded) {
       if (tx) await this.payments.markFailed(tx.PayTxID);
-      await this.bus.emit("PAYMENT_FAILED", { orderId, gateway: method });
       return { ok: false, orderId };
     }
 
@@ -117,7 +126,36 @@ class PaymentService {
       gateway: method,
       amount: payload.amount || payload.vnp_Amount,
     });
+    if (tx?.UserID) {
+      await this.payments.rewardBuyerCoinsForOrder({
+        userId: tx.UserID,
+        orderId,
+        amount: tx.Amount,
+      });
+    }
     return { ok: true, orderId };
+  }
+
+  async simulateGatewayResult({ userId, orderId, method, success }) {
+    const order = await this.orders.findById(orderId);
+    if (!order) throw new AppError("Order not found", 404);
+    if (order.BuyerID !== userId) {
+      throw new AppError("You can only simulate payment for your own order", 403);
+    }
+
+    const tx = await this.payments.findByOrderId(orderId);
+    if (!tx) {
+      throw new AppError("Payment transaction not found for this order", 404);
+    }
+
+    const strategy = this.strategies.get(method);
+    const { payload, signature } = strategy.buildMockWebhook({
+      orderId,
+      amount: tx.Amount,
+      success,
+    });
+
+    return this.handleWebhook({ method, payload, signature });
   }
 }
 

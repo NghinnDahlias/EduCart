@@ -21,6 +21,7 @@ describe("AuthService", () => {
     users = {
       findByEmail: jest.fn(),
       create: jest.fn(),
+      updatePasswordHash: jest.fn(),
     };
     svc = new AuthService({
       userRepository: users,
@@ -29,7 +30,7 @@ describe("AuthService", () => {
     });
   });
 
-  it("registers a new user and returns token + public user", async () => {
+  it("registers a new user and returns the public user payload", async () => {
     users.findByEmail.mockResolvedValue(null);
     users.create.mockResolvedValue({
       UserID: 1,
@@ -53,10 +54,8 @@ describe("AuthService", () => {
       }),
     );
     // register now returns { token, user } — same shape as login
-    expect(result).toHaveProperty("token", "jwt.token.value");
-    expect(result).toHaveProperty("user");
-    expect(result.user).not.toHaveProperty("Password");
-    expect(result.user.UserEmail).toBe("a@b.com");
+    expect(result).not.toHaveProperty("Password");
+    expect(result.UserEmail).toBe("a@b.com");
   });
 
   it("rejects duplicate emails with 409", async () => {
@@ -75,7 +74,7 @@ describe("AuthService", () => {
     users.findByEmail.mockResolvedValue({
       UserID: 1,
       UserEmail: "a@b.com",
-      Password: "hashed_pw",
+      Password: "$2b$10$abcdefghijklmnopqrstuv",
       Role: "Student",
       Status: "Active",
     });
@@ -84,11 +83,37 @@ describe("AuthService", () => {
     expect(result.user).not.toHaveProperty("Password");
   });
 
+  it("accepts legacy plaintext passwords and upgrades them to bcrypt", async () => {
+    const fakeBcrypt = makeFakeBcrypt();
+    const local = new AuthService({
+      userRepository: users,
+      bcryptLib: fakeBcrypt,
+      jwt: makeFakeJwt(),
+    });
+    users.findByEmail.mockResolvedValue({
+      UserID: 7,
+      UserEmail: "legacy@educart.local",
+      Password: "password123",
+      Role: "Student",
+      Status: "Active",
+    });
+
+    const result = await local.login({
+      email: "legacy@educart.local",
+      password: "password123",
+    });
+
+    expect(result.token).toBe("jwt.token.value");
+    expect(fakeBcrypt.compare).not.toHaveBeenCalled();
+    expect(fakeBcrypt.hash).toHaveBeenCalledWith("password123", 10);
+    expect(users.updatePasswordHash).toHaveBeenCalledWith(7, "hashed_pw");
+  });
+
   it("rejects login when bcrypt.compare returns false", async () => {
     users.findByEmail.mockResolvedValue({
       UserID: 1,
       UserEmail: "a@b.com",
-      Password: "hashed_pw",
+      Password: "$2b$10$abcdefghijklmnopqrstuv",
       Role: "Student",
       Status: "Active",
     });

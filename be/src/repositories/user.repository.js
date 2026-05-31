@@ -63,6 +63,19 @@ const UserRepository = {
       throw err;
     }
   },
+
+  async updatePasswordHash(userId, passwordHash) {
+    const pool = await getPool();
+    await pool
+      .request()
+      .input('UserID', sql.Int, userId)
+      .input('Password', sql.VarChar(255), passwordHash)
+      .query(`
+        UPDATE dbo.Users
+        SET Password = @Password
+        WHERE UserID = @UserID
+      `);
+  },
 };
 
 module.exports = UserRepository;

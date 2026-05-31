@@ -44,7 +44,7 @@ class RentOrder extends BaseOrder {
    * Deposit is refunded when the order reaches DepositRefunded.
    */
   getFinalAmount() {
-    return this.dailyRate + this.deposit;
+    return (this.dailyRate * this.rentDays) + this.deposit;
   }
 
   toPersistencePayload() {

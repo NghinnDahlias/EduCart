@@ -64,11 +64,11 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const transition = asyncHandler(async (req, res) => {
-  const next = await services.orderService.transition(
+  const result = await services.orderService.transition(
     Number(req.params.id),
     req.body.event,
   );
-  res.json({ ok: true, lifecycleState: next });
+  res.json({ ok: true, ...result });
 });
 
 module.exports = {

@@ -14,9 +14,9 @@ const registerSchema = Joi.object({
   lastName: Joi.string().max(50).optional(),
   role: Joi.string().valid("Student", "Admin").optional(),
   eduLevel: Joi.string()
-    .valid("Undergraduate", "Graduate", "Postgraduate")
+    .valid("Undergraduate", "Pupils")
     .optional(),
-  year: Joi.number().integer().min(1).max(8).optional(),
+  year: Joi.number().integer().min(1).max(12).optional(),
 });
 
 const loginSchema = Joi.object({
@@ -27,7 +27,7 @@ const loginSchema = Joi.object({
 });
 
 const register = asyncHandler(async (req, res) => {
-  // register() returns the public user object; we then log them in to get a token
+  // Register returns only the safe user payload. Login remains a separate step.
   const result = await services.authService.register(req.body);
   res.status(201).json({ ok: true, ...result });
 });

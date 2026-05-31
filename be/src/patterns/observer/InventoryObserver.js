@@ -22,4 +22,19 @@ function createInventoryObserver({ productRepository, orderRepository }) {
   };
 }
 
+function createInventoryReleaseObserver({ productRepository, orderRepository }) {
+  return async function handleOrderRelease(payload) {
+    const { orderId } = payload;
+    const order = await orderRepository.findById(orderId);
+    if (!order) return;
+    const items = await orderRepository.findItemsByOrderId(orderId);
+
+    for (const item of items) {
+      // eslint-disable-next-line no-await-in-loop
+      await productRepository.releaseReservation(item.ProductID);
+    }
+  };
+}
+
 module.exports = createInventoryObserver;
+module.exports.createInventoryReleaseObserver = createInventoryReleaseObserver;

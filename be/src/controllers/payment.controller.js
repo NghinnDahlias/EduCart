@@ -15,6 +15,12 @@ const webhookSchema = Joi.object({
   payload: Joi.object().required(),
 });
 
+const simulateSchema = Joi.object({
+  orderId: Joi.number().integer().required(),
+  method: Joi.string().valid("MoMo", "VNPay").required(),
+  success: Joi.boolean().required(),
+});
+
 const list = asyncHandler(async (req, res) => {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 20;
@@ -46,10 +52,22 @@ const webhook = asyncHandler(async (req, res) => {
   res.json({ ok: true, ...result });
 });
 
+const simulate = asyncHandler(async (req, res) => {
+  const result = await services.paymentService.simulateGatewayResult({
+    userId: req.user.id,
+    orderId: req.body.orderId,
+    method: req.body.method,
+    success: req.body.success,
+  });
+  res.json({ ok: true, ...result });
+});
+
 module.exports = {
   list,
   initiate,
   webhook,
+  simulate,
   initiateValidator: validate(initiateSchema),
   webhookValidator: validate(webhookSchema),
+  simulateValidator: validate(simulateSchema),
 };

@@ -3,6 +3,7 @@ const OrderService = require('../services/order.service');
 describe('OrderService', () => {
   let orders;
   let products;
+  let payments;
   let svc;
 
   beforeEach(() => {
@@ -11,8 +12,19 @@ describe('OrderService', () => {
       findById: jest.fn(),
       updateLifecycleState: jest.fn(),
     };
-    products = { findManyByIds: jest.fn() };
-    svc = new OrderService({ orderRepository: orders, productRepository: products });
+    products = {
+      findManyByIds: jest.fn(),
+      reserveForOrder: jest.fn().mockResolvedValue({ ProductID: 1, Status: 'Pending', Stock: 1 }),
+      releaseReservation: jest.fn().mockResolvedValue(undefined),
+    };
+    payments = {
+      releaseEscrowForOrder: jest.fn().mockResolvedValue({ sellerPayout: 91, platformFee: 9 }),
+    };
+    svc = new OrderService({
+      orderRepository: orders,
+      productRepository: products,
+      paymentRepository: payments,
+    });
   });
 
   it('creates a Buy order with the right subtotal and persists items', async () => {
@@ -45,6 +57,7 @@ describe('OrderService', () => {
         ],
       }),
     );
+    expect(products.reserveForOrder).toHaveBeenCalledTimes(2);
     expect(result.Subtotal).toBe(90);
     expect(result.FinalAmount).toBe(90);
   });
@@ -66,17 +79,18 @@ describe('OrderService', () => {
       },
     });
 
-    // 20 * 7 = 140 gross rent, deposit = 50% = 70 (≤ item value 500),
-    // FinalAmount = 140 + 70 = 210
-    expect(result.FinalAmount).toBe(210);
+    // Current business rule: fixed deposit 100000 VND per rented item.
+    // 20 * 7 = 140 rental charge, deposit = 100000, final = 100140.
+    expect(result.FinalAmount).toBe(100140);
     expect(orders.createWithItems).toHaveBeenCalledWith(
       expect.objectContaining({
         orderType: 'Rent',
         rentDays: 7,
         dailyRate: 20,
-        deposit: 70,
+        deposit: 100000,
       }),
     );
+    expect(products.reserveForOrder).toHaveBeenCalledWith(30, 1);
   });
 
   it('rejects mixed-seller orders', async () => {
@@ -114,9 +128,24 @@ describe('OrderService', () => {
     orders.findById.mockResolvedValue({
       OrderID: 1, OrderType: 'Buy', LifecycleState: 'PendingPayment',
     });
-    const next = await svc.transition(1, 'onPaymentSucceeded');
-    expect(next).toBe('Paid');
+    const result = await svc.transition(1, 'onPaymentSucceeded');
+    expect(result.lifecycleState).toBe('Paid');
     expect(orders.updateLifecycleState).toHaveBeenCalledWith(1, 'Paid');
+  });
+
+  it('releases escrow when a paid order reaches Completed', async () => {
+    orders.findById.mockResolvedValue({
+      OrderID: 1,
+      OrderType: 'Buy',
+      LifecycleState: 'Delivering',
+      IsPaid: true,
+    });
+
+    const result = await svc.transition(1, 'onDeliver');
+
+    expect(result.lifecycleState).toBe('Completed');
+    expect(payments.releaseEscrowForOrder).toHaveBeenCalledWith(1);
+    expect(result.settlement).toEqual(expect.objectContaining({ sellerPayout: 91 }));
   });
 
   it('rejects invalid transitions with 409', async () => {
@@ -124,5 +153,19 @@ describe('OrderService', () => {
       OrderID: 1, OrderType: 'Buy', LifecycleState: 'PendingPayment',
     });
     await expect(svc.transition(1, 'onShip')).rejects.toMatchObject({ statusCode: 409 });
+  });
+
+  it('rejects if a product was reserved by another buyer first', async () => {
+    products.findManyByIds.mockResolvedValue([
+      { ProductID: 10, SellerID: 2, Price: '50.00', IsForRent: false, Status: 'Available' },
+    ]);
+    products.reserveForOrder.mockResolvedValueOnce(null);
+
+    await expect(
+      svc.createOrder({
+        buyerId: 1,
+        dto: { type: 'Buy', items: [{ productId: 10, quantity: 1 }] },
+      }),
+    ).rejects.toMatchObject({ statusCode: 409 });
   });
 });

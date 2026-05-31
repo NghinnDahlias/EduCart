@@ -1,7 +1,8 @@
 const Joi = require("joi");
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
-const { repositories } = require("../container"); // ← Import container
+const { repositories } = require("../container");
+const analyticsRepository = require("../repositories/analytics.repository");
 
 const listSchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
@@ -22,10 +23,6 @@ const createCommentSchema = Joi.object({
   parentCommentId: Joi.number().integer().optional(),
 });
 
-/**
- * GET /forum
- * List all posts (public)
- */
 const list = asyncHandler(async (req, res) => {
   const { value, error } = listSchema.validate(req.query, {
     abortEarly: false,
@@ -45,10 +42,6 @@ const list = asyncHandler(async (req, res) => {
   res.json({ ok: true, ...result });
 });
 
-/**
- * GET /forum/:id
- * Get post details with comments (public)
- */
 const getById = asyncHandler(async (req, res) => {
   const postId = Number(req.params.id);
   if (!Number.isFinite(postId)) {
@@ -60,16 +53,17 @@ const getById = asyncHandler(async (req, res) => {
     throw new AppError("Post not found", 404);
   }
 
-  // Increment view count
   await repositories.forumRepository.incrementViewCount(postId);
+  await analyticsRepository.track({
+    eventType: "ForumView",
+    entityType: "Post",
+    entityId: postId,
+    sessionKey: req.ip,
+  });
 
   res.json({ ok: true, post });
 });
 
-/**
- * POST /forum
- * Create a new post (auth required)
- */
 const create = asyncHandler(async (req, res) => {
   const { value, error } = createPostSchema.validate(req.body, {
     abortEarly: false,
@@ -95,10 +89,6 @@ const create = asyncHandler(async (req, res) => {
   res.status(201).json({ ok: true, post });
 });
 
-/**
- * POST /forum/:id/comments
- * Add a comment to a post (auth required)
- */
 const addComment = asyncHandler(async (req, res) => {
   const { value, error } = createCommentSchema.validate(req.body, {
     abortEarly: false,
@@ -118,7 +108,6 @@ const addComment = asyncHandler(async (req, res) => {
     throw new AppError("Invalid post ID", 400);
   }
 
-  // Verify post exists
   const post = await repositories.forumRepository.findByIdWithComments(postId);
   if (!post) {
     throw new AppError("Post not found", 404);
@@ -134,13 +123,9 @@ const addComment = asyncHandler(async (req, res) => {
   res.status(201).json({ ok: true, comment });
 });
 
-/**
- * POST /forum/:id/vote
- * Vote on a post (auth required)
- */
 const vote = asyncHandler(async (req, res) => {
   const postId = Number(req.params.id);
-  const voteType = req.body.type; // "up" or "down"
+  const voteType = req.body.type;
 
   if (!Number.isFinite(postId)) {
     throw new AppError("Invalid post ID", 400);
@@ -154,10 +139,6 @@ const vote = asyncHandler(async (req, res) => {
   res.json({ ok: true, message: "Vote recorded" });
 });
 
-/**
- * DELETE /forum/:id
- * Delete a post (auth required - post author only)
- */
 const deletePost = asyncHandler(async (req, res) => {
   const postId = Number(req.params.id);
 

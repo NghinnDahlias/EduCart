@@ -81,13 +81,24 @@ const OrderRepository = {
         SELECT o.*,
                ub.FName + ' ' + ub.LName AS BuyerName,
                us.FName + ' ' + us.LName AS SellerName,
+               (
+                 SELECT TOP 1 p.Title
+                 FROM dbo.OrderItems oi0
+                 JOIN dbo.Products p ON p.ProductID = oi0.ProductID
+                 WHERE oi0.OrderID = o.OrderID
+                 ORDER BY oi0.ProductID
+               ) AS PrimaryTitle,
+               DATEADD(HOUR, 2, o.CreatedAt) AS PaymentDueAt,
                CASE 
-                 WHEN o.OrderType = 'Rent' THEN COALESCE(o.DailyRate, 0) + COALESCE(o.Deposit, 0)
+                 WHEN o.OrderType = 'Rent' THEN (COALESCE(o.DailyRate, 0) * COALESCE(o.RentDays, 0)) + COALESCE(o.Deposit, 0)
                  ELSE (SELECT COALESCE(SUM(Quantity * UnitPrice), 0) FROM dbo.OrderItems WHERE OrderID = o.OrderID)
-               END AS TotalAmount
+               END AS TotalAmount,
+               ofe.CommissionRate,
+               ofe.CommissionAmount
         FROM dbo.Orders o
         JOIN dbo.Users ub ON ub.UserID = o.BuyerID
         JOIN dbo.Users us ON us.UserID = o.SellerID
+        LEFT JOIN dbo.OrderFees ofe ON ofe.OrderID = o.OrderID
         WHERE o.${col} = @UserID
         ORDER BY o.CreatedAt DESC
       `);
@@ -103,10 +114,18 @@ const OrderRepository = {
         .query(`
           SELECT o.*,
                  ub.FName + ' ' + ub.LName AS BuyerName,
-                 us.FName + ' ' + us.LName AS SellerName
+                 us.FName + ' ' + us.LName AS SellerName,
+                 DATEADD(HOUR, 2, o.CreatedAt) AS PaymentDueAt,
+                 CASE 
+                   WHEN o.OrderType = 'Rent' THEN (COALESCE(o.DailyRate, 0) * COALESCE(o.RentDays, 0)) + COALESCE(o.Deposit, 0)
+                   ELSE (SELECT COALESCE(SUM(oi2.Quantity * oi2.UnitPrice), 0) FROM dbo.OrderItems oi2 WHERE oi2.OrderID = o.OrderID)
+                 END AS TotalAmount,
+                 ofe.CommissionRate,
+                 ofe.CommissionAmount
           FROM dbo.Orders o
           JOIN dbo.Users ub ON ub.UserID = o.BuyerID
           JOIN dbo.Users us ON us.UserID = o.SellerID
+          LEFT JOIN dbo.OrderFees ofe ON ofe.OrderID = o.OrderID
           WHERE o.OrderID = @OrderID
         `),
       pool
@@ -129,12 +148,11 @@ const OrderRepository = {
 
   async updateLifecycleState(orderId, newState, { isPaid, paidType } = {}) {
     const pool = await getPool();
-    const req = pool
-      .request()
+    const req = pool.request()
       .input('OrderID', sql.Int, orderId)
       .input('LifecycleState', sql.NVarChar(30), newState);
 
-    const sets = ['LifecycleState = @LifecycleState', 'UpdatedAt = GETDATE()'];
+    const sets = ['LifecycleState = @LifecycleState'];
     if (typeof isPaid === 'boolean') {
       req.input('IsPaid', sql.Bit, isPaid ? 1 : 0);
       sets.push('IsPaid = @IsPaid');
@@ -144,7 +162,21 @@ const OrderRepository = {
       sets.push('PaidType = @PaidType');
     }
 
-    await req.query(`UPDATE dbo.Orders SET ${sets.join(', ')} WHERE OrderID = @OrderID`);
+    const updateClause = sets.join(', ');
+    await req.query(`
+      IF COL_LENGTH('dbo.Orders', 'UpdatedAt') IS NOT NULL
+      BEGIN
+        UPDATE dbo.Orders
+        SET ${updateClause}, UpdatedAt = GETDATE()
+        WHERE OrderID = @OrderID;
+      END
+      ELSE
+      BEGIN
+        UPDATE dbo.Orders
+        SET ${updateClause}
+        WHERE OrderID = @OrderID;
+      END
+    `);
   },
 };
 

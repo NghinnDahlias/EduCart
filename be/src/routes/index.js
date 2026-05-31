@@ -9,7 +9,9 @@ const userRoutes = require('./user.routes');
 const lookupRoutes = require('./lookup.routes');
 const messageRoutes = require('./message.routes');
 const reportRoutes = require('./report.routes');
+const aiRoutes = require('./ai.routes');
 const forumRoutes = require("./forum.routes"); // ← ADD THIS
+const adminRoutes = require("./admin.routes");
 
 const router = express.Router();
 
@@ -22,7 +24,9 @@ router.use('/cart', cartRoutes);
 router.use('/users', userRoutes);
 router.use('/reports', reportRoutes);
 router.use('/messages', messageRoutes);
+router.use('/ai', aiRoutes);
 router.use('/forum', forumRoutes); // ← ADD THIS
+router.use('/admin', adminRoutes);
 router.use(lookupRoutes); // mounts at /universities and /faculties
 
 module.exports = router;

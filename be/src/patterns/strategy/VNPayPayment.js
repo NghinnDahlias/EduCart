@@ -63,6 +63,23 @@ class VNPayPayment extends PaymentStrategy {
       .digest('hex');
     return expected === signature;
   }
+
+  buildMockWebhook({ orderId, amount, success }) {
+    const payload = {
+      vnp_TxnRef: String(orderId),
+      vnp_Amount: String(Math.round(Number(amount) * 100)),
+      vnp_ResponseCode: success ? '00' : '24',
+    };
+    const signData = Object.keys(payload)
+      .sort()
+      .map((k) => `${k}=${payload[k]}`)
+      .join('&');
+    const signature = crypto
+      .createHmac('sha512', this.secret || 'dev')
+      .update(signData)
+      .digest('hex');
+    return { payload, signature };
+  }
 }
 
 module.exports = VNPayPayment;

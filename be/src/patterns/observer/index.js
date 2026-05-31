@@ -6,6 +6,7 @@
 const eventBus = require('./EventBus');
 const createOrderStateObserver = require('./OrderStateObserver');
 const createInventoryObserver = require('./InventoryObserver');
+const { createInventoryReleaseObserver } = require('./InventoryObserver');
 const createNotificationObserver = require('./NotificationObserver');
 
 function register({ orderRepository, productRepository, logger }) {
@@ -18,6 +19,10 @@ function register({ orderRepository, productRepository, logger }) {
   eventBus.on(
     'PAYMENT_SUCCESS',
     createInventoryObserver({ productRepository, orderRepository }),
+  );
+  eventBus.on(
+    'ORDER_CANCELLED',
+    createInventoryReleaseObserver({ productRepository, orderRepository }),
   );
   eventBus.on(
     'PAYMENT_SUCCESS',
