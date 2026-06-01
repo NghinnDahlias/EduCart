@@ -64,10 +64,13 @@ const create = asyncHandler(async (req, res) => {
 });
 
 const transition = asyncHandler(async (req, res) => {
-  const result = await services.orderService.transition(
-    Number(req.params.id),
-    req.body.event,
-  );
+  const orderId = Number(req.params.id);
+  const order = await services.orderService.getOrder(orderId);
+  if (order.BuyerID !== req.user.id && order.SellerID !== req.user.id) {
+    throw new AppError("You do not have permission to update this order", 403);
+  }
+
+  const result = await services.orderService.transition(orderId, req.body.event);
   res.json({ ok: true, ...result });
 });
 

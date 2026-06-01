@@ -26,6 +26,7 @@ interface ApiOrderItem {
 }
 
 interface ApiOrder {
+  BuyerID: number;
   SellerID: number;
   OrderID: number;
   OrderType: "Buy" | "Rent";
@@ -94,11 +95,19 @@ function ReviewPageInner() {
     setIsSubmitting(true);
     setSubmitMsg("");
     try {
-      // Mark order as complete (Rent orders need this, Buy orders might already be complete)
+      // Buy orders finish on buyer receipt confirmation; rent orders finish after seller closes the rental.
       try {
-        await api.post(`/orders/${order.OrderID}/transitions`, { event: "onComplete" }, true);
+        const completionEvent =
+          order.LifecycleState === "Delivering"
+            ? "onDeliver"
+            : order.LifecycleState === "ActiveRental"
+              ? "onComplete"
+              : null;
+        if (completionEvent) {
+          await api.post(`/orders/${order.OrderID}/transitions`, { event: completionEvent }, true);
+        }
       } catch {
-        // ignore, may already be in completed state
+        // ignore to avoid blocking review when the order was already completed in another tab
       }
 
       // Submit review for each product in the order

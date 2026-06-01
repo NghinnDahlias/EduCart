@@ -1,13 +1,13 @@
 # UAT va Automation Testcases EduCart
 
-## 1. Pham vi kiem thu
+## 1. Muc dich
 
-Tai lieu nay dung cho:
+Tai lieu nay duoc dung de:
 
-- Kiem thu demo voi giao vien
-- Kiem thu UAT theo luong nguoi dung cuoi
-- Kiem tra nhanh truoc khi quay video
-- Doi chieu voi cac unit test backend hien co
+- kiem thu UAT voi giao vien
+- doi chieu voi ban hien thuc moi nhat
+- chuan bi kich ban quay video
+- kiem tra nhanh truoc khi demo
 
 ## 2. Automation hien co
 
@@ -18,306 +18,372 @@ Backend da co cac file test:
 - `be/src/tests/order.service.test.js`
 - `be/src/tests/payment.service.test.js`
 
-Muc dich:
+Pham vi:
 
-- `auth`: dang ky, dang nhap, duplicate email, account status, migration plaintext -> bcrypt
-- `product`: validate so luong anh, tao san pham, lay chi tiet
-- `order`: tao don mua/thuê, transition state
-- `payment`: initiate payment, webhook success/fail
+- auth va password migration
+- tao/cap nhat san pham
+- don mua, don thue, state transition
+- payment sandbox va simulate flow
 
-Luu y:
+## 3. Smoke test truoc khi demo
 
-- Nhom `order.service` hien can dong bo lai ky vong test voi business rule thuc te truoc khi coi la "green suite" hoan chinh.
+1. `GET /api/health` tra `ok = true`
+2. frontend mo duoc `http://localhost:3000`
+3. dang nhap duoc bang `buyer@educart.local / password123`
+4. `/products` co du lieu
+5. `/forum` co bai viet
+6. `/admin` mo duoc bang `admin@educart.local / password123`
+7. chatbot AI mo duoc o goc phai duoi
 
-## 3. Checklist smoke test truoc khi demo
+## 4. Tai khoan demo
 
-1. Backend `http://localhost:5000/api/health` tra `ok=true`
-2. Frontend mo duoc `http://localhost:3000`
-3. Dang nhap duoc bang tai khoan seed:
-   - `buyer@educart.local / password123`
-4. Trang san pham hien ra danh sach
-5. Trang dien dan hien ra 5 bai viet seed
-6. DB da co du lieu san pham cho thuê
-
-## 4. UAT chi tiet
-
-### TC-AUTH-01 Dang nhap thanh cong
-
-- Muc tieu: Xac nhan dang nhap hoat dong
-- Tien dieu kien: backend + frontend dang chay
-- Du lieu: `buyer@educart.local / password123`
-- Buoc thuc hien:
-  1. Mo trang `/login`
-  2. Nhap email va mat khau
-  3. Bam dang nhap
-- Ket qua mong doi:
-  - Dang nhap thanh cong
-  - Chuyen ve trang chu
-  - `educart_token` duoc tao trong localStorage
-
-### TC-AUTH-02 Dang ky tai khoan moi
-
-- Muc tieu: Kiem tra tao user moi va luu DB
-- Buoc thuc hien:
-  1. Mo `/register`
-  2. Nhap day du thong tin
-  3. Chon truong
-  4. Xac nhan dang ky
-- Ket qua mong doi:
-  - API tra `201`
-  - User moi duoc tao trong bang `Users`
-  - Co ban ghi lien ket trong `UserUniversity`
-
-### TC-AUTH-03 Dang nhap sai mat khau
-
-- Buoc:
-  1. Vao `/login`
-  2. Nhap sai mat khau
-- Ket qua mong doi:
-  - Hien thong bao loi
-  - Khong tao token
-
-### TC-PROD-01 Xem danh sach san pham
-
-- Muc tieu: Kiem tra trang `/products`
-- Buoc:
-  1. Mo trang danh sach san pham
-  2. Cuon danh sach
-- Ket qua mong doi:
-  - Hien du lieu
-  - Co san pham ban va cho thuê
-  - Co san pham tai lieu so
-
-### TC-PROD-02 Loc san pham cho thuê
-
-- Buoc:
-  1. Mo `/products`
-  2. Chon filter "thuê"
-- Ket qua mong doi:
-  - Chi con san pham `IsForRent = true`
-  - Thay cac listing nhu Casio, giao trinh, tai khoan khoa hoc
-
-### TC-PROD-03 Loc theo truong/khoa/mon hoc
-
-- Buoc:
-  1. Chon university
-  2. Chon faculty
-  3. Chon subject
-  4. Bam cap nhat
-- Ket qua mong doi:
-  - Danh sach san pham thay doi theo bo loc
-
-### TC-PROD-04 Xem chi tiet san pham
-
-- Buoc:
-  1. Chon 1 san pham bat ky
-  2. Mo trang chi tiet
-- Ket qua mong doi:
-  - Hien title, mo ta, gia, hinh anh, seller, review
-
-### TC-PROD-05 Dang san pham moi
-
-- Tien dieu kien: da dang nhap
-- Buoc:
-  1. Vao `/post-product`
-  2. Nhap thong tin san pham
-  3. Chon type mua/thuê
-  4. Upload anh
-  5. Bam dang
-- Ket qua mong doi:
-  - San pham moi xuat hien trong `/products`
-  - Co du lieu trong bang `Products`
-  - Anh co trong `ProductImages`
-
-### TC-CART-01 Them san pham vao gio hang
-
-- Buoc:
-  1. Vao chi tiet san pham
-  2. Bam them vao gio
-  3. Mo `/cart`
-- Ket qua mong doi:
-  - San pham xuat hien trong gio
-  - Co ban ghi trong `CartItems`
-
-### TC-CART-02 Xoa san pham khoi gio
-
-- Buoc:
-  1. Vao `/cart`
-  2. Bam xoa
-- Ket qua mong doi:
-  - San pham bien mat khoi gio
-  - Ban ghi `CartItems` bi xoa
-
-### TC-ORDER-01 Tao don mua
-
-- Buoc:
-  1. Chon san pham mua
-  2. Them gio
-  3. Checkout
-- Ket qua mong doi:
-  - Tao `Orders`
-  - Tao `OrderItems`
-  - Don xuat hien trong `/orders`
-
-### TC-ORDER-02 Tao don thuê
-
-- Buoc:
-  1. Chon san pham cho thuê
-  2. Them gio
-  3. Checkout
-- Ket qua mong doi:
-  - Don `OrderType = Rent`
-  - Tong tien co tinh thanh phan coc/thue
-
-### TC-ORDER-03 Xem timeline don hang
-
-- Buoc:
-  1. Mo `/orders`
-  2. Xem mot don co san
-- Ket qua mong doi:
-  - Hien timeline theo `LifecycleState`
-  - Don thuê co cac moc khac don mua
-
-### TC-ORDER-04 Huy don
-
-- Tien dieu kien: don dang o `PendingPayment` hoac `Paid`
-- Buoc:
-  1. Vao `/orders`
-  2. Bam huy don
-- Ket qua mong doi:
-  - Trang thai don thay doi
-  - UI cap nhat sau refresh
-
-### TC-MSG-01 Nhan tin nguoi ban
-
-- Buoc:
-  1. Tu trang don hang hoac seller, mo chat
-  2. Gui 1 tin nhan
-- Ket qua mong doi:
-  - Tin nhan xuat hien trong UI
-  - Co du lieu trong bang `Messages`
-
-### TC-REVIEW-01 Gui danh gia sau giao dich
-
-- Tien dieu kien: co don da hoan thanh
-- Buoc:
-  1. Vao trang review
-  2. Chon so sao va noi dung
-  3. Gui danh gia
-- Ket qua mong doi:
-  - Co ban ghi trong `Reviews`
-  - Rating san pham/nguoi ban duoc cap nhat neu co trigger/logic lien quan
-
-### TC-FORUM-01 Xem danh sach bai viet dien dan
-
-- Buoc:
-  1. Mo `/forum`
-- Ket qua mong doi:
-  - Hien 5 bai viet seed
-  - Co bai ve tai lieu so, hoi bai, hoi mon hoc
-
-### TC-FORUM-02 Tim kiem bai viet
-
-- Buoc:
-  1. Tim voi tu khoa `React` hoac `Giải tích`
-- Ket qua mong doi:
-  - Danh sach bai viet loc dung
-
-### TC-FORUM-03 Tao bai viet moi
-
-- Tien dieu kien: da dang nhap
-- Buoc:
-  1. Vao `/forum/create`
-  2. Nhap title, content, tags
-  3. Dang bai
-- Ket qua mong doi:
-  - Bai moi xuat hien trong `/forum`
-  - Co ban ghi trong `Posts`
-
-### TC-FORUM-04 Binh luan bai viet
-
-- Buoc:
-  1. Mo chi tiet 1 bai viet
-  2. Nhap comment
-  3. Gui comment
-- Ket qua mong doi:
-  - Comment xuat hien tren UI
-  - Co ban ghi trong `Comments`
-  - `CommentsCount` cua `Posts` tang len
-
-### TC-FORUM-05 Vote bai viet
-
-- Buoc:
-  1. Mo chi tiet bai viet
-  2. Upvote/downvote
-- Ket qua mong doi:
-  - Vote count thay doi tren UI
-
-### TC-REPORT-01 Bao cao nguoi ban
-
-- Buoc:
-  1. Vao chi tiet san pham
-  2. Mo form report
-  3. Gui noi dung bao cao
-- Ket qua mong doi:
-  - Co request thanh cong
-  - Co ban ghi trong `Reports`
-
-## 5. Kich ban demo de quay video
-
-### Kich ban ngan gon, an toan
-
-1. Mo `/login` va dang nhap bang `buyer@educart.local`
-2. Mo `/products`
-3. Loc san pham cho thuê
-4. Mo 1 listing thuê moi seed
-5. Them vao gio hang
-6. Mo `/cart`
-7. Mo `/orders` de xem don seed
-8. Mo `/forum`
-9. Xem 5 bai viet seed
-10. Tao 1 bai moi
-11. Comment vao 1 bai co san
-12. Mo SQL Server hoac goi API de chung minh du lieu da duoc luu
-
-### Kich ban day du hon
-
-1. Dang ky tai khoan moi
-2. Dang nhap bang tai khoan moi
-3. Dang san pham tai lieu so
-4. Them san pham vao gio
-5. Tao don
-6. Vao profile sua thong tin
-7. Vao forum tao bai hoi bai
-8. Dang xuat
-
-## 6. Du lieu demo khuyen nghi
-
-Tai khoan seed:
-
+- `admin@educart.local / password123`
 - `buyer@educart.local / password123`
 - `seller@educart.local / password123`
 - `hoangnam@educart.local / password123`
-- `minhanh@educart.local / password123`
-- `khoa@educart.local / password123`
-- `phuonglinh@educart.local / password123`
 
-Du lieu moi bo sung de demo:
+## 5. UAT theo module
 
-- San pham cho thuê:
-  - giao trinh thuat toan
-  - may tinh Casio
-  - tai khoan khoa hoc React
-- San pham tai lieu so:
-  - note Giai tich 1
-  - slide Kinh te vi mo
-  - bo de Dai so tuyen tinh
-- Dien dan:
-  - 5 bai viet mau co comment
+### UAT-AUTH-01 Dang nhap thanh cong
 
-## 7. Van de can note khi demo
+- Buoc:
+  1. vao `/login`
+  2. nhap `buyer@educart.local / password123`
+  3. bam dang nhap
+- Mong doi:
+  - vao duoc trang chu
+  - co `educart_token` trong localStorage
 
-- Nen khoi dong backend truoc va kiem tra `/api/health`
-- Neu sua `fe/.env`, phai restart frontend
-- Nen dung du lieu seed de tranh loi do du lieu rong
-- Khong nen demo phan stored procedure nang neu chua doi chieu xong schema hien tai
+### UAT-AUTH-02 Dang ky tai khoan moi
+
+- Buoc:
+  1. vao `/register`
+  2. nhap day du thong tin
+  3. chon truong/khoa
+  4. gui form
+- Mong doi:
+  - tao user moi thanh cong
+  - user moi duoc luu trong `Users`
+
+### UAT-PROD-01 Xem danh sach san pham
+
+- Buoc:
+  1. vao `/products`
+- Mong doi:
+  - co san pham mua
+  - co san pham cho thue
+  - co tai lieu so
+
+### UAT-PROD-02 Loc san pham cho thue
+
+- Buoc:
+  1. chon filter thue
+- Mong doi:
+  - chi con listing `IsForRent = true`
+
+### UAT-PROD-03 Xem chi tiet san pham va trust signal
+
+- Buoc:
+  1. mo mot san pham
+- Mong doi:
+  - thay thong tin seller
+  - thay trust score / risk badge
+  - co nut report
+
+### UAT-PROD-04 Dang san pham moi
+
+- Tien dieu kien: da dang nhap
+- Buoc:
+  1. vao `/post-product`
+  2. nhap ten, mo ta, gia, chon loai
+  3. upload anh
+  4. chon thong tin giao hang
+  5. dang bai
+- Mong doi:
+  - san pham xuat hien trong danh sach
+  - co du lieu trong `Products` va `ProductImages`
+
+### UAT-CART-01 Them vao gio va xoa khoi gio
+
+- Buoc:
+  1. them 1 san pham vao gio
+  2. vao `/cart`
+  3. xoa san pham
+- Mong doi:
+  - them/xoa thanh cong
+  - `CartItems` cap nhat dung
+
+### UAT-CHECKOUT-01 Hien dia chi mac dinh
+
+- Tien dieu kien: profile da co dia chi
+- Buoc:
+  1. vao `/checkout`
+- Mong doi:
+  - hien san dia chi mac dinh
+  - co the chon nhap tay dia chi khac
+
+### UAT-CHECKOUT-02 Tinh phi ship
+
+- Buoc:
+  1. checkout voi direct pickup
+  2. checkout voi online payment hoac COD
+- Mong doi:
+  - direct pickup ship = 0
+  - online/COD ship = 10.000d
+  - tong tien va tam tinh hien dung
+
+### UAT-PAY-01 Tao don va thanh toan thanh cong
+
+- Buoc:
+  1. checkout
+  2. chon `MoMo Sandbox` hoac `VNPay Sandbox`
+  3. vao `/payment-gateway`
+  4. bam `Mo phong thanh toan thanh cong`
+- Mong doi:
+  - sang trang thanh toan thanh cong
+  - co 2 nut:
+    - xem chi tiet don hang
+    - tiep tuc mua sam
+
+### UAT-PAY-02 Thanh toan that bai
+
+- Buoc:
+  1. tao don moi
+  2. bam `Mo phong thanh toan that bai`
+- Mong doi:
+  - don van ton tai o `PendingPayment`
+  - co the thanh toan lai trong 2 gio
+  - san pham chua quay lai catalog cong khai
+
+### UAT-PAY-03 Kiem tra escrow
+
+- Cach doi chieu:
+  1. tao don va thanh toan thanh cong
+  2. chua complete don
+  3. vao admin dashboard
+- Mong doi:
+  - seller chua nhan payout ngay
+  - admin thay so lieu escrow dang giu
+
+### UAT-ORDER-01 San pham stock = 1 bien khoi catalog sau khi tao don
+
+- Buoc:
+  1. buyer A tao don cho san pham stock 1
+  2. quay lai `/products`
+- Mong doi:
+  - san pham bien mat khoi catalog public
+
+### UAT-ORDER-02 Nguoi mua theo doi va thanh toan lai
+
+- Buoc:
+  1. tao don that bai thanh toan
+  2. vao `/orders`
+  3. mo chi tiet don
+- Mong doi:
+  - thay nut thanh toan lai trong 2 gio
+  - thay nut huy don neu seller chua gui van chuyen
+
+### UAT-ORDER-03 Luong seller
+
+- Dang nhap seller
+- Buoc:
+  1. vao `/orders`
+  2. mo mot don ban
+  3. xac nhan:
+     - da nhan don
+     - da chuyen cho chuyen phat
+     - xac nhan da giao hang
+- Mong doi:
+  - seller chi thay cac thao tac ben ban
+
+### UAT-ORDER-04 Luong buyer sau khi giao hang
+
+- Buoc:
+  1. buyer vao chi tiet don da giao
+  2. bam `Xac nhan don hang`
+- Mong doi:
+  - chuyen sang review
+  - buyer co the danh gia
+
+### UAT-PROFILE-01 Cap nhat thong tin va dia chi
+
+- Buoc:
+  1. vao `/profile`
+  2. sua thong tin ca nhan
+  3. cap nhat dia chi
+- Mong doi:
+  - thong tin cu khong bi mat
+  - dia chi luu dung
+
+### UAT-PROFILE-02 Coins va diem danh
+
+- Buoc:
+  1. vao `/profile`
+  2. bam diem danh
+  3. tao 1 don da thanh toan
+- Mong doi:
+  - coins tang khi diem danh
+  - coins tang theo quy tac `1.000d = 1 coin`
+
+### UAT-PROFILE-03 Notifications dong
+
+- Buoc:
+  1. tao 1 don `PendingPayment`
+  2. seller nhan don
+  3. seller danh dau da chuyen phat
+- Mong doi:
+  - profile / notifications co nhac thanh toan
+  - co thong bao seller da nhan don
+  - co thong bao dang giao
+
+### UAT-FORUM-01 Xem va tao bai viet
+
+- Buoc:
+  1. vao `/forum`
+  2. xem bai seed
+  3. tao bai moi
+- Mong doi:
+  - bai moi xuat hien
+  - du lieu luu vao `Posts`
+
+### UAT-FORUM-02 Binh luan va vote
+
+- Buoc:
+  1. mo chi tiet bai
+  2. comment
+  3. vote
+- Mong doi:
+  - comment xuat hien
+  - vote count thay doi
+
+### UAT-CHAT-01 Nhan tin buyer-seller
+
+- Buoc:
+  1. vao `/chat`
+  2. gui tin nhan
+- Mong doi:
+  - tin nhan hien tren UI
+  - co du lieu trong `Messages`
+
+### UAT-REPORT-01 Gui report
+
+- Buoc:
+  1. vao chi tiet seller hoac product
+  2. mo form report
+  3. nhap ly do va bang chung
+  4. gui report
+- Mong doi:
+  - tao report thanh cong
+  - du lieu luu trong `Reports`
+
+### UAT-ADMIN-01 Dang nhap admin va mo dashboard
+
+- Buoc:
+  1. dang nhap `admin@educart.local`
+  2. vao `/admin`
+- Mong doi:
+  - thay dashboard
+  - thay thong ke user, product, order, report
+
+### UAT-ADMIN-02 Moderation report
+
+- Buoc:
+  1. admin mo report queue
+  2. chon `Canh bao user`
+- Mong doi:
+  - report duoc update
+  - trust score seller giam
+  - warning count tang
+
+### UAT-ADMIN-03 Theo doi trust score
+
+- Buoc:
+  1. canh bao cung 1 seller nhieu lan
+- Mong doi:
+  - moi lan canh bao tru 5 diem
+  - du 10 canh bao thi tam khoa 7 ngay
+  - tai pham 3 lan nua co the ban vinh vien
+
+### UAT-AI-01 Chatbot chao hoi
+
+- Buoc:
+  1. mo chatbot o goc phai duoi
+  2. nhap `xin chao`
+- Mong doi:
+  - bot tu gioi thieu cac kha nang ho tro
+
+### UAT-AI-02 Chatbot tra cuu don
+
+- Tien dieu kien: user co don
+- Buoc:
+  1. hoi `don hang cua toi dang o dau`
+- Mong doi:
+  - bot tra ve don gan nhat va trang thai
+
+### UAT-AI-03 Chatbot goi y san pham
+
+- Buoc:
+  1. hoi `goi y giao trinh giai tich 1`
+- Mong doi:
+  - bot tra ve suggestions
+  - bam vao suggestions mo duoc trang san pham
+
+### UAT-AI-04 Chatbot chinh sach trust score
+
+- Buoc:
+  1. hoi `trust score duoc tinh nhu the nao`
+- Mong doi:
+  - bot tra loi dung policy canh bao / tam khoa / ban
+
+### UAT-SEO-01 Kiem tra metadata
+
+- Buoc:
+  1. mo `/products`, `/forum`, `/khung-phap-ly`
+  2. inspect title va meta description
+- Mong doi:
+  - co metadata
+
+### UAT-SEO-02 Kiem tra robots va sitemap
+
+- Buoc:
+  1. mo `/robots.txt`
+  2. mo `/sitemap.xml`
+- Mong doi:
+  - route tra ve du lieu hop le
+
+## 6. Checklist DB doi chieu khi demo
+
+Sau khi demo, co the doi chieu:
+
+- `Users`
+- `Products`
+- `ProductImages`
+- `Orders`
+- `OrderItems`
+- `PaymentTransactions`
+- `OrderFees`
+- `Messages`
+- `Posts`
+- `Comments`
+- `Reviews`
+- `Reports`
+
+## 7. Kich ban quay video khuyen nghi
+
+1. dang nhap buyer
+2. xem san pham va trust seller
+3. them vao gio, checkout, simulate payment
+4. vao orders theo doi don
+5. dang nhap seller xu ly giao hang
+6. buyer xac nhan nhan hang va review
+7. gui report seller
+8. dang nhap admin duyet report va xem dashboard
+9. mo chatbot AI hoi ve don hang va trust score
+10. mo `/robots.txt` va `/sitemap.xml`
+11. mo SQL Server/API de doi chieu du lieu da luu
+
+## 8. Ghi chu trung thuc
+
+- neu chatbot hien `tam thoi bi loi`, can rebuild backend de mount route `/api/ai/chat`
+- neu build frontend bao dang co `next build` khac dang chay, can dung process cu truoc khi build lai
+- mot so text cu van con can dọn encoding, nhung khong anh huong nghiep vu chinh

@@ -27,6 +27,119 @@ type ChatMessage = {
   suggestions?: ChatSuggestion[];
 };
 
+function normalizeText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function classifyFallbackIntent(rawMessage: string) {
+  const message = normalizeText(rawMessage);
+  const rules = [
+    { key: "payment_retry", keywords: ["thanh toan", "payment", "momo", "vnpay", "retry"] },
+    { key: "order_tracking", keywords: ["don hang", "dang o dau", "tracking", "giao den", "ship"] },
+    { key: "trust_score", keywords: ["trust", "uy tin", "canh bao", "bao nhieu diem"] },
+    { key: "copyright", keywords: ["ban quyen", "pdf lau", "scan giao trinh", "ebook lau"] },
+    { key: "product_recommendation", keywords: ["goi y", "giao trinh", "tai lieu", "flashcard", "nen mua"] },
+    { key: "refund_dispute", keywords: ["hoan tien", "khieu nai", "tranh chap", "report", "lua dao"] },
+  ];
+
+  let best = "fallback";
+  let score = 0;
+  for (const rule of rules) {
+    const nextScore = rule.keywords.reduce((sum, keyword) => sum + (message.includes(keyword) ? 1 : 0), 0);
+    if (nextScore > score) {
+      best = rule.key;
+      score = nextScore;
+    }
+  }
+  return best;
+}
+
+function buildFallbackReply(rawMessage: string, locale: "vi" | "en"): Pick<ChatResponse, "reply" | "suggestions"> {
+  const intent = classifyFallbackIntent(rawMessage);
+
+  if (locale === "en") {
+    switch (intent) {
+      case "payment_retry":
+        return {
+          reply: "You can reopen your order detail page and retry payment within the remaining payment window. Look for orders that are still in PendingPayment state.",
+          suggestions: [{ id: 0, title: "Open my orders", href: "/orders", price: 0, isForRent: false }],
+        };
+      case "order_tracking":
+        return {
+          reply: "Please open the Orders page to check the latest lifecycle state such as PendingPayment, Paid, Delivering, or Completed.",
+          suggestions: [{ id: 0, title: "Track my orders", href: "/orders", price: 0, isForRent: false }],
+        };
+      case "trust_score":
+        return {
+          reply: "EduCart starts every account at 100 trust points. Valid violations reduce trust score and may lead to warning, suspension, or permanent ban.",
+          suggestions: [{ id: 0, title: "Read legal policy", href: "/khung-phap-ly", price: 0, isForRent: false }],
+        };
+      case "copyright":
+        return {
+          reply: "The platform allows self-created notes and study aids, but does not allow pirated PDFs, full textbook scans, or unauthorized copyrighted material.",
+          suggestions: [{ id: 0, title: "Copyright policy", href: "/khung-phap-ly", price: 0, isForRent: false }],
+        };
+      case "product_recommendation":
+        return {
+          reply: "You can browse the Products page and filter by subject, rental, or digital materials to find suitable learning resources.",
+          suggestions: [{ id: 0, title: "Browse products", href: "/products", price: 0, isForRent: false }],
+        };
+      case "refund_dispute":
+        return {
+          reply: "If you need a refund or dispute resolution, please create a report with clear evidence so the admin team can review it.",
+          suggestions: [{ id: 0, title: "View seller policy", href: "/khung-phap-ly", price: 0, isForRent: false }],
+        };
+      default:
+        return {
+          reply: "I can still help with orders, payments, trust score, disputes, and study-material suggestions even if the backend AI route is temporarily unavailable.",
+          suggestions: [{ id: 0, title: "Go to home", href: "/", price: 0, isForRent: false }],
+        };
+    }
+  }
+
+  switch (intent) {
+    case "payment_retry":
+      return {
+        reply: "Ban co the mo chi tiet don hang va thanh toan lai trong thoi gian cho phep. Hay tim don dang o trang thai PendingPayment.",
+        suggestions: [{ id: 0, title: "Mo don hang cua toi", href: "/orders", price: 0, isForRent: false }],
+      };
+    case "order_tracking":
+      return {
+        reply: "Hay mo trang Don hang de kiem tra trang thai moi nhat nhu PendingPayment, Paid, Delivering hoac Completed.",
+        suggestions: [{ id: 0, title: "Theo doi don hang", href: "/orders", price: 0, isForRent: false }],
+      };
+    case "trust_score":
+      return {
+        reply: "Moi tai khoan bat dau voi 100 diem trust score. Vi pham hop le se tru diem va co the dan den canh bao, tam khoa hoac ban vinh vien.",
+        suggestions: [{ id: 0, title: "Xem policy trust score", href: "/khung-phap-ly", price: 0, isForRent: false }],
+      };
+    case "copyright":
+      return {
+        reply: "EduCart cho phep tai lieu tu tao, ghi chu ca nhan va flashcard, nhung khong cho phep PDF lau, scan toan bo giao trinh hoac hoc lieu vi pham ban quyen.",
+        suggestions: [{ id: 0, title: "Xem chinh sach ban quyen", href: "/khung-phap-ly", price: 0, isForRent: false }],
+      };
+    case "product_recommendation":
+      return {
+        reply: "Ban co the vao trang San pham va loc theo mon hoc, tai lieu so hoac cho thue de tim hoc lieu phu hop.",
+        suggestions: [{ id: 0, title: "Mo trang san pham", href: "/products", price: 0, isForRent: false }],
+      };
+    case "refund_dispute":
+      return {
+        reply: "Neu can hoan tien hoac tranh chap, hay tao report kem bang chung de admin tiep nhan va xu ly.",
+        suggestions: [{ id: 0, title: "Xem khung phap ly", href: "/khung-phap-ly", price: 0, isForRent: false }],
+      };
+    default:
+      return {
+        reply: "Mình vẫn có thể hỗ trợ các câu hỏi cơ bản về đơn hàng, thanh toán, trust score, tranh chấp và gợi ý học liệu ngay cả khi route AI backend chưa sẵn sàng.",
+        suggestions: [{ id: 0, title: "Ve trang chu", href: "/", price: 0, isForRent: false }],
+      };
+  }
+}
+
 const dictionary = {
   vi: {
     title: "Tro ly AI EduCart",
@@ -100,7 +213,15 @@ export default function SupportChatbot() {
         },
       ]);
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", content: t.error }]);
+      const fallback = buildFallbackReply(message, locale);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: `${t.error}\n\n${fallback.reply}`,
+          suggestions: fallback.suggestions,
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }

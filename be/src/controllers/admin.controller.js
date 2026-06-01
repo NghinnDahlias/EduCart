@@ -601,6 +601,7 @@ const listUsers = asyncHandler(async (req, res) => {
   }
 
   const pool = await getPool();
+  await ensureAdminColumns(pool);
   const request = pool.request();
   const conditions = [];
 
@@ -663,6 +664,7 @@ const actOnUser = asyncHandler(async (req, res) => {
   }
 
   const pool = await getPool();
+  await ensureAdminColumns(pool);
   const existing = await pool
     .request()
     .input("UserID", sql.Int, targetUserId)
